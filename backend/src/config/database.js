@@ -13,7 +13,7 @@ if (!fs.existsSync(DATA_DIR)) {
 let db = null;
 
 /**
- * Initialize database connection
+ * Initialize database connection and run migrations
  * @returns {Promise<Database>}
  */
 function initializeDatabase() {
@@ -22,6 +22,11 @@ function initializeDatabase() {
       db = new Database(DB_PATH);
       db.pragma('foreign_keys = ON'); // Enable foreign key constraints
       console.log(`Connected to SQLite database at ${DB_PATH}`);
+      
+      // Run migrations to create tables
+      const { createTables } = require('../migrations/createTables');
+      createTables();
+      
       resolve(db);
     } catch (error) {
       console.error('Database connection error:', error);
