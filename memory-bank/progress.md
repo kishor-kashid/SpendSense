@@ -1,8 +1,8 @@
 # Progress: SpendSense
 
-## Project Status: 🟢 Foundation Complete
+## Project Status: 🟢 Feature Detection In Progress
 
-**Overall Progress:** 10% (3/30 PRs completed)
+**Overall Progress:** 13% (4/30 PRs completed)
 
 ## What Works
 
@@ -37,17 +37,29 @@
   - JSON export working
   - CLI script: `npm run generate-data`
 
+### Feature Detection (Phase 2) - Started ✅
+- ✅ **PR #4: Behavioral Signal Detection - Subscriptions**
+  - Recurring merchant detection (≥3 occurrences in 90 days)
+  - Cadence calculation (monthly/weekly/irregular) using coefficient of variation
+  - Monthly recurring spend calculation
+  - Subscription share of total spend calculation
+  - Dual window analysis (30-day and 180-day)
+  - Comprehensive unit tests (19 tests, all passing)
+  - Service: `backend/src/services/features/subscriptionDetector.js`
+
 ### Technical Infrastructure
 - ✅ Backend server runs successfully
 - ✅ Frontend development server runs successfully
 - ✅ Database connection and migrations working
 - ✅ Data generation and loading pipeline complete
 - ✅ All models can be imported and used
+- ✅ Jest testing framework configured
+- ✅ Test database isolation working
 
 ## What's Left to Build
 
-### Phase 2: Backend Core (0/11 PRs)
-- [ ] PR #4: Behavioral Signal Detection - Subscriptions
+### Phase 2: Backend Core (1/11 PRs)
+- [x] PR #4: Behavioral Signal Detection - Subscriptions ✅
 - [ ] PR #5: Behavioral Signal Detection - Savings
 - [ ] PR #6: Behavioral Signal Detection - Credit
 - [ ] PR #7: Behavioral Signal Detection - Income
@@ -91,6 +103,7 @@
 - [x] Database schema
 - [x] Linting and formatting
 - [x] .gitignore configuration
+- [x] Jest testing framework
 
 ### Data Layer ✅
 - [x] Synthetic data generator
@@ -98,8 +111,8 @@
 - [x] Data loader
 - [x] JSON export
 
-### Feature Detection ❌
-- [ ] Subscription detection
+### Feature Detection 🟡
+- [x] Subscription detection ✅
 - [ ] Savings analysis
 - [ ] Credit analysis
 - [ ] Income analysis
@@ -136,8 +149,8 @@
 - [ ] Operator dashboard
 - [ ] Navigation and routing
 
-### Testing ❌
-- [ ] Unit tests (≥10 required)
+### Testing 🟡
+- [x] Unit tests (19 tests passing) ✅
 - [ ] Integration tests
 - [ ] End-to-end tests
 
@@ -156,11 +169,11 @@
 | Explainability | 100% | N/A | Not started |
 | Latency | <5s | N/A | Not started |
 | Auditability | 100% | N/A | Not started |
-| Code Quality | ≥10 tests | 0 | Not started |
+| Code Quality | ≥10 tests | **19** | ✅ **Exceeded** |
 | Documentation | Complete | Partial | In progress |
 
 ## Known Issues
-- None currently - all foundation issues resolved
+- None currently - all issues resolved
 
 ## Data Status
 - **Users:** 75 loaded
@@ -169,17 +182,25 @@
 - **Liabilities:** 66 loaded
 - **Database:** `backend/data/database.sqlite` (persistent)
 - **Synthetic JSON:** `backend/data/synthetic/` (excluded from git)
+- **Test Database:** `backend/data/test_database.sqlite` (auto-created for tests)
+
+## Testing Status
+- **Unit Tests:** 19 tests passing ✅
+- **Test Framework:** Jest configured
+- **Test Database:** Separate test database for isolation
+- **Coverage:** Subscription detection fully tested
 
 ## Next Milestones
 
 ### Immediate (Current)
-- **PR #4: Subscription Detection** - Next task
-- Implement recurring merchant detection algorithm
-- Calculate subscription metrics for 30-day and 180-day windows
+- **PR #5: Savings Detection** - Next task
+- Implement net inflow detection to savings accounts
+- Calculate growth rate and emergency fund coverage
+- Service for 30-day and 180-day windows
 - Write unit tests
 
 ### Short-term (Weeks 2-4)
-- Complete PRs #4-7 (Behavioral signal detection)
+- Complete PRs #5-7 (Remaining behavioral signal detection)
 - Complete PR #8 (Persona system)
 - Complete PRs #9-11 (Recommendation engine)
 - Complete PRs #12-14 (Guardrails)
@@ -203,3 +224,5 @@
 - System must meet all success criteria targets
 - Data is permanent (generated once, used throughout development)
 - Synthetic data excluded from version control (can be regenerated)
+- Test command: `npm test` (runs all unit tests)
+- Subscription detector working and tested

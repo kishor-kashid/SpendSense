@@ -105,9 +105,13 @@ spendsense/
 
 ### Testing Requirements
 - **≥10 tests:** Unit and integration tests combined
+- **Current:** 19 unit tests passing ✅
 - **Coverage:** Aim for >80% test coverage
+- **Test Framework:** Jest with separate test database
+- **Test Database:** `backend/data/test_database.sqlite` (auto-created, excluded from git)
 - **Deterministic:** Use seeds for randomness
-- **Fast execution:** Tests should run quickly
+- **Fast execution:** Tests should run quickly (~1-2 seconds)
+- **Test Command:** `npm test` (runs all tests)
 
 ## Build & Deployment
 

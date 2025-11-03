@@ -96,10 +96,19 @@ User (1) → (1) Consent
 
 ## Behavioral Signal Detection Patterns
 
-### Subscription Detection
-- Pattern: Recurring merchants (≥3 occurrences in 90 days)
-- Cadence: Monthly/weekly frequency analysis
-- Metrics: Monthly recurring spend, subscription share of total
+### Subscription Detection ✅
+- **Pattern:** Recurring merchants (≥3 occurrences in 90 days)
+- **Cadence:** Monthly/weekly/irregular frequency analysis using coefficient of variation
+- **Metrics:** Monthly recurring spend, subscription share of total spend
+- **Service:** `backend/src/services/features/subscriptionDetector.js`
+- **Implementation:**
+  - Detects merchants with ≥3 transactions in 90-day lookback period
+  - Calculates cadence using coefficient of variation (CV > 0.5 = irregular)
+  - Estimates monthly recurring spend based on cadence
+  - Calculates subscription share as percentage of total spend
+  - Analyzes both 30-day and 180-day windows
+  - Returns threshold flags for persona assignment
+- **Testing:** 19 unit tests covering all functions and edge cases
 
 ### Savings Detection
 - Pattern: Net inflow to savings-like accounts

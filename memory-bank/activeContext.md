@@ -1,17 +1,18 @@
 # Active Context: SpendSense
 
 ## Current Status
-**Project Phase:** Foundation Complete, Ready for Feature Detection
-**Date:** After PR #3 completion
+**Project Phase:** Feature Detection In Progress
+**Date:** After PR #4 completion
 
 ## Current Work Focus
-- **Foundation phase complete:** PRs #1-3 successfully implemented
-- **Data generation:** 75 users, 218 accounts, 8,133 transactions, 66 liabilities loaded
-- **Next steps:** Ready to begin PR #4 (Behavioral Signal Detection - Subscriptions)
+- **PR #4 Complete:** Subscription detection service implemented and tested
+- **Feature detection:** First behavioral signal detection service working
+- **Next steps:** Ready to begin PR #5 (Behavioral Signal Detection - Savings)
+- **Data status:** 75 users, 218 accounts, 8,133 transactions, 66 liabilities loaded
 
 ## Recent Changes
 
-### Completed (PRs #1-3)
+### Completed (PRs #1-4)
 1. **PR #1: Project Setup & Infrastructure** ✅
    - Monorepo structure initialized (backend + frontend)
    - Node.js/Express backend configured (port 3001)
@@ -38,26 +39,35 @@
    - JSON export functionality
    - Fixed: Transaction loading issues (account ID matching, transaction ID uniqueness)
 
+4. **PR #4: Behavioral Signal Detection - Subscriptions** ✅
+   - Recurring merchant detection algorithm (≥3 occurrences in 90 days)
+   - Monthly/weekly cadence calculation with irregular pattern detection
+   - Monthly recurring spend calculation
+   - Subscription share of total spend calculation
+   - Service for both 30-day and 180-day windows
+   - Comprehensive unit tests (19 tests, all passing)
+   - Fixed: Cadence detection using coefficient of variation for irregular patterns
+
 ### Technical Decisions
 - **Frontend build tool:** Vite (not Create React App)
 - **Database driver:** better-sqlite3 (synchronous, better performance)
 - **Data persistence:** SQLite file persists across sessions (permanent data)
 - **Data generation:** One-time generation, not regenerated on server start
 - **Git strategy:** Synthetic data folder excluded from version control
+- **Testing:** Jest configured with separate test database
+- **Cadence detection:** Uses coefficient of variation (CV) to detect irregular patterns
 
 ## Next Steps (Immediate)
 
 ### Phase 2: Backend Core (PRs #4-7)
-**Next up: PR #4: Behavioral Signal Detection - Subscriptions**
-- Implement recurring merchant detection (≥3 occurrences in 90 days)
-- Calculate monthly/weekly cadence
-- Calculate monthly recurring spend
-- Calculate subscription share of total spend
+**Next up: PR #5: Behavioral Signal Detection - Savings**
+- Detect net inflow to savings-like accounts
+- Calculate savings growth rate
+- Calculate emergency fund coverage
 - Service for 30-day and 180-day windows
-- Unit tests for subscription detection
+- Unit tests for savings analysis
 
 Then continue with:
-- PR #5: Savings Detection
 - PR #6: Credit Detection
 - PR #7: Income Detection
 
@@ -79,22 +89,32 @@ Then continue with:
 - Can be regenerated if needed (fresh data, different parameters)
 - **Rationale:** Consistent dataset for development and testing
 
+### Feature Detection Pattern
+**Decision:** Service-based, windowed analysis
+- Each feature detector is a service module
+- Analysis performed on 30-day and 180-day windows
+- Results include both short-term and long-term metrics
+- Threshold-based detection for persona assignment
+- **Rationale:** Flexible, reusable pattern for all behavioral signals
+
 ### Project Structure
 **Decision:** Monorepo with separate backend and frontend folders
 - Clear separation of concerns
 - Independent package.json files
 - Shared documentation at root level
 - Data generator scripts in `backend/scripts/`
+- Feature services in `backend/src/services/features/`
 
 ### Development Priority
 **Focus Areas:**
 1. ✅ Foundation (PRs 1-3) - COMPLETE
-2. Core behavioral detection (PRs 4-7) - NEXT
-3. Persona system (PR #8)
-4. Recommendation engine (PR #11)
-5. Guardrails (PRs 12-14)
-6. API endpoints (PRs 15-18)
-7. Frontend interfaces (PRs 20-26)
+2. ✅ Subscription Detection (PR #4) - COMPLETE
+3. Core behavioral detection (PRs 5-7) - IN PROGRESS
+4. Persona system (PR #8)
+5. Recommendation engine (PR #11)
+6. Guardrails (PRs 12-14)
+7. API endpoints (PRs 15-18)
+8. Frontend interfaces (PRs 20-26)
 
 ## Current Blockers
 - None at this time
@@ -104,27 +124,31 @@ Then continue with:
 2. ✅ **Database column naming:** `credit_limit` instead of `limit` (reserved keyword)
 3. ✅ **Data persistence:** Permanent storage in SQLite
 4. ✅ **Git strategy:** Synthetic data excluded from version control
+5. ✅ **Testing framework:** Jest configured with test database
+6. ✅ **Cadence detection:** Coefficient of variation used for irregular pattern detection
 
 ## Questions to Resolve
 1. **Custom Persona (Persona 6):** Criteria and rationale to be defined during PR #8
-2. **Testing framework:** Jest confirmed (in package.json)
 
 ## Active Development Notes
 - Database file: `backend/data/database.sqlite` (persistent)
+- Test database: `backend/data/test_database.sqlite` (auto-created for tests)
 - Synthetic data: Generated in `backend/data/synthetic/` (excluded from git)
 - Data can be regenerated with: `npm run generate-data [userCount] [daysOfHistory]`
 - All models working correctly with foreign key constraints
-- Account ID mapping fixed for transaction loading
+- Subscription detector: 19 unit tests all passing
+- Test command: `npm test` (runs Jest with test database)
 
 ## Key Metrics to Track
 - Coverage: % users with persona + ≥3 behaviors (target: 100%)
 - Explainability: % recommendations with rationales (target: 100%)
 - Latency: Recommendation generation time (target: <5s)
 - Auditability: % recommendations with decision traces (target: 100%)
-- Test coverage: Number of passing tests (target: ≥10)
+- Test coverage: Number of passing tests (target: ≥10) - **Current: 19 tests passing** ✅
 
 ## Communication Notes
 - Foundation phase (PRs 1-3) successfully completed
-- Data generation working perfectly (8,133 transactions loaded)
-- Ready to proceed with behavioral signal detection
+- Subscription detection (PR #4) successfully completed
+- All unit tests passing (19/19)
+- Ready to proceed with savings detection (PR #5)
 - Following structured PR approach for organization
