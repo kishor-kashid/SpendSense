@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
+    "generate-data": "node scripts/generateData.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "lint": "eslint src/**/*.js",

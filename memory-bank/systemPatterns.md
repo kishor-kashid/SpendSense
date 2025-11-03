@@ -51,11 +51,11 @@ Analysis performed on two windows:
 ## Data Models & Relationships
 
 ### Core Entities
-- **User:** Base entity with consent status
-- **Account:** Linked to User, has type/subtype and balances
-- **Transaction:** Linked to Account, has date, amount, merchant, category
-- **Liability:** Linked to Account, has APR, payment details, overdue status
-- **Consent:** Linked to User, tracks opt-in/opt-out with timestamps
+- **User:** Base entity with consent status (user_id, name, consent_status, created_at)
+- **Account:** Linked to User, has type/subtype and balances (account_id, user_id, type, subtype, available_balance, current_balance, credit_limit)
+- **Transaction:** Linked to Account, has date, amount, merchant, category (transaction_id, account_id, date, amount, merchant_name, category, pending)
+- **Liability:** Linked to Account, has APR, payment details, overdue status (liability_id, account_id, APR, payment details, overdue)
+- **Consent:** Linked to User, tracks opt-in/opt-out with timestamps (consent_id, user_id, opted_in, timestamp)
 
 ### Relationships
 ```
@@ -64,6 +64,35 @@ Account (1) → (N) Transaction
 Account (1) → (0-1) Liability
 User (1) → (1) Consent
 ```
+
+### Database Schema
+- **Storage:** SQLite database (`backend/data/database.sqlite`)
+- **Migrations:** Automatic table creation on database initialization
+- **Foreign Keys:** All relationships use ON DELETE CASCADE
+- **Indexes:** Created on frequently queried columns (user_id, account_id, date, merchant_name, etc.)
+
+## Data Ingestion Patterns
+
+### Synthetic Data Generation
+- **Generator:** `backend/src/services/ingest/dataGenerator.js`
+- **Validator:** `backend/src/services/ingest/dataValidator.js`
+- **Loader:** `backend/src/services/ingest/dataLoader.js`
+- **CLI Script:** `npm run generate-data [userCount] [daysOfHistory]`
+
+### Data Generation Strategy
+- **Seeded Random:** Deterministic generation using seed for consistency
+- **Profile Types:** 5 financial profile types matching personas
+- **Account Types:** Checking, savings, credit cards, money market, HSA
+- **Transaction Patterns:** Realistic patterns including subscriptions, income, expenses
+- **Data Persistence:** Generated once, stored permanently in SQLite
+- **Data Export:** JSON files exported to `backend/data/synthetic/` (excluded from git)
+
+### Data Loading Pattern
+1. **Validation:** Validate all data against schema before loading
+2. **User Mapping:** Map generated user IDs to database user IDs
+3. **Account Mapping:** Track account IDs for transaction linking
+4. **Batch Loading:** Load users → accounts → transactions → liabilities
+5. **Error Handling:** Skip invalid records, log errors for debugging
 
 ## Behavioral Signal Detection Patterns
 

@@ -22,6 +22,9 @@ build/
 *.db
 backend/data/database.sqlite
 
+# Synthetic data (can be regenerated)
+backend/data/synthetic/
+
 # IDE
 .vscode/
 .idea/

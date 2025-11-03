@@ -45,20 +45,20 @@ spendsense/
 
 ## Dependencies
 
-### Backend (Expected)
-- `express` - Web framework
-- `sqlite3` or `better-sqlite3` - Database driver
-- `cors` - Cross-origin resource sharing
-- `dotenv` - Environment variables
-- `jest` - Testing framework
-- Additional utilities as needed
+### Backend (Installed)
+- `express` (^4.18.2) - Web framework
+- `better-sqlite3` (^9.2.2) - Database driver (synchronous, better performance)
+- `cors` (^2.8.5) - Cross-origin resource sharing
+- `dotenv` (^16.3.1) - Environment variables
+- `jest` (^29.7.0) - Testing framework
+- `nodemon` (^3.0.2) - Development auto-reload
 
-### Frontend (Expected)
-- `react` - UI library
-- `react-dom` - React DOM rendering
-- `react-router-dom` - Routing
-- `axios` or `fetch` - API calls
-- Additional UI utilities as needed
+### Frontend (Installed)
+- `react` (^18.2.0) - UI library
+- `react-dom` (^18.2.0) - React DOM rendering
+- `react-router-dom` (^6.21.1) - Routing
+- `axios` (^1.6.5) - API calls
+- `vite` (^5.0.8) - Build tool (selected over Create React App)
 
 ## Technical Constraints
 
@@ -69,10 +69,13 @@ spendsense/
 - **Parquet:** Optional for analytics (not required)
 
 ### Data Generation
-- **Synthetic data only:** No real PII
-- **50-100 users:** Diverse financial profiles
-- **90-180 days:** Transaction history per user
+- **Synthetic data only:** No real PII (fake names, masked account numbers)
+- **75 users generated:** Diverse financial profiles (configurable 50-100)
+- **120 days history:** Transaction history per user (configurable 90-180)
 - **Plaid-style structure:** Match Plaid API format
+- **Data persistence:** Generated once, stored in SQLite permanently
+- **Regeneration:** Can regenerate with `npm run generate-data` if needed
+- **Git strategy:** Synthetic JSON files excluded from version control
 
 ### Performance Requirements
 - **Latency:** <5 seconds per user for recommendation generation
@@ -109,9 +112,18 @@ spendsense/
 ## Build & Deployment
 
 ### Setup Commands
-- **Backend:** `npm install` then `npm start` (runs on port 3001)
-- **Frontend:** `npm install` then `npm start` (runs on port 3000)
-- **One-command setup:** Single command to set up entire project
+- **Backend:** 
+  - `npm install` - Install dependencies
+  - `npm start` - Start server (port 3001)
+  - `npm run dev` - Start with auto-reload (nodemon)
+  - `npm run generate-data` - Generate and load synthetic data
+- **Frontend:** 
+  - `npm install` - Install dependencies
+  - `npm run dev` - Start development server (port 3000)
+  - `npm run build` - Build for production
+- **Data Generation:** 
+  - `npm run generate-data` - Generate 75 users, 120 days (default)
+  - `npm run generate-data 100 180` - Custom user count and days
 
 ### Environment Configuration
 - `.env.example` file provided
