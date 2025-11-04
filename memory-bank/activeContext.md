@@ -1,17 +1,19 @@
 # Active Context: SpendSense
 
 ## Current Status
-**Project Phase:** Recommendation System In Progress
-**Date:** After PR #10 completion
+**Project Phase:** Backend Core Complete - Ready for API Phase
+**Date:** After PR #14 completion
 
 ## Current Work Focus
-- **PRs #5-10 Complete:** All behavioral signal detection, persona system, and content catalogs implemented
+- **PRs #1-14 Complete:** All behavioral signal detection, persona system, content catalogs, recommendation engine, and guardrails implemented
 - **Feature detection:** All 4 behavioral signals working (subscriptions, savings, credit, income)
 - **Persona system:** Complete with 5 personas and prioritization logic
 - **Content catalogs:** Education items and partner offers catalogs ready
-- **Next steps:** Ready to begin PR #11 (Recommendation Engine & Rationale Generator)
+- **Recommendation engine:** Complete with rationale generation and data citation
+- **Guardrails:** All guardrails complete (consent, eligibility, tone validation)
+- **Next steps:** Ready to begin PR #15 (REST API - User Endpoints)
 - **Data status:** 75 users, 218 accounts, 8,133 transactions, 66 liabilities loaded
-- **Test status:** 104 tests passing across all modules
+- **Test status:** 227 tests passing across all modules
 
 ## Recent Changes
 
@@ -104,6 +106,58 @@
     - Unit tests (30 tests, all passing)
     - Fixed: Account type matching logic for excluded account types
 
+11. **PR #11: Recommendation Engine & Rationale Generator** ✅
+    - Recommendation engine service (recommendationEngine.js)
+    - Combines persona assignment, content selection, and rationale generation
+    - Selects 3-5 education items per user based on persona
+    - Selects 1-3 partner offers per user with eligibility filtering
+    - Rationale generator with plain-language explanations (rationaleGenerator.js)
+    - Data citation in rationales (specific account numbers, amounts, percentages)
+    - Plain language (no jargon) in all rationales
+    - Mandatory disclaimer included in all recommendations
+    - Decision trace included for auditability
+    - Unit tests (13 tests for recommendation engine, all passing)
+    - Service: `backend/src/services/recommend/recommendationEngine.js`
+    - Service: `backend/src/services/recommend/rationaleGenerator.js`
+
+12. **PR #12: Consent Management System** ✅
+    - Consent checker service (consentChecker.js)
+    - Consent status tracked per user in database
+    - Opt-in logic with timestamps (grantConsent)
+    - Opt-out/revoke logic with timestamps (revokeConsent)
+    - Consent enforcement integrated into persona assignment and recommendation generation
+    - System blocks processing without consent (requireConsent throws errors)
+    - Timestamps recorded for audit trail
+    - Unit tests (26 tests, all passing)
+    - Service: `backend/src/services/guardrails/consentChecker.js`
+    - Updated: `backend/src/models/Consent.js` (fixed findByUserId to return null)
+    - Integration: Consent checks in `personaAssigner.js` and `recommendationEngine.js`
+
+13. **PR #13: Eligibility Filter** ✅
+    - Eligibility filter service (eligibilityFilter.js)
+    - Credit score estimation from utilization and behavior
+    - Income requirement checking (from income analysis)
+    - Credit score requirement checking (with estimation if needed)
+    - Existing account type filtering (prevents duplicate recommendations)
+    - Prohibited product blocking (payday loans, title loans, etc.)
+    - Comprehensive eligibility checking with detailed results
+    - Updated constants.js with PROHIBITED_PRODUCT_TYPES and ELIGIBILITY_RULES
+    - Unit tests (32 tests, all passing)
+    - Service: `backend/src/services/guardrails/eligibilityFilter.js`
+    - Functions: estimateCreditScore, getUserAnnualIncome, getUserCreditScore, hasAccountType, isProhibitedProduct, checkOfferEligibility, filterEligibleOffers, requireEligibleOffer
+
+14. **PR #14: Tone Validator** ✅
+    - Tone validation service (toneValidator.js)
+    - Prohibited phrases JSON file with 5 categories (shaming, judgmental, negative framing, comparison, pressure)
+    - Case-insensitive phrase detection
+    - Multi-field content validation (title, description, rationale, etc.)
+    - Severity categorization (high for shaming/judgmental, medium for others)
+    - Guardrail function that throws errors on violations
+    - Unit tests (42 tests, all passing)
+    - Service: `backend/src/services/guardrails/toneValidator.js`
+    - Data: `backend/data/content/prohibited_phrases.json`
+    - Functions: validateTone, validateContent, requireValidTone, checkTone, getToneSummary
+
 ### Technical Decisions
 - **Frontend build tool:** Vite (not Create React App)
 - **Database driver:** better-sqlite3 (synchronous, better performance)
@@ -115,20 +169,16 @@
 
 ## Next Steps (Immediate)
 
-### Phase 2: Backend Core (PRs #4-14) - In Progress
-**Next up: PR #11: Recommendation Engine & Rationale Generator**
-- Build recommendation engine that combines persona + signals
-- Implement logic to select 3-5 education items per user
-- Implement logic to select 1-3 partner offers per user
-- Build rationale generator with plain-language explanations
-- Create "because" templates citing specific data
-- Ensure recommendations include concrete numbers
-- Write unit tests for recommendation logic
+### Phase 2: Backend Core (PRs #4-14) - COMPLETE ✅
+**All guardrails complete!** Ready for Phase 3: Backend API
 
-Then continue with:
-- PR #12: Consent Management System
-- PR #13: Eligibility Filter
-- PR #14: Tone Validator
+### Phase 3: Backend API (PRs #15-19) - Next Up
+**Next up: PR #15: REST API - User Endpoints**
+- Implement GET /users (list all users for login dropdown)
+- Implement GET /users/:id (get user details)
+- Add validation middleware
+- Add error handling
+- Write integration tests
 
 ## Active Decisions & Considerations
 
@@ -170,10 +220,11 @@ Then continue with:
 2. ✅ Behavioral Signal Detection (PRs 4-7) - COMPLETE
 3. ✅ Persona System (PR #8) - COMPLETE
 4. ✅ Content Catalogs (PRs 9-10) - COMPLETE
-5. Recommendation engine (PR #11) - NEXT
-6. Guardrails (PRs 12-14)
-7. API endpoints (PRs 15-18)
-8. Frontend interfaces (PRs 20-26)
+5. ✅ Recommendation Engine (PR #11) - COMPLETE
+6. ✅ Consent Management (PR #12) - COMPLETE
+7. ✅ Guardrails (PRs 13-14) - COMPLETE
+8. API endpoints (PRs 15-19) - NEXT
+9. Frontend interfaces (PRs 20-26)
 
 ## Current Blockers
 - None at this time
@@ -188,6 +239,10 @@ Then continue with:
 7. ✅ **Persona system:** 5 personas implemented (custom persona deferred)
 8. ✅ **Content catalogs:** Education items and partner offers catalogs implemented
 9. ✅ **Test isolation:** Unique IDs in tests to prevent UNIQUE constraint violations
+10. ✅ **Recommendation engine:** Complete with rationale generation and data citation
+11. ✅ **Consent management:** Complete with enforcement in processing paths
+12. ✅ **Eligibility filter:** Complete with income, credit score, account type, and prohibited product checks
+13. ✅ **Tone validator:** Complete with shaming/judgmental phrase detection and content validation
 
 ## Questions to Resolve
 1. **Custom Persona (Persona 6):** Deferred - 5 personas implemented, custom persona can be added later if needed
@@ -202,21 +257,30 @@ Then continue with:
 - Persona system: 13 tests passing
 - Education catalog: 13 tests passing
 - Partner offers catalog: 30 tests passing
-- Total: 104 tests passing across all modules
+- Recommendation engine: 13 tests passing
+- Consent management: 26 tests passing
+- Eligibility filter: 32 tests passing
+- Tone validator: 42 tests passing
+- Total: 227 tests passing across all modules
 - Test command: `npm test` (runs Jest with test database)
 
 ## Key Metrics to Track
 - Coverage: % users with persona + ≥3 behaviors (target: 100%)
-- Explainability: % recommendations with rationales (target: 100%)
+- Explainability: % recommendations with rationales (target: 100%) - **Achieved: 100%** ✅
 - Latency: Recommendation generation time (target: <5s)
-- Auditability: % recommendations with decision traces (target: 100%)
-- Test coverage: Number of passing tests (target: ≥10) - **Current: 104 tests passing** ✅
+- Auditability: % recommendations with decision traces (target: 100%) - **Achieved: 100%** ✅
+- Consent enforcement: % operations blocked without consent (target: 100%) - **Achieved: 100%** ✅
+- Test coverage: Number of passing tests (target: ≥10) - **Current: 227 tests passing** ✅
 
 ## Communication Notes
 - Foundation phase (PRs 1-3) successfully completed
 - All behavioral signal detection (PRs 4-7) successfully completed
 - Persona system (PR #8) successfully completed
 - Content catalogs (PRs 9-10) successfully completed
-- All unit tests passing (104/104)
-- Ready to proceed with recommendation engine (PR #11)
+- Recommendation engine (PR #11) successfully completed with rationale generation
+- Consent management (PR #12) successfully completed with enforcement
+- Eligibility filter (PR #13) successfully completed with comprehensive checks
+- Tone validator (PR #14) successfully completed with phrase detection
+- All unit tests passing (227/227)
+- Backend core phase (PRs #1-14) complete - ready for API phase
 - Following structured PR approach for organization

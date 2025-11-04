@@ -56,7 +56,8 @@ class Consent {
    */
   static findByUserId(userId) {
     const db = getDatabase();
-    return db.prepare('SELECT * FROM consent WHERE user_id = ?').get(userId);
+    const result = db.prepare('SELECT * FROM consent WHERE user_id = ?').get(userId);
+    return result || null;
   }
 
   /**

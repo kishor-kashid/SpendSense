@@ -7,6 +7,7 @@ process.env.DB_PATH = './data/test_database.sqlite';
 
 const { initializeDatabase, closeDatabase } = require('../../src/config/database');
 const { User, Account, Transaction, Liability } = require('../../src/models');
+const Consent = require('../../src/models/Consent');
 const { getAllPersonas, getPersonaById } = require('../../src/services/personas/personaDefinitions');
 const { prioritizePersonas, findMatchingPersonas, assignPersona } = require('../../src/services/personas/personaPrioritizer');
 const { assignPersonaToUser } = require('../../src/services/personas/personaAssigner');
@@ -101,6 +102,9 @@ describe('Persona Assignment Logic', () => {
       consent_status: 'granted'
     });
     testUserId = user.user_id;
+    
+    // Grant consent for persona assignment
+    Consent.grant(testUserId);
   });
 
   afterAll(() => {
@@ -437,6 +441,9 @@ describe('Persona Assignment Logic', () => {
         name: 'Minimal User',
         consent_status: 'granted'
       });
+
+      // Grant consent for this user
+      Consent.grant(minimalUser.user_id);
 
       const result = assignPersonaToUser(minimalUser.user_id);
 

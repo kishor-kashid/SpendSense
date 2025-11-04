@@ -31,10 +31,10 @@ Data Ingestion → Feature Detection → Persona Assignment → Recommendation G
 
 ### 3. Guardrail Pattern
 All recommendations pass through multiple guardrails:
-- **Consent Check:** Must have opt-in consent
-- **Eligibility Filter:** Must meet product requirements
-- **Tone Validator:** Must pass language checks
-- **Disclaimer:** Must include mandatory disclaimer
+- **Consent Check:** ✅ Must have opt-in consent (PR #12 - implemented)
+- **Eligibility Filter:** ✅ Must meet product requirements (PR #13 - implemented)
+- **Tone Validator:** ✅ Must pass language checks (PR #14 - implemented)
+- **Disclaimer:** ✅ Must include mandatory disclaimer (PR #11 - implemented)
 
 ### 4. Explainability Pattern
 Every recommendation includes:
@@ -212,18 +212,78 @@ When multiple personas match:
 - **Testing:** 30 unit tests covering loading, filtering, eligibility checking, selection, and content quality
 - **Configuration:** Eligibility thresholds in `backend/src/config/constants.js` (PARTNER_OFFER_THRESHOLDS)
 
-## Recommendation Generation Pattern
+## Recommendation Generation Pattern ✅
 
-### Selection Logic (To Be Implemented in PR #11)
+### Selection Logic (Implemented in PR #11)
 1. **Education Items:** Select 3-5 items based on persona using `educationCatalog.selectItemsForPersona()`
 2. **Partner Offers:** Select 1-3 eligible offers based on persona and user data using `partnerOffers.selectOffersForPersona()`
-3. **Rationale Generation:** Create "because" statement for each item (PR #11)
-4. **Disclaimer Addition:** Append mandatory disclaimer
+3. **Rationale Generation:** Create "because" statement for each item using `rationaleGenerator.generateRationale()`
+4. **Disclaimer Addition:** Append mandatory disclaimer to all recommendations
+
+### Rationale Generation ✅
+- **Service:** `backend/src/services/recommend/rationaleGenerator.js`
+- **Features:**
+  - Persona-specific rationales for education items
+  - Offer-specific rationales with eligibility reasons
+  - Data citation (account numbers, amounts, percentages, utilization levels)
+  - Plain language (no jargon, no technical terms)
+  - Concrete numbers cited from user's actual data
+  - Templates for each persona and offer type
+- **Testing:** Rationale generation tested for all personas and offer types
 
 ### Rationale Template
-Format: "We noticed [specific data point]. [Action/recommendation]. [Expected benefit]."
+Format: "This [resource/offer], '[title]', is recommended because [specific data point]. [Action/recommendation]. [Expected benefit]."
 
-Example: "We noticed your Visa ending in 4523 is at 68% utilization ($3,400 of $5,000 limit). Bringing this below 30% could improve your credit score and reduce interest charges of $87/month."
+Example: "This resource, 'Debt Paydown Strategy: The Snowball Method', is recommended because we noticed your Visa ending in 001 has 68% utilization ($3,400 of $5,000 limit). You've also incurred $88 in interest charges recently. You appear to be making minimum payments only. This content can help you manage your credit more effectively."
+
+### Recommendation Engine ✅
+- **Service:** `backend/src/services/recommend/recommendationEngine.js`
+- **Features:**
+  - Combines persona assignment, content selection, and rationale generation
+  - Requires consent before processing (PR #12)
+  - Generates comprehensive recommendations with:
+    - Assigned persona with rationale
+    - Behavioral signals (credit, income, subscriptions, savings)
+    - Education items (3-5) with rationales
+    - Partner offers (1-3) with rationales and eligibility checks
+    - Decision trace for auditability
+    - Mandatory disclaimer
+  - Respects custom limits (min/max items/offers)
+- **Testing:** 13 unit tests covering selection, rationale generation, data citation, plain language, disclaimer, error handling
+
+## Consent Management Pattern ✅
+
+### Consent Checker Service
+- **Service:** `backend/src/services/guardrails/consentChecker.js`
+- **Functions:**
+  - `hasConsent(userId)` - Check if user has consented
+  - `requireConsent(userId)` - Throw error if no consent (blocks processing)
+  - `getConsentStatus(userId)` - Get detailed consent status
+  - `grantConsent(userId)` - Opt-in with timestamp
+  - `revokeConsent(userId)` - Opt-out with timestamp
+  - `checkConsent(userId)` - Conditional check (returns object)
+  - `getConsentHistory(userId)` - Get consent history
+
+### Consent Enforcement
+- **Integration Points:**
+  - `personaAssigner.js` - Requires consent before persona assignment
+  - `recommendationEngine.js` - Requires consent before recommendation generation
+- **Behavior:**
+  - Throws clear error if user has not consented
+  - Blocks all data processing operations
+  - Timestamps recorded for audit trail
+- **Testing:** 26 unit tests covering consent model, checker service, enforcement, timestamps, multiple users
+
+### Consent Model
+- **Model:** `backend/src/models/Consent.js`
+- **Features:**
+  - `createOrUpdate()` - Create or update consent record
+  - `findByUserId()` - Find consent by user ID (returns null if not found)
+  - `hasConsent()` - Check if user has consented
+  - `grant()` - Opt-in with timestamp
+  - `revoke()` - Opt-out with timestamp
+  - `getHistory()` - Get consent history
+- **Database:** Consent table tracks opted_in (0/1) and timestamp
 
 ## API Design Patterns
 
@@ -305,4 +365,51 @@ backend/tests/
   - Recommendation limits (min/max education items, partner offers)
   - Partner offer eligibility thresholds (credit scores, income, utilization)
 - Content catalogs (education items, partner offers) as JSON files
+- Prohibited phrases for tone validation (`backend/data/content/prohibited_phrases.json`)
+- Prohibited product types in constants (`PROHIBITED_PRODUCT_TYPES`)
+- Eligibility rules in constants (`ELIGIBILITY_RULES`)
+
+## Guardrail Patterns ✅
+
+### Eligibility Filter Pattern ✅
+- **Service:** `backend/src/services/guardrails/eligibilityFilter.js`
+- **Functions:**
+  - `estimateCreditScore()` - Estimates credit score from utilization and behavior
+  - `getUserAnnualIncome()` - Gets annual income from income analysis
+  - `getUserCreditScore()` - Gets/estimates credit score
+  - `hasAccountType()` - Checks if user has specific account types
+  - `isProhibitedProduct()` - Blocks predatory products
+  - `checkOfferEligibility()` - Comprehensive eligibility checking
+  - `filterEligibleOffers()` - Filters array of offers
+  - `requireEligibleOffer()` - Guardrail function that throws on ineligible offers
+- **Features:**
+  - Credit score estimation from utilization (300-850 range)
+  - Income requirement validation (from income analysis)
+  - Account type exclusion (prevents duplicate recommendations)
+  - Prohibited product blocking (payday loans, title loans, etc.)
+  - Detailed eligibility results with disqualifiers and reasons
+- **Testing:** 32 unit tests covering all eligibility scenarios
+- **Configuration:** `PROHIBITED_PRODUCT_TYPES` and `ELIGIBILITY_RULES` in constants.js
+
+### Tone Validator Pattern ✅
+- **Service:** `backend/src/services/guardrails/toneValidator.js`
+- **Data:** `backend/data/content/prohibited_phrases.json`
+- **Categories:**
+  - Shaming phrases (33 phrases, e.g., "you're overspending")
+  - Judgmental terms (20 terms, e.g., "irresponsible", "you should")
+  - Negative framing (19 phrases, e.g., "can't", "hopeless")
+  - Comparison phrases (10 phrases, e.g., "everyone else", "better than you")
+  - Pressure phrases (12 phrases, e.g., "you must", "act now")
+- **Functions:**
+  - `validateTone()` - Validates single text string
+  - `validateContent()` - Validates object with multiple text fields
+  - `requireValidTone()` - Guardrail function that throws on violations
+  - `checkTone()` - Conditional check (returns object)
+  - `getToneSummary()` - Returns summary of tone validation
+- **Features:**
+  - Case-insensitive phrase detection
+  - Multi-field validation (title, description, rationale, etc.)
+  - Severity categorization (high for shaming/judgmental, medium for others)
+  - Violation categorization by type
+- **Testing:** 42 unit tests covering all validation scenarios
 

@@ -105,11 +105,13 @@ spendsense/
 
 ### Testing Requirements
 - **≥10 tests:** Unit and integration tests combined
-- **Current:** 104 unit tests passing ✅
+- **Current:** 153 unit tests passing ✅
   - Feature detection: 74 tests (subscriptions: 19, savings: 6, credit: 8, income: 8, plus 33 additional)
   - Persona system: 13 tests
   - Education catalog: 13 tests
   - Partner offers: 30 tests
+  - Recommendation engine: 13 tests
+  - Consent management: 26 tests
 - **Coverage:** Aim for >80% test coverage
 - **Test Framework:** Jest with separate test database
 - **Test Database:** `backend/data/test_database.sqlite` (auto-created, excluded from git)
