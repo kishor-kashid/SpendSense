@@ -1,10 +1,15 @@
 .partner-offer {
-  margin-bottom: var(--spacing-lg);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  margin-bottom: 0;
+  transition: box-shadow 0.2s ease;
+  height: 100% !important;
+  min-height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+  box-sizing: border-box;
 }
 
 .partner-offer:hover {
-  transform: translateY(-2px);
   box-shadow: var(--shadow-lg);
 }
 
@@ -13,6 +18,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--spacing-md);
+  flex-shrink: 0;
 }
 
 .partner-offer-type {
@@ -50,12 +56,14 @@
   font-weight: 600;
   color: var(--text-primary);
   margin: 0 0 var(--spacing-sm) 0;
+  flex-shrink: 0;
 }
 
 .partner-offer-description {
   color: var(--text-secondary);
   line-height: 1.6;
   margin: 0 0 var(--spacing-md) 0;
+  flex-shrink: 0;
 }
 
 .partner-offer-benefits {
@@ -64,6 +72,8 @@
   border-radius: var(--radius-md);
   border-left: 3px solid var(--success-color);
   margin: var(--spacing-md) 0;
+  flex: 1;
+  min-height: 0;
 }
 
 .partner-offer-benefits strong {
@@ -88,6 +98,8 @@
   border-radius: var(--radius-md);
   border-left: 3px solid var(--primary-color);
   margin: var(--spacing-md) 0;
+  flex: 1;
+  min-height: 0;
 }
 
 .partner-offer-rationale strong {
@@ -127,7 +139,8 @@
 }
 
 .partner-offer-actions {
-  margin-top: var(--spacing-md);
+  margin-top: auto;
+  padding-top: var(--spacing-md);
 }
 
 .partner-offer-actions a {
@@ -136,7 +149,7 @@
 }
 
 .partner-offer-disclaimer {
-  margin-top: var(--spacing-md);
+  margin-top: auto;
   padding-top: var(--spacing-md);
   border-top: 1px solid var(--border-color);
 }

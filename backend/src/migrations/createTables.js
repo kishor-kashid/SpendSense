@@ -138,6 +138,8 @@ function createTables() {
       status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'approved', 'overridden')),
       operator_notes TEXT,
       decision_trace TEXT,
+      flagged INTEGER NOT NULL DEFAULT 0 CHECK(flagged IN (0, 1)),
+      flag_reason TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       reviewed_at TEXT,
       reviewed_by TEXT,

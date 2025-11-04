@@ -137,6 +137,7 @@ function loadTransactions(transactions, accountMapping) {
   const loaded = [];
   const errors = [];
   let skipped = 0;
+  let duplicates = 0;
 
   // Get ALL account IDs from database (this is the source of truth)
   const { getDatabase } = require('../../config/database');
@@ -154,6 +155,9 @@ function loadTransactions(transactions, accountMapping) {
   console.log(`  Mapping has ${validAccountIds.size} accounts`);
   console.log(`  Total valid account IDs: ${allValidAccountIds.size}`);
 
+  // Prepare statements for better performance
+  const checkExistingStmt = db.prepare('SELECT transaction_id FROM transactions WHERE transaction_id = ?');
+
   transactions.forEach((transaction, index) => {
     try {
       const accountId = transaction.account_id;
@@ -165,6 +169,14 @@ function loadTransactions(transactions, accountMapping) {
         if (skipped <= 5) {
           errors.push(`Transaction ${index}: Account ${accountId} not found`);
         }
+        return;
+      }
+
+      // Check if transaction already exists (prevent duplicates on re-run)
+      const existing = checkExistingStmt.get(transaction.transaction_id);
+      if (existing) {
+        duplicates++;
+        // Skip duplicate transactions silently
         return;
       }
 
@@ -186,7 +198,11 @@ function loadTransactions(transactions, accountMapping) {
     errors.push(`... and ${skipped - Math.min(skipped, 5)} more transactions skipped due to missing accounts`);
   }
 
-  return { loaded, errors, skipped };
+  if (duplicates > 0) {
+    console.log(`  Skipped ${duplicates} duplicate transactions (already exist in database)`);
+  }
+
+  return { loaded, errors, skipped, duplicates };
 }
 
 /**
@@ -248,16 +264,48 @@ function loadAllData(data, options = {}) {
   }
 
   // Create user ID mapping (old user_id -> new database user_id)
+  // FIX: Map by username instead of index to handle existing users and errors
   const userMapping = {};
-  data.users.forEach((user, index) => {
-    userMapping[user.user_id] = userResults.loaded[index]?.user_id;
+  const { getDatabase } = require('../../config/database');
+  const db = getDatabase();
+  
+  data.users.forEach((user) => {
+    // Find the user in the loaded results by username
+    const loadedUser = userResults.loaded.find(u => u.username === user.username);
+    if (loadedUser) {
+      userMapping[user.user_id] = loadedUser.user_id;
+    } else {
+      // If not found in loaded, check database directly (might be existing user)
+      const existingUser = db.prepare('SELECT user_id FROM users WHERE username = ?').get(user.username);
+      if (existingUser) {
+        userMapping[user.user_id] = existingUser.user_id;
+      }
+    }
   });
+
+  console.log(`User mapping created: ${Object.keys(userMapping).length} mappings`);
+  
+  // Debug: Check for unmapped users
+  const unmappedUsers = data.users.filter(u => !userMapping[u.user_id]);
+  if (unmappedUsers.length > 0) {
+    console.warn(`⚠️  ${unmappedUsers.length} users could not be mapped (will cause account loading issues)`);
+  }
 
   console.log('Loading accounts...');
   const accountResults = loadAccounts(data.accounts, userMapping);
-  const accountMapping = accountResults.accountMapping || {};
+  let accountMapping = accountResults.accountMapping || {};
+  
+  // FIX: Include ALL existing accounts from database in the mapping
+  // This ensures transactions can reference accounts from previous data loads
+  const allAccounts = db.prepare('SELECT account_id FROM accounts').all();
+  allAccounts.forEach(acc => {
+    if (!accountMapping[acc.account_id]) {
+      accountMapping[acc.account_id] = acc.account_id; // Account ID is its own key
+    }
+  });
+  
   console.log(`Loaded ${accountResults.loaded.length} accounts`);
-  console.log(`Account mapping size: ${Object.keys(accountMapping).length}`);
+  console.log(`Account mapping size: ${Object.keys(accountMapping).length} (includes ${allAccounts.length} total accounts from database)`);
   if (accountResults.errors.length > 0) {
     console.warn(`Account errors: ${accountResults.errors.length}`);
     if (accountResults.errors.length <= 5) {
@@ -280,6 +328,10 @@ function loadAllData(data, options = {}) {
   console.log(`\nLoading transactions (${data.transactions.length} total)...`);
   const transactionResults = loadTransactions(data.transactions, accountMapping);
   console.log(`Loaded ${transactionResults.loaded.length} transactions`);
+  if (transactionResults.duplicates > 0) {
+    console.warn(`⚠️  Skipped ${transactionResults.duplicates} duplicate transactions (already exist in database)`);
+    console.warn(`   Tip: Clear database first if you want to regenerate all data.`);
+  }
   if (transactionResults.skipped > 0) {
     console.warn(`Skipped ${transactionResults.skipped} transactions (missing accounts)`);
   }

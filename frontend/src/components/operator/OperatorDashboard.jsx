@@ -83,29 +83,13 @@ const OperatorDashboard = () => {
       const rawProfile = profileData.profile || profileData.data?.profile || profileData.data || profileData;
       
       // Transform the profile data to match what SignalViewer expects
+      // Keep the full behavioral_signals structure with both short_term and long_term
       const transformedProfile = {
         ...rawProfile,
-        // Map behavioral_signals to signals with flattened structure
-        signals: rawProfile.behavioral_signals ? {
-          subscriptions: rawProfile.behavioral_signals.subscriptions?.short_term ? {
-            recurring_merchants: rawProfile.behavioral_signals.subscriptions.short_term.recurring_merchants || [],
-            monthly_recurring_spend_30d: rawProfile.behavioral_signals.subscriptions.short_term.total_monthly_recurring_spend || 0,
-            subscription_share_30d: rawProfile.behavioral_signals.subscriptions.short_term.subscription_share || 0
-          } : null,
-          savings: rawProfile.behavioral_signals.savings?.short_term ? {
-            growth_rate_30d: rawProfile.behavioral_signals.savings.short_term.growth_rate || 0,
-            emergency_fund_coverage_30d: rawProfile.behavioral_signals.savings.short_term.emergency_fund_coverage_months || 0,
-            net_inflow_30d: rawProfile.behavioral_signals.savings.short_term.net_inflow || 0
-          } : null,
-          credit: rawProfile.behavioral_signals.credit?.short_term ? {
-            cards: rawProfile.behavioral_signals.credit.short_term.cards || []
-          } : null,
-          income: rawProfile.behavioral_signals.income?.short_term ? {
-            payment_frequency: rawProfile.behavioral_signals.income.short_term.payment_frequency || 'Unknown',
-            median_pay_gap_days: rawProfile.behavioral_signals.income.short_term.median_pay_gap_days || 0,
-            cash_flow_buffer_months: rawProfile.behavioral_signals.income.short_term.cash_flow_buffer_months || 0
-          } : null
-        } : null,
+        // Include persona assignments from user data if available
+        persona_assignments: rawProfile.persona_assignments || null,
+        // Pass behavioral_signals as-is so SignalViewer can access both time windows
+        signals: rawProfile.behavioral_signals || null,
         // Map assigned_persona to persona
         persona: rawProfile.assigned_persona ? {
           name: rawProfile.assigned_persona.name,
@@ -140,11 +124,15 @@ const OperatorDashboard = () => {
       loadData();
     };
 
-    window.addEventListener('operator-dashboard-refresh', handleRefreshEvent);
+    window.addEventListener('refreshOperatorData', handleRefreshEvent);
     return () => {
-      window.removeEventListener('operator-dashboard-refresh', handleRefreshEvent);
+      window.removeEventListener('refreshOperatorData', handleRefreshEvent);
     };
   }, []);
+
+  // Get persona assignments for selected user from users list
+  const selectedUser = users.find(u => u.user_id === selectedUserId);
+  const selectedUserPersonaAssignments = selectedUser?.persona_assignments;
 
   const handleApprove = async (reviewId, notes) => {
     try {

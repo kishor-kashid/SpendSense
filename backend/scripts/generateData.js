@@ -2,7 +2,10 @@
 
 /**
  * CLI script to generate and load synthetic data
- * Usage: node scripts/generateData.js [userCount] [daysOfHistory]
+ * Usage: node scripts/generateData.js [userCount] [daysOfHistory] [--clear]
+ * 
+ * Options:
+ *   --clear, -c    Clear existing data before loading new data
  */
 
 require('dotenv').config();
@@ -14,6 +17,7 @@ async function main() {
   // Parse command line arguments
   const userCount = parseInt(process.argv[2]) || DATA_GENERATION.DEFAULT_USER_COUNT;
   const daysOfHistory = parseInt(process.argv[3]) || DATA_GENERATION.DEFAULT_DAYS_HISTORY;
+  const clearDatabase = process.argv.includes('--clear') || process.argv.includes('-c');
 
   // Validate inputs
   if (userCount < DATA_GENERATION.MIN_USER_COUNT || userCount > DATA_GENERATION.MAX_USER_COUNT) {
@@ -31,6 +35,23 @@ async function main() {
     await initializeDatabase();
     console.log('Database initialized ✓\n');
 
+    // Clear database if requested
+    if (clearDatabase) {
+      console.log('Clearing existing data...');
+      const { getDatabase } = require('../src/config/database');
+      const db = getDatabase();
+      db.exec(`
+        DELETE FROM recommendation_reviews;
+        DELETE FROM feedback;
+        DELETE FROM consent;
+        DELETE FROM liabilities;
+        DELETE FROM transactions;
+        DELETE FROM accounts;
+        DELETE FROM users;
+      `);
+      console.log('Database cleared ✓\n');
+    }
+
     console.log(`Generating data for ${userCount} users with ${daysOfHistory} days of history...\n`);
     const results = generateAndLoad(userCount, daysOfHistory);
 
@@ -39,6 +60,9 @@ async function main() {
     console.log(`- Users loaded: ${results.users.loaded.length}`);
     console.log(`- Accounts loaded: ${results.accounts.loaded.length}`);
     console.log(`- Transactions loaded: ${results.transactions.loaded.length}`);
+    if (results.transactions.duplicates > 0) {
+      console.log(`  (${results.transactions.duplicates} duplicates skipped)`);
+    }
     console.log(`- Liabilities loaded: ${results.liabilities.loaded.length}`);
 
     if (results.users.errors.length > 0) {
@@ -49,6 +73,9 @@ async function main() {
     }
     if (results.transactions.errors.length > 0) {
       console.warn(`⚠️  Transaction errors: ${results.transactions.errors.length}`);
+    }
+    if (results.transactions.skipped > 0) {
+      console.warn(`⚠️  Transactions skipped (missing accounts): ${results.transactions.skipped}`);
     }
     if (results.liabilities.errors.length > 0) {
       console.warn(`⚠️  Liability errors: ${results.liabilities.errors.length}`);

@@ -301,6 +301,13 @@
   - Fixed data mapping for operator dashboard
   - Signals now display correctly for users with consent
 
+- ✅ **Recommendation Display Improvements**
+  - Eligibility filtering: Ineligible partner offers filtered out in backend and frontend
+  - Horizontal scrollable layout: Recommendations display in single row with horizontal scrolling
+  - Navigation buttons: Left/right buttons replace scrollbar for better UX
+  - Consistent card heights: All cards in each row have same height using flexbox
+  - Applied to both educational resources and partner offers sections
+
 ## What's Left to Build
 
 ### Phase 2: Backend Core (11/11 PRs) - COMPLETE ✅

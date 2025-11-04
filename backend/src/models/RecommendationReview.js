@@ -157,6 +157,45 @@ class RecommendationReview {
   }
 
   /**
+   * Flag a review for special attention
+   * @param {number} reviewId - Review ID
+   * @param {string} flagReason - Reason for flagging
+   * @returns {Object|null} Updated review record or null
+   */
+  static flagReview(reviewId, flagReason = null) {
+    const db = getDatabase();
+    
+    const stmt = db.prepare(`
+      UPDATE recommendation_reviews
+      SET flagged = 1, flag_reason = ?
+      WHERE review_id = ?
+    `);
+    
+    stmt.run(flagReason, reviewId);
+    
+    return this.findById(reviewId);
+  }
+
+  /**
+   * Unflag a review
+   * @param {number} reviewId - Review ID
+   * @returns {Object|null} Updated review record or null
+   */
+  static unflagReview(reviewId) {
+    const db = getDatabase();
+    
+    const stmt = db.prepare(`
+      UPDATE recommendation_reviews
+      SET flagged = 0, flag_reason = NULL
+      WHERE review_id = ?
+    `);
+    
+    stmt.run(reviewId);
+    
+    return this.findById(reviewId);
+  }
+
+  /**
    * Create or update pending review for a user
    * If a pending review exists, update it; otherwise create a new one
    * @param {Object} reviewData - Review data

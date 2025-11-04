@@ -24,7 +24,35 @@
 
 ## Recent Changes
 
-### Latest Updates (Post-PR #28)
+### Latest Updates (Post-PR #28 - Continued)
+
+1. **Recommendation Display Improvements** ✅
+   - **Eligibility Filtering:** Fixed issue where ineligible partner offers were showing on user dashboard
+     - Backend now filters out ineligible offers in both new and approved recommendations
+     - Frontend added safety filter to prevent any ineligible offers from displaying
+     - Only eligible partner offers appear to users
+   - **Horizontal Scrollable Layout:** Changed recommendation display from grid to horizontal scrollable row
+     - Educational content and partner offers display in single horizontal row
+     - No wrapping to new rows
+     - Consistent card widths (320px desktop, 280px mobile)
+     - Scrollbar hidden for cleaner UI
+   - **Navigation Buttons:** Replaced scrollbar with left/right navigation buttons
+     - Circular buttons (← →) next to section titles
+     - Buttons only show when 2+ items exist
+     - Buttons disabled when at start/end of scroll
+     - Smooth scrolling (80% of visible width per click)
+     - Real-time button state updates based on scroll position
+   - **Consistent Card Heights:** Fixed height inconsistency issues
+     - All cards in each row now have same height (matching tallest card)
+     - Used flexbox with `align-items: stretch` and `align-self: stretch`
+     - Cards use `height: 100%` and proper flex properties
+     - Fixed sections (headers, titles) don't shrink
+     - Expandable sections (rationale, benefits) grow to fill space
+     - Bottom sections (actions, disclaimers) pushed to bottom with `margin-top: auto`
+     - Removed transform animations that could affect height
+     - Applied to both educational resources and partner offers
+
+### Previous Updates (Post-PR #28)
 
 1. **PR #28: Documentation & Decision Log** ✅
    - **Root README.md:** Comprehensive setup instructions, usage examples, data generation commands

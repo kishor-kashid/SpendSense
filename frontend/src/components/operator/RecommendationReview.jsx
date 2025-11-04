@@ -3,6 +3,8 @@ import Card from '../common/Card';
 import Button from '../common/Button';
 import Modal from '../common/Modal';
 import Loading from '../common/Loading';
+import DecisionTrace from './DecisionTrace';
+import { flagReview, unflagReview } from '../../services/api';
 import './RecommendationReview.css';
 
 const RecommendationReview = ({ 
@@ -17,6 +19,9 @@ const RecommendationReview = ({
   const [actionType, setActionType] = useState(null); // 'approve' or 'override'
   const [sortBy, setSortBy] = useState('date'); // 'date', 'user', 'urgency'
   const [filterText, setFilterText] = useState('');
+  const [flagReason, setFlagReason] = useState('');
+  const [showFlagModal, setShowFlagModal] = useState(false);
+  const [reviewToFlag, setReviewToFlag] = useState(null);
 
   // Calculate urgency for a review
   const getReviewUrgency = (review) => {
@@ -65,6 +70,43 @@ const RecommendationReview = ({
 
   const toggleReview = (reviewId) => {
     setExpandedReviewId(expandedReviewId === reviewId ? null : reviewId);
+  };
+
+  const handleFlag = async (review) => {
+    setReviewToFlag(review);
+    setShowFlagModal(true);
+  };
+
+  const handleUnflag = async (reviewId) => {
+    try {
+      await unflagReview(reviewId);
+      // Refresh reviews
+      if (onApprove) {
+        // Trigger refresh by calling parent's refresh
+        window.dispatchEvent(new CustomEvent('refreshOperatorData'));
+      }
+    } catch (error) {
+      console.error('Error unflagging review:', error);
+      alert('Failed to unflag review: ' + (error.message || 'Unknown error'));
+    }
+  };
+
+  const submitFlag = async () => {
+    if (!reviewToFlag) return;
+    
+    try {
+      await flagReview(reviewToFlag.review_id, flagReason);
+      setShowFlagModal(false);
+      setFlagReason('');
+      setReviewToFlag(null);
+      // Refresh reviews
+      if (onApprove) {
+        window.dispatchEvent(new CustomEvent('refreshOperatorData'));
+      }
+    } catch (error) {
+      console.error('Error flagging review:', error);
+      alert('Failed to flag review: ' + (error.message || 'Unknown error'));
+    }
   };
 
   const handleAction = (review, type) => {
@@ -172,6 +214,11 @@ const RecommendationReview = ({
                     </span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+                    {review.flagged && (
+                      <span className="flag-badge" title={review.flag_reason || 'Flagged for review'}>
+                        🚩 Flagged
+                      </span>
+                    )}
                     <span className={`urgency-badge ${urgency.level}`}>
                       {urgency.label}
                     </span>
@@ -186,6 +233,23 @@ const RecommendationReview = ({
 
                 {isExpanded && (
                   <div className="review-item-content">
+                    {/* Decision Trace */}
+                    {(review.decision_trace || recData.decision_trace) && (
+                      <div className="review-section">
+                        <h4 className="review-section-title">
+                          🔍 Decision Trace
+                        </h4>
+                        <DecisionTrace 
+                          decisionTrace={{
+                            ...(review.decision_trace || recData.decision_trace || {}),
+                            // Enrich with behavioral signals and summary from recommendation data if available
+                            behavioral_signals: recData.behavioral_signals || null,
+                            summary: recData.summary || null
+                          }} 
+                        />
+                      </div>
+                    )}
+
                     {educationRecs.length > 0 && (
                       <div className="review-section">
                         <h4 className="review-section-title">
@@ -235,20 +299,39 @@ const RecommendationReview = ({
                     )}
 
                     <div className="review-item-actions">
-                      <Button
-                        variant="primary"
-                        onClick={() => handleAction(review, 'approve')}
-                        fullWidth
-                      >
-                        ✓ Approve Recommendations
-                      </Button>
-                      <Button
-                        variant="danger"
-                        onClick={() => handleAction(review, 'override')}
-                        fullWidth
-                      >
-                        ✗ Override/Reject Recommendations
-                      </Button>
+                      <div style={{ display: 'flex', gap: 'var(--spacing-sm)', flexWrap: 'wrap' }}>
+                        {!review.flagged ? (
+                          <Button
+                            variant="outline"
+                            onClick={() => handleFlag(review)}
+                            style={{ flex: 1, minWidth: '120px' }}
+                          >
+                            🚩 Flag for Review
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            onClick={() => handleUnflag(review.review_id)}
+                            style={{ flex: 1, minWidth: '120px' }}
+                          >
+                            ✓ Unflag
+                          </Button>
+                        )}
+                        <Button
+                          variant="primary"
+                          onClick={() => handleAction(review, 'approve')}
+                          style={{ flex: 1, minWidth: '150px' }}
+                        >
+                          ✓ Approve
+                        </Button>
+                        <Button
+                          variant="danger"
+                          onClick={() => handleAction(review, 'override')}
+                          style={{ flex: 1, minWidth: '150px' }}
+                        >
+                          ✗ Override
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -354,6 +437,55 @@ const RecommendationReview = ({
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* Flag Modal */}
+      <Modal
+        isOpen={showFlagModal}
+        title="Flag Review for Attention"
+        onClose={() => {
+          setShowFlagModal(false);
+          setFlagReason('');
+          setReviewToFlag(null);
+        }}
+      >
+          <div>
+            <p>Why are you flagging this review?</p>
+            <textarea
+              value={flagReason}
+              onChange={(e) => setFlagReason(e.target.value)}
+              placeholder="Enter reason for flagging (optional)"
+              rows={4}
+              style={{
+                width: '100%',
+                padding: 'var(--spacing-sm)',
+                marginTop: 'var(--spacing-sm)',
+                border: '1px solid var(--border-color)',
+                borderRadius: 'var(--border-radius)',
+                fontFamily: 'inherit'
+              }}
+            />
+            <div style={{ display: 'flex', gap: 'var(--spacing-sm)', marginTop: 'var(--spacing-md)' }}>
+              <Button
+                variant="primary"
+                onClick={submitFlag}
+                fullWidth
+              >
+                Flag Review
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowFlagModal(false);
+                  setFlagReason('');
+                  setReviewToFlag(null);
+                }}
+                fullWidth
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
       </Modal>
     </>
   );

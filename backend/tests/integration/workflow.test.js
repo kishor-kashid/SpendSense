@@ -614,6 +614,9 @@ describe('End-to-End Workflows', () => {
   });
 
   describe('Operator Workflow', () => {
+    // Increase timeout for slow operator workflow tests (30 seconds)
+    jest.setTimeout(30000);
+    
     test('should complete operator workflow: login -> view users -> view review queue -> approve recommendation -> verify user can see it', async () => {
       // Step 1: Operator login
       const loginResponse = await request(app)

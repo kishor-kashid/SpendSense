@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import RecommendationCard from './RecommendationCard';
 import TransactionList from './TransactionList';
 import SpendingBreakdown from './SpendingBreakdown';
 import SpendingInsights from './SpendingInsights';
+import CreditCards from './CreditCards';
+import BehavioralSignals from './BehavioralSignals';
 import Loading from '../common/Loading';
 import Card from '../common/Card';
 import { useAuth } from '../../context/AuthContext';
@@ -26,6 +28,14 @@ const Dashboard = () => {
   const [loadingInsights, setLoadingInsights] = useState(false);
   const [activeTab, setActiveTab] = useState('overview'); // overview, transactions, insights
 
+  // Refs for scrollable recommendation lists
+  const educationListRef = useRef(null);
+  const offersListRef = useRef(null);
+
+  // State for scroll button visibility
+  const [educationScrollState, setEducationScrollState] = useState({ canScrollLeft: false, canScrollRight: false });
+  const [offersScrollState, setOffersScrollState] = useState({ canScrollLeft: false, canScrollRight: false });
+
   useEffect(() => {
     if (userId) {
       loadConsent();
@@ -37,9 +47,14 @@ const Dashboard = () => {
     if (hasConsent && userId) {
       // Small delay to ensure profile is loaded first
       const timer = setTimeout(() => {
-        loadRecommendations().catch(console.error);
+        loadRecommendations().catch(err => {
+          console.error('Error loading recommendations after consent:', err);
+        });
       }, 100);
       return () => clearTimeout(timer);
+    } else if (!hasConsent && userId) {
+      // Clear recommendations when consent is revoked
+      setLoadingRecommendations(false);
     }
   }, [hasConsent, userId, loadRecommendations]);
 
@@ -103,6 +118,69 @@ const Dashboard = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, hasConsent, refreshProfile, loadRecommendations]);
 
+  // Check scroll position for button states
+  const checkScrollPosition = useCallback((ref, setScrollState) => {
+    if (ref.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = ref.current;
+      setScrollState({
+        canScrollLeft: scrollLeft > 0,
+        canScrollRight: scrollLeft + clientWidth < scrollWidth - 1 // -1 for floating point precision
+      });
+    }
+  }, []);
+
+  // Scroll function for navigation buttons
+  const scrollList = useCallback((ref, direction) => {
+    if (ref.current) {
+      const scrollAmount = ref.current.clientWidth * 0.8; // Scroll 80% of visible width
+      ref.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  }, []);
+
+  // Update scroll button states
+  useEffect(() => {
+    const updateScrollStates = () => {
+      checkScrollPosition(educationListRef, setEducationScrollState);
+      checkScrollPosition(offersListRef, setOffersScrollState);
+    };
+
+    // Initial check
+    updateScrollStates();
+
+    // Set up scroll listeners
+    const educationElement = educationListRef.current;
+    const offersElement = offersListRef.current;
+
+    if (educationElement) {
+      educationElement.addEventListener('scroll', updateScrollStates);
+    }
+    if (offersElement) {
+      offersElement.addEventListener('scroll', updateScrollStates);
+    }
+
+    // Also check when recommendations change
+    if (recommendations) {
+      // Small delay to allow DOM to update
+      setTimeout(updateScrollStates, 100);
+    }
+
+    // Check on window resize
+    window.addEventListener('resize', updateScrollStates);
+
+    return () => {
+      if (educationElement) {
+        educationElement.removeEventListener('scroll', updateScrollStates);
+      }
+      if (offersElement) {
+        offersElement.removeEventListener('scroll', updateScrollStates);
+      }
+      window.removeEventListener('resize', updateScrollStates);
+    };
+  }, [recommendations, checkScrollPosition]);
+
   if (!userId) {
     return (
       <div className="dashboard-container">
@@ -149,6 +227,18 @@ const Dashboard = () => {
       {activeTab === 'overview' && (
         <>
           <SpendingInsights insights={insights} loading={loadingInsights} />
+          {hasConsent && (
+            <>
+              <BehavioralSignals 
+                behavioralSignals={profile?.behavioral_signals} 
+                loading={profile === null} 
+              />
+              <CreditCards 
+                creditData={profile?.behavioral_signals?.credit} 
+                loading={profile === null} 
+              />
+            </>
+          )}
           <SpendingBreakdown insights={insights} loading={loadingInsights} />
         </>
       )}
@@ -204,8 +294,30 @@ const Dashboard = () => {
               <>
                 {recommendations.education_items && recommendations.education_items.length > 0 && (
                   <div className="recommendations-group">
-                    <h3 className="recommendations-group-title">📚 Educational Resources</h3>
-                    <div className="recommendations-list">
+                    <div className="recommendations-group-header">
+                      <h3 className="recommendations-group-title">📚 Educational Resources</h3>
+                      {recommendations.education_items.length > 1 && (
+                        <div className="scroll-nav-buttons">
+                          <button
+                            className="scroll-nav-btn scroll-nav-btn-left"
+                            onClick={() => scrollList(educationListRef, 'left')}
+                            disabled={!educationScrollState.canScrollLeft}
+                            aria-label="Scroll left"
+                          >
+                            ←
+                          </button>
+                          <button
+                            className="scroll-nav-btn scroll-nav-btn-right"
+                            onClick={() => scrollList(educationListRef, 'right')}
+                            disabled={!educationScrollState.canScrollRight}
+                            aria-label="Scroll right"
+                          >
+                            →
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    <div className="recommendations-list" ref={educationListRef}>
                       {recommendations.education_items.map((item, index) => (
                         <RecommendationCard 
                           key={index} 
@@ -219,15 +331,46 @@ const Dashboard = () => {
 
                 {recommendations.partner_offers && recommendations.partner_offers.length > 0 && (
                   <div className="recommendations-group">
-                    <h3 className="recommendations-group-title">💳 Partner Offers</h3>
-                    <div className="recommendations-list">
-                      {recommendations.partner_offers.map((offer, index) => (
-                        <RecommendationCard 
-                          key={index} 
-                          recommendation={offer} 
-                          type="offer"
-                        />
-                      ))}
+                    <div className="recommendations-group-header">
+                      <h3 className="recommendations-group-title">💳 Partner Offers</h3>
+                      {recommendations.partner_offers.filter(offer => {
+                        const eligibility = offer.eligibility || offer.eligibility_check;
+                        return !eligibility || eligibility.eligible === true || eligibility.isEligible === true;
+                      }).length > 1 && (
+                        <div className="scroll-nav-buttons">
+                          <button
+                            className="scroll-nav-btn scroll-nav-btn-left"
+                            onClick={() => scrollList(offersListRef, 'left')}
+                            disabled={!offersScrollState.canScrollLeft}
+                            aria-label="Scroll left"
+                          >
+                            ←
+                          </button>
+                          <button
+                            className="scroll-nav-btn scroll-nav-btn-right"
+                            onClick={() => scrollList(offersListRef, 'right')}
+                            disabled={!offersScrollState.canScrollRight}
+                            aria-label="Scroll right"
+                          >
+                            →
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    <div className="recommendations-list" ref={offersListRef}>
+                      {recommendations.partner_offers
+                        .filter(offer => {
+                          // Safety filter: Only show eligible offers
+                          const eligibility = offer.eligibility || offer.eligibility_check;
+                          return !eligibility || eligibility.eligible === true || eligibility.isEligible === true;
+                        })
+                        .map((offer, index) => (
+                          <RecommendationCard 
+                            key={index} 
+                            recommendation={offer} 
+                            type="offer"
+                          />
+                        ))}
                     </div>
                   </div>
                 )}

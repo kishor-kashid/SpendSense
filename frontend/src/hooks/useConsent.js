@@ -43,10 +43,12 @@ export const useConsent = (userId) => {
     setError(null);
 
     try {
-      await grantConsent(userId);
+      const response = await grantConsent(userId);
+      console.log('Consent granted successfully:', response);
       setConsentStatus('granted');
       return true;
     } catch (err) {
+      console.error('Error granting consent:', err);
       setError(err.message);
       return false;
     } finally {

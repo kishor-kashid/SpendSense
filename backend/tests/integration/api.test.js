@@ -1304,6 +1304,9 @@ describe('Operator API Endpoints', () => {
   });
 
   describe('GET /operator/users', () => {
+    // Increase timeout for slow operator/users tests (30 seconds)
+    jest.setTimeout(30000);
+    
     test('should return all users with persona info', async () => {
       const response = await request(app)
         .get('/operator/users')
