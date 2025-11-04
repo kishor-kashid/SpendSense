@@ -3,8 +3,6 @@ import Card from '../common/Card';
 import Button from '../common/Button';
 import Modal from '../common/Modal';
 import Loading from '../common/Loading';
-import EducationItem from '../user/EducationItem';
-import PartnerOffer from '../user/PartnerOffer';
 import './RecommendationReview.css';
 
 const RecommendationReview = ({ 
@@ -13,6 +11,7 @@ const RecommendationReview = ({
   onOverride, 
   loading = false 
 }) => {
+  const [expandedReviewId, setExpandedReviewId] = useState(null);
   const [selectedReview, setSelectedReview] = useState(null);
   const [notes, setNotes] = useState('');
   const [actionType, setActionType] = useState(null); // 'approve' or 'override'
@@ -20,16 +19,40 @@ const RecommendationReview = ({
   // Ensure reviews is an array
   if (!reviews || !Array.isArray(reviews) || reviews.length === 0) {
     return (
-      <Card>
-        <p>No recommendations pending review.</p>
-      </Card>
+      <p>No recommendations pending review.</p>
     );
   }
+
+  const toggleReview = (reviewId) => {
+    setExpandedReviewId(expandedReviewId === reviewId ? null : reviewId);
+  };
 
   const handleAction = (review, type) => {
     setSelectedReview(review);
     setActionType(type);
     setNotes('');
+  };
+
+  // Simplified recommendation item component - only title and link
+  const SimpleRecommendationItem = ({ item, type }) => {
+    const url = item.url || item.provider_url;
+    const title = item.title || item.name;
+    
+    return (
+      <div className="simple-recommendation-item">
+        <div className="simple-recommendation-title">{title}</div>
+        {url && (
+          <a 
+            href={url} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="simple-recommendation-link"
+          >
+            View Resource →
+          </a>
+        )}
+      </div>
+    );
   };
 
   const confirmAction = () => {
@@ -48,157 +71,119 @@ const RecommendationReview = ({
 
   return (
     <>
-      <Card title="Review Queue" className="recommendation-review">
-        {loading && (
-          <Loading message="Loading reviews..." />
-        )}
+      {loading && (
+        <Loading message="Loading reviews..." />
+      )}
 
-        {!loading && (
-          <div className="review-list">
-            {reviews.map((review) => (
+      {!loading && (
+        <div className="review-list">
+          {reviews.map((review) => {
+            const isExpanded = expandedReviewId === review.review_id;
+            const recData = review.recommendation_data || {};
+            const educationRecs = recData.recommendations?.education || recData.education_items || [];
+            const partnerOfferRecs = recData.recommendations?.partner_offers || recData.partner_offers || [];
+            const totalRecommendations = educationRecs.length + partnerOfferRecs.length;
+
+            return (
               <Card key={review.review_id} className="review-item-card">
-                <div className="review-item-header">
+                <div 
+                  className="review-item-header clickable"
+                  onClick={() => toggleReview(review.review_id)}
+                >
                   <div>
                     <strong>User ID: {review.user_id}</strong>
                     <span className="review-item-date">
                       Created: {new Date(review.created_at).toLocaleDateString()}
+                      {totalRecommendations > 0 && (
+                        <span className="review-item-count">
+                          {' '}• {totalRecommendations} recommendation{totalRecommendations !== 1 ? 's' : ''}
+                        </span>
+                      )}
                     </span>
                   </div>
-                  <span className="review-item-status pending">
-                    {review.status}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+                    <span className="review-item-status pending">
+                      {review.status}
+                    </span>
+                    <span className="review-expand-icon">
+                      {isExpanded ? '▼' : '▶'}
+                    </span>
+                  </div>
                 </div>
 
-                <div className="review-item-content">
-                  <h3 className="review-content-title">Recommendations to Review</h3>
-                  
-                  {/* Backend stores recommendations in recommendations.education array */}
-                  {/* Each item has structure: { type: 'education', item: {...}, rationale: '...' } */}
-                  {(() => {
-                    const recData = review.recommendation_data || {};
-                    console.log('RecommendationReview - review.recommendation_data:', recData);
-                    
-                    // Handle both formats:
-                    // 1. New format: { recommendations: { education: [...], partner_offers: [...] } }
-                    // 2. Transformed format: { education_items: [...], partner_offers: [...] }
-                    const educationRecs = recData.recommendations?.education || recData.education_items || [];
-                    const partnerOfferRecs = recData.recommendations?.partner_offers || recData.partner_offers || [];
-                    
-                    console.log('RecommendationReview - educationRecs:', educationRecs);
-                    console.log('RecommendationReview - partnerOfferRecs:', partnerOfferRecs);
-                    
-                    return (
-                      <>
-                        {educationRecs.length > 0 && (
-                          <div className="review-section">
-                            <h4 className="review-section-title">
-                              📚 Educational Resources ({educationRecs.length})
-                            </h4>
-                            <div className="review-items-list">
-                              {educationRecs.map((rec, idx) => {
-                                // Handle both formats: { item, rationale } or just item
-                                const item = rec.item || rec;
-                                const rationale = rec.rationale;
-                                return (
-                                  <div key={idx} className="review-item-detail">
-                                    <EducationItem item={{ ...item, rationale }} />
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
-
-                        {partnerOfferRecs.length > 0 && (
-                          <div className="review-section">
-                            <h4 className="review-section-title">
-                              💳 Partner Offers ({partnerOfferRecs.length})
-                            </h4>
-                            <div className="review-items-list">
-                              {partnerOfferRecs.map((rec, idx) => {
-                                // Handle both formats: { item, rationale, eligibility_check/eligibility } or just item
-                                const item = rec.item || rec;
-                                const rationale = rec.rationale;
-                                // Backend uses eligibility_check, but component expects eligibility
-                                const eligibility = rec.eligibility_check || rec.eligibility;
-                                // Map offer_category to category and provider_url to url for component compatibility
-                                const mappedItem = {
-                                  ...item,
-                                  category: item.category || item.offer_category,
-                                  url: item.url || item.provider_url,
-                                  rationale,
-                                  eligibility
-                                };
-                                return (
-                                  <div key={idx} className="review-item-detail">
-                                    <PartnerOffer offer={mappedItem} />
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
-
-                        {educationRecs.length === 0 && partnerOfferRecs.length === 0 && (
-                          <div className="review-section">
-                            <p style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>
-                              No recommendations found in this review. Data structure may be different.
-                            </p>
-                            <details style={{ marginTop: 'var(--spacing-md)' }}>
-                              <summary style={{ cursor: 'pointer', color: 'var(--text-secondary)' }}>
-                                Debug: View raw data
-                              </summary>
-                              <pre style={{ 
-                                background: 'var(--background)', 
-                                padding: 'var(--spacing-md)', 
-                                borderRadius: 'var(--radius-md)',
-                                overflow: 'auto',
-                                fontSize: '0.75rem',
-                                marginTop: 'var(--spacing-sm)'
-                              }}>
-                                {JSON.stringify(recData, null, 2)}
-                              </pre>
-                            </details>
-                          </div>
-                        )}
-                      </>
-                    );
-                  })()}
-
-                  {review.decision_trace && (
-                    <div className="review-section">
-                      <h4 className="review-section-title">Decision Trace</h4>
-                      <div className="review-decision-trace">
-                        <p><strong>Persona:</strong> {review.decision_trace.persona_assignment?.persona_name || 'N/A'}</p>
-                        {review.decision_trace.persona_assignment?.rationale && (
-                          <p><strong>Rationale:</strong> {review.decision_trace.persona_assignment.rationale}</p>
-                        )}
+                {isExpanded && (
+                  <div className="review-item-content">
+                    {educationRecs.length > 0 && (
+                      <div className="review-section">
+                        <h4 className="review-section-title">
+                          📚 Educational Resources ({educationRecs.length})
+                        </h4>
+                        <div className="review-items-list">
+                          {educationRecs.map((rec, idx) => {
+                            const item = rec.item || rec;
+                            return (
+                              <SimpleRecommendationItem 
+                                key={idx} 
+                                item={item} 
+                                type="education"
+                              />
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
+                    )}
 
-                <div className="review-item-actions">
-                  <Button
-                    variant="primary"
-                    onClick={() => handleAction(review, 'approve')}
-                    fullWidth
-                  >
-                    ✓ Approve Recommendations
-                  </Button>
-                  <Button
-                    variant="danger"
-                    onClick={() => handleAction(review, 'override')}
-                    fullWidth
-                  >
-                    ✗ Override/Reject Recommendations
-                  </Button>
-                </div>
+                    {partnerOfferRecs.length > 0 && (
+                      <div className="review-section">
+                        <h4 className="review-section-title">
+                          💳 Partner Offers ({partnerOfferRecs.length})
+                        </h4>
+                        <div className="review-items-list">
+                          {partnerOfferRecs.map((rec, idx) => {
+                            const item = rec.item || rec;
+                            return (
+                              <SimpleRecommendationItem 
+                                key={idx} 
+                                item={item} 
+                                type="offer"
+                              />
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {educationRecs.length === 0 && partnerOfferRecs.length === 0 && (
+                      <div className="review-section">
+                        <p style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+                          No recommendations found in this review.
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="review-item-actions">
+                      <Button
+                        variant="primary"
+                        onClick={() => handleAction(review, 'approve')}
+                        fullWidth
+                      >
+                        ✓ Approve Recommendations
+                      </Button>
+                      <Button
+                        variant="danger"
+                        onClick={() => handleAction(review, 'override')}
+                        fullWidth
+                      >
+                        ✗ Override/Reject Recommendations
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </Card>
-            ))}
-          </div>
-        )}
-      </Card>
+            );
+          })}
+        </div>
+      )}
 
       <Modal
         isOpen={selectedReview !== null}

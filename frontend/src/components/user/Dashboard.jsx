@@ -1,7 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import ConsentPrompt from './ConsentPrompt';
-import ConsentToggle from './ConsentToggle';
-import BehavioralProfile from './BehavioralProfile';
 import RecommendationCard from './RecommendationCard';
 import TransactionList from './TransactionList';
 import SpendingBreakdown from './SpendingBreakdown';
@@ -20,7 +17,6 @@ const Dashboard = () => {
   const { profile, refreshProfile } = useUser();
   const { consentStatus, hasConsent, grant, revoke, loadConsent } = useConsent(userId);
   const { recommendations, loadRecommendations, loading: recommendationsLoading } = useRecommendations(userId);
-  const [loadingConsent, setLoadingConsent] = useState(false);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
   
   // Transactions and insights state
@@ -81,46 +77,31 @@ const Dashboard = () => {
     }
   };
 
-  const handleToggleConsent = async () => {
-    setLoadingConsent(true);
-    try {
-      if (hasConsent) {
-        // Revoke consent
-        await revoke();
-        // Note: Recommendations will be hidden by conditional rendering based on hasConsent
-      } else {
-        // Grant consent
-        const success = await grant();
-        if (success) {
-          // Load profile and recommendations when consent is granted
-          await refreshProfile();
-          await loadRecommendations();
+  // Listen for refresh events from navbar
+  useEffect(() => {
+    const handleRefreshEvent = async () => {
+      if (userId) {
+        setLoadingRecommendations(true);
+        try {
+          if (hasConsent) {
+            await refreshProfile();
+            await loadRecommendations();
+          }
+          await loadTransactionsAndInsights();
+        } catch (error) {
+          console.error('Error refreshing data:', error);
+        } finally {
+          setLoadingRecommendations(false);
         }
       }
-    } catch (error) {
-      console.error('Error toggling consent:', error);
-    } finally {
-      setLoadingConsent(false);
-    }
-  };
+    };
 
-  // Add refresh function that can be called manually
-  const handleRefresh = async () => {
-    if (userId) {
-      setLoadingRecommendations(true);
-      try {
-        if (hasConsent) {
-          await refreshProfile();
-          await loadRecommendations();
-        }
-        await loadTransactionsAndInsights();
-      } catch (error) {
-        console.error('Error refreshing data:', error);
-      } finally {
-        setLoadingRecommendations(false);
-      }
-    }
-  };
+    window.addEventListener('dashboard-refresh', handleRefreshEvent);
+    return () => {
+      window.removeEventListener('dashboard-refresh', handleRefreshEvent);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, hasConsent, refreshProfile, loadRecommendations]);
 
   if (!userId) {
     return (
@@ -142,31 +123,6 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-container">
-      <div className="dashboard-header">
-        <h1>Your Financial Dashboard</h1>
-        <div className="dashboard-header-actions">
-          <button 
-            onClick={handleRefresh}
-            className="refresh-button"
-            disabled={recommendationsLoading || loadingConsent}
-            title="Refresh data"
-          >
-            🔄 Refresh
-          </button>
-        </div>
-      </div>
-
-      {/* Consent Toggle - Always visible */}
-      <ConsentToggle
-        hasConsent={hasConsent}
-        onToggle={handleToggleConsent}
-        loading={loadingConsent}
-        disabled={false}
-      />
-
-      {/* Behavioral Profile - Only shown when consent is granted */}
-      {hasConsent && <BehavioralProfile profile={profile} />}
-
       {/* Tabs for different views */}
       <div className="dashboard-tabs">
         <button

@@ -10,11 +10,38 @@ function createTables() {
   // Enable foreign keys
   db.pragma('foreign_keys = ON');
 
-  // Create users table
+  // Check if users table exists and has old schema (missing username/password)
+  const tableInfo = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='users'").get();
+  
+  if (tableInfo) {
+    const columns = db.prepare("PRAGMA table_info(users)").all();
+    const hasUsername = columns.some(col => col.name === 'username');
+    const hasPassword = columns.some(col => col.name === 'password');
+    
+    if (!hasUsername || !hasPassword) {
+      console.log('Detected old users table schema. Dropping and recreating all tables with new schema...');
+      // Drop all tables in correct order (respecting foreign keys)
+      db.exec('PRAGMA foreign_keys = OFF');
+      db.exec('DROP TABLE IF EXISTS recommendation_reviews');
+      db.exec('DROP TABLE IF EXISTS feedback');
+      db.exec('DROP TABLE IF EXISTS consent');
+      db.exec('DROP TABLE IF EXISTS liabilities');
+      db.exec('DROP TABLE IF EXISTS transactions');
+      db.exec('DROP TABLE IF EXISTS accounts');
+      db.exec('DROP TABLE IF EXISTS users');
+      db.exec('PRAGMA foreign_keys = ON');
+    }
+  }
+
+  // Create users table with new schema
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (
       user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+      first_name TEXT NOT NULL,
+      last_name TEXT NOT NULL,
       name TEXT NOT NULL,
+      username TEXT NOT NULL UNIQUE,
+      password TEXT NOT NULL,
       consent_status TEXT NOT NULL DEFAULT 'revoked' CHECK(consent_status IN ('granted', 'revoked')),
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))

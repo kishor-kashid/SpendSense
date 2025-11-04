@@ -164,15 +164,36 @@ function generateLiabilityId(accountId) {
 function generateUsers(count = 75) {
   const users = [];
   resetSeed(12345); // Reset seed for consistency
+  const usedUsernames = new Set(); // Track usernames to avoid duplicates
 
   for (let i = 0; i < count; i++) {
     const firstName = randomChoice(FIRST_NAMES);
     const lastName = randomChoice(LAST_NAMES);
     const name = `${firstName} ${lastName}`;
+    
+    // Generate username by concatenating first and last name (lowercase, no spaces)
+    let username = `${firstName}${lastName}`.toLowerCase();
+    
+    // Handle duplicate usernames by adding a number
+    let baseUsername = username;
+    let counter = 1;
+    while (usedUsernames.has(username)) {
+      username = `${baseUsername}${counter}`;
+      counter++;
+    }
+    usedUsernames.add(username);
+    
+    // Generate simple password (can be same as username or simple pattern)
+    // Using simple pattern: firstname + lastname + "123" for demo
+    const password = `${firstName}${lastName}123`.toLowerCase();
 
     users.push({
       user_id: i + 1, // Will be auto-incremented by database
+      first_name: firstName,
+      last_name: lastName,
       name: name,
+      username: username,
+      password: password,
       consent_status: randomChoice(['granted', 'revoked'])
     });
   }

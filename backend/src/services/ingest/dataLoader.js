@@ -45,10 +45,27 @@ function loadUsers(users) {
     try {
       // Remove user_id from data since it's auto-incremented
       const { user_id, ...userData } = user;
+      
+      // Check if user already exists by username
+      const { getDatabase } = require('../../config/database');
+      const db = getDatabase();
+      const existing = db.prepare('SELECT user_id FROM users WHERE username = ?').get(userData.username);
+      
+      if (existing) {
+        // User already exists, skip or update
+        loaded.push(existing);
+        return;
+      }
+      
       const created = User.create(userData);
       loaded.push(created);
     } catch (error) {
-      errors.push(`User ${index}: ${error.message}`);
+      const errorMsg = `User ${index} (${user.username || user.name}): ${error.message}`;
+      errors.push(errorMsg);
+      // Log first few errors for debugging
+      if (errors.length <= 5) {
+        console.error(`  Error details:`, errorMsg);
+      }
     }
   });
 

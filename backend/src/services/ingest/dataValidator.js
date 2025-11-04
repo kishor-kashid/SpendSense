@@ -9,8 +9,24 @@
 function validateUser(user) {
   const errors = [];
 
+  if (!user.first_name || typeof user.first_name !== 'string' || user.first_name.trim().length === 0) {
+    errors.push('first_name is required and must be a non-empty string');
+  }
+
+  if (!user.last_name || typeof user.last_name !== 'string' || user.last_name.trim().length === 0) {
+    errors.push('last_name is required and must be a non-empty string');
+  }
+
   if (!user.name || typeof user.name !== 'string' || user.name.trim().length === 0) {
     errors.push('User name is required and must be a non-empty string');
+  }
+
+  if (!user.username || typeof user.username !== 'string' || user.username.trim().length === 0) {
+    errors.push('username is required and must be a non-empty string');
+  }
+
+  if (!user.password || typeof user.password !== 'string' || user.password.trim().length === 0) {
+    errors.push('password is required and must be a non-empty string');
   }
 
   if (user.consent_status && !['granted', 'revoked'].includes(user.consent_status)) {

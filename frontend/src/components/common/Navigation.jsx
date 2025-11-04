@@ -1,16 +1,62 @@
-import React from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useConsent } from '../../hooks/useConsent';
+import { UserContext } from '../../context/UserContext';
 import Button from './Button';
 import './Navigation.css';
 
 const Navigation = () => {
   const { isAuthenticated, isCustomer, isOperator, logout, userId } = useAuth();
+  const { hasConsent, grant, revoke, loadConsent } = useConsent(userId);
+  // Safely access UserContext - it may not be available if Navigation is outside UserProvider
+  const userContext = useContext(UserContext);
   const navigate = useNavigate();
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [loadingConsent, setLoadingConsent] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    if (userId && isCustomer()) {
+      loadConsent();
+    }
+  }, [userId, isCustomer, loadConsent]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowProfileMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const handleConsentToggle = async () => {
+    setLoadingConsent(true);
+    try {
+      if (hasConsent) {
+        await revoke();
+      } else {
+        const success = await grant();
+        if (success && userContext?.refreshProfile) {
+          // Only refresh profile if UserProvider is available
+          await userContext.refreshProfile();
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling consent:', error);
+    } finally {
+      setLoadingConsent(false);
+    }
   };
 
   if (!isAuthenticated()) {
@@ -39,19 +85,118 @@ const Navigation = () => {
             </Link>
           )}
 
-          {userId && (
-            <span className="nav-user-info">
-              User ID: {userId}
-            </span>
-          )}
-
-          <Button
-            variant="outline"
-            size="small"
-            onClick={handleLogout}
+          {/* Refresh Button */}
+          <button
+            className="nav-refresh-button"
+            onClick={() => {
+              if (isCustomer()) {
+                window.dispatchEvent(new Event('dashboard-refresh'));
+              } else if (isOperator()) {
+                window.dispatchEvent(new Event('operator-dashboard-refresh'));
+              }
+            }}
+            title="Refresh data"
           >
-            Logout
-          </Button>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M1 4V10H7"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M23 20V14H17"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10M23 14L18.36 18.36A9 9 0 0 1 3.51 15"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+
+          {/* Profile Menu - For customers and operators */}
+          {(isCustomer() || isOperator()) && (
+            <div className="nav-profile-menu" ref={menuRef}>
+              <button
+                className="nav-profile-button"
+                onClick={() => setShowProfileMenu(!showProfileMenu)}
+                aria-label="Profile menu"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M20.59 22C20.59 18.13 16.74 15 12 15C7.26 15 3.41 18.13 3.41 22"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+
+              {showProfileMenu && (
+                <div className="nav-profile-dropdown">
+                  <button
+                    className="nav-profile-dropdown-item"
+                    onClick={() => {
+                      setShowProfileMenu(false);
+                      // Profile section placeholder - no implementation needed
+                    }}
+                  >
+                    Profile
+                  </button>
+
+                  {/* Data Processing Consent - Only for customers */}
+                  {isCustomer() && (
+                    <>
+                      <div className="nav-profile-dropdown-item nav-profile-consent">
+                        <span className="nav-profile-consent-label">Data Processing Consent</span>
+                        <label className="nav-profile-consent-toggle">
+                          <input
+                            type="checkbox"
+                            checked={hasConsent}
+                            onChange={handleConsentToggle}
+                            disabled={loadingConsent}
+                            className="nav-profile-consent-input"
+                          />
+                          <span className={`nav-profile-consent-slider ${hasConsent ? 'active' : ''}`}>
+                            <span className="nav-profile-consent-label-text">
+                              {hasConsent ? 'ON' : 'OFF'}
+                            </span>
+                          </span>
+                        </label>
+                        {loadingConsent && (
+                          <span className="nav-profile-consent-loading">Updating...</span>
+                        )}
+                      </div>
+                      <div className="nav-profile-dropdown-divider"></div>
+                    </>
+                  )}
+
+                  <button
+                    className="nav-profile-dropdown-item nav-profile-logout"
+                    onClick={handleLogout}
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </nav>

@@ -63,6 +63,27 @@
   color: white;
 }
 
+.form-input {
+  padding: var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  background-color: var(--surface);
+  color: var(--text-primary);
+  transition: all var(--transition-base);
+  font-family: inherit;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+.form-input::placeholder {
+  color: var(--text-tertiary);
+}
+
 .form-select {
   padding: var(--spacing-md);
   border: 1px solid var(--border-color);
@@ -84,6 +105,19 @@
   cursor: not-allowed;
 }
 
+.info-message {
+  padding: var(--spacing-md);
+  background-color: var(--info-light);
+  border: 1px solid var(--info-color);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+}
+
+.info-message p {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
 .error-message {
   padding: var(--spacing-md);
   background-color: #fee2e2;
@@ -95,23 +129,6 @@
 
 .form-actions {
   margin-top: var(--spacing-sm);
-}
-
-.login-info {
-  margin-top: var(--spacing-md);
-  padding-top: var(--spacing-md);
-  border-top: 1px solid var(--border-color);
-}
-
-.info-text {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  text-align: center;
-  margin: 0;
-}
-
-.info-text strong {
-  color: var(--text-primary);
 }
 
 @media (max-width: 768px) {

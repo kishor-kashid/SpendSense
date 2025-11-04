@@ -36,10 +36,14 @@ export const AuthProvider = ({ children }) => {
     }
   }, [userId]);
 
-  const login = (selectedRole, selectedUserId = null) => {
+  const login = (selectedRole, selectedUserId = null, userData = null) => {
     setRole(selectedRole);
     if (selectedUserId) {
       setUserId(selectedUserId);
+    }
+    // Store additional user data if provided
+    if (userData) {
+      localStorage.setItem('spendsense_user_data', JSON.stringify(userData));
     }
   };
 
@@ -48,6 +52,7 @@ export const AuthProvider = ({ children }) => {
     setUserId(null);
     localStorage.removeItem('spendsense_role');
     localStorage.removeItem('spendsense_user_id');
+    localStorage.removeItem('spendsense_user_data');
   };
 
   const isAuthenticated = () => {

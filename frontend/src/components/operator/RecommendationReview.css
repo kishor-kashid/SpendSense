@@ -29,6 +29,17 @@
   gap: var(--spacing-sm);
 }
 
+.review-item-header.clickable {
+  cursor: pointer;
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-md);
+  transition: background-color var(--transition-base);
+}
+
+.review-item-header.clickable:hover {
+  background-color: var(--background);
+}
+
 .review-item-header strong {
   color: var(--text-primary);
   display: block;
@@ -39,6 +50,17 @@
   font-size: 0.75rem;
   display: block;
   margin-top: var(--spacing-xs);
+}
+
+.review-item-count {
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+.review-expand-icon {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  user-select: none;
 }
 
 .review-item-status {
@@ -101,6 +123,44 @@
 .review-item-detail {
   border-left: 3px solid var(--primary-color);
   padding-left: var(--spacing-md);
+}
+
+.simple-recommendation-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background-color: var(--surface);
+  margin-bottom: var(--spacing-sm);
+  transition: all var(--transition-base);
+}
+
+.simple-recommendation-item:hover {
+  background-color: var(--background);
+  border-color: var(--primary-color);
+}
+
+.simple-recommendation-title {
+  font-weight: 500;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.simple-recommendation-link {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: color var(--transition-base);
+  white-space: nowrap;
+  margin-left: var(--spacing-md);
+}
+
+.simple-recommendation-link:hover {
+  color: var(--primary-color-dark);
+  text-decoration: underline;
 }
 
 .review-decision-trace {

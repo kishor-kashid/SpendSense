@@ -73,6 +73,8 @@ spendsense/
 - **75 users generated:** Diverse financial profiles (configurable 50-100)
 - **120 days history:** Transaction history per user (configurable 90-180)
 - **Plaid-style structure:** Match Plaid API format
+- **User fields:** Generates first_name, last_name, username (first_name + last_name), password (first_name + last_name + "123")
+- **Username uniqueness:** Handles duplicate usernames by appending counter
 - **Data persistence:** Generated once, stored in SQLite permanently
 - **Regeneration:** Can regenerate with `npm run generate-data` if needed
 - **Git strategy:** Synthetic JSON files excluded from version control
@@ -84,7 +86,9 @@ spendsense/
 
 ### API Constraints
 - **REST API:** Simple REST endpoints
-- **No authentication:** Demo mode (no JWT, passwords, etc.)
+- **Authentication:** Username/password system (simple, no encryption for demo mode)
+- **User Credentials:** Username = first_name + last_name, Password = first_name + last_name + "123"
+- **Operator Credentials:** Username "operator", Password "operator123"
 - **CORS:** Enabled for frontend-backend communication
 - **Ports:** Backend on 3001, Frontend on 3000 (typical)
 
@@ -170,10 +174,11 @@ spendsense/
 - No payment processing
 
 ### Demo Mode
-- No production-ready authentication
-- No user registration
-- Simplified role-based access
+- Username/password authentication (simple, no encryption)
+- No user registration (users pre-generated)
+- Role-based access (customer/operator)
 - Synthetic users only
+- Operator credentials: "operator" / "operator123"
 
 ### Scalability
 - Designed for 50-100 users

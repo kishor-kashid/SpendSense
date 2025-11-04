@@ -44,9 +44,10 @@ Globs: frontend/**/*.{js,jsx,css}
 - 404/NotFound page for invalid routes
 
 ## Current Status
-- Frontend setup complete (React + Vite)
+- ✅ Frontend setup complete (React + Vite)
 - ✅ PRs #20-26 Complete: All frontend components, pages, and routing implemented
 - ✅ Spending Insights: Transaction viewing, category breakdown, analytics added
 - ✅ Consent Toggle: Always-visible toggle for consent management
 - ✅ Conditional Display: Content shown/hidden based on consent status
+- ✅ Recommendation Approval Flow: Users see approved only, operators review pending
 - Next: PRs #27-30 (Polish Phase) - Integration Testing, Documentation, Performance, Final Evaluation

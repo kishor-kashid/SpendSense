@@ -1,7 +1,26 @@
 .user-list-card {
-  max-height: 600px;
+  height: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+  min-height: 0;
+}
+
+.user-list-card .card-header {
+  flex-shrink: 0;
+  padding: var(--spacing-xl);
+  padding-bottom: var(--spacing-md);
+}
+
+.user-list-card .card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  padding: var(--spacing-xl);
+  padding-top: 0;
 }
 
 .user-list-filters {
@@ -9,6 +28,7 @@
   gap: var(--spacing-sm);
   margin-bottom: var(--spacing-md);
   flex-wrap: wrap;
+  flex-shrink: 0;
 }
 
 .user-list-search {
@@ -34,7 +54,28 @@
   flex-direction: column;
   gap: var(--spacing-sm);
   overflow-y: auto;
+  overflow-x: hidden;
   flex: 1;
+  min-height: 0;
+  max-height: 100%;
+}
+
+.user-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.user-list::-webkit-scrollbar-track {
+  background: var(--background);
+  border-radius: var(--radius-full);
+}
+
+.user-list::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: var(--radius-full);
+}
+
+.user-list::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
 }
 
 .user-list-item {
@@ -112,4 +153,5 @@
   padding: var(--spacing-xl);
   margin: 0;
 }
+
 

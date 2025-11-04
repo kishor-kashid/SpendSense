@@ -61,6 +61,7 @@ Analysis performed on two windows:
   - Error: `{ success: false, error: { message, code } }`
 - **Integration:** All services integrated via REST API endpoints
 - **API Endpoints:**
+  - Authentication: `/auth/login` (POST - username, password, role)
   - User: `/users`, `/users/:id`
   - Consent: `/consent`, `/consent/:user_id`
   - Profile: `/profile/:user_id` (requires consent)
@@ -99,14 +100,39 @@ Analysis performed on two windows:
 - **No Consent Required:** Transactions and insights available without consent
 - **Components:** TransactionList, SpendingBreakdown, SpendingInsights
 
-### 10. Recommendation Approval Pattern
+### 10. Authentication Pattern
+- **Username/Password System:** Simple authentication without encryption (demo mode)
+- **User Credentials:** Username = first_name + last_name (lowercase, no spaces), Password = first_name + last_name + "123"
+- **Operator Credentials:** Username "operator", Password "operator123"
+- **Login Endpoint:** POST /auth/login (validates username, password, role)
+- **Session Management:** localStorage persistence for role, userId, and userData
+- **Password Verification:** Simple string comparison (User.verifyCredentials method)
+- **User Model:** Includes first_name, last_name, username (unique), password fields
+- **Data Generation:** Usernames and passwords generated during synthetic data creation
+- **Frontend:** Login component with username/password input fields for both roles
+
+### 11. UI Design Pattern
+- **Modern Design System:** CSS variables for colors, spacing, shadows, transitions
+- **Gradient Backgrounds:** Linear gradients for headers, buttons, and accent elements
+- **Pill-Style Components:** Rounded tabs, badges, and buttons
+- **Card Components:** Enhanced with hover effects, accent bars, and smooth transitions
+- **Navigation:** Backdrop blur effect, gradient text, hover animations, profile menu with dropdown
+- **Scrollable Content:** Flex-based layouts with proper overflow handling
+- **Custom Scrollbars:** Styled scrollbars for better visual consistency
+- **Responsive Design:** Media queries for mobile and tablet breakpoints
+- **Component Structure:** Component-specific CSS files with global CSS variables
+- **Profile Menu:** Profile icon in navbar with dropdown (Profile, Consent toggle, Logout)
+- **Centralized Actions:** Refresh button in navbar, consent toggle in profile menu
+- **Simplified Displays:** Clean user lists, collapsed review queues, minimal headers
+
+### 12. Recommendation Approval Pattern
 - **Generation:** Recommendations generated and stored as 'pending' in review queue
 - **User View:** Users see "Pending Approval" message (no content) until approved
 - **Operator Review:** Operators see full recommendation content for review
 - **Approval:** Once approved, recommendations become visible to users
 - **Duplicate Prevention:** Only one pending review per user (updated if regenerated)
 
-### 11. Evaluation Pattern
+### 13. Evaluation Pattern
 - **Metrics Calculation:** Four key metrics calculated for system evaluation
   - Coverage: % users with persona + ≥3 behaviors
   - Explainability: % recommendations with rationales
@@ -120,7 +146,7 @@ Analysis performed on two windows:
 ## Data Models & Relationships
 
 ### Core Entities
-- **User:** Base entity with consent status (user_id, name, consent_status: 'granted'|'revoked', created_at, updated_at)
+- **User:** Base entity with consent status (user_id, name, first_name, last_name, username (unique), password, consent_status: 'granted'|'revoked', created_at, updated_at)
 - **Account:** Financial accounts linked to users (account_id, user_id, type, subtype, available_balance, current_balance, credit_limit, iso_currency_code, holder_category, created_at, updated_at)
 - **Transaction:** Individual transactions linked to accounts (transaction_id, account_id, date, amount, merchant_name, merchant_entity_id, payment_channel, personal_finance_category_primary, personal_finance_category_detailed, pending, created_at)
 - **Liability:** Credit card liabilities linked to accounts (liability_id, account_id, apr_type, apr_percentage, interest_rate, minimum_payment_amount, last_payment_amount, is_overdue, next_payment_due_date, last_statement_balance, created_at, updated_at)

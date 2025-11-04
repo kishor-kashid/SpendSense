@@ -83,22 +83,6 @@ const UserList = ({ users, onUserSelect, selectedUserId }) => {
                 </span>
               )}
             </div>
-            {user.behavioral_signals && (
-              <div className="user-list-item-signals">
-                {user.behavioral_signals.subscriptions && (
-                  <span className="signal-badge">📱 Subscriptions</span>
-                )}
-                {user.behavioral_signals.savings && (
-                  <span className="signal-badge">💰 Savings</span>
-                )}
-                {user.behavioral_signals.credit && (
-                  <span className="signal-badge">💳 Credit</span>
-                )}
-                {user.behavioral_signals.income && (
-                  <span className="signal-badge">💵 Income</span>
-                )}
-              </div>
-            )}
           </div>
         ))}
       </div>

@@ -44,6 +44,9 @@ api.interceptors.response.use(
   }
 );
 
+// Auth endpoints
+export const login = (username, password, role) => api.post('/auth/login', { username, password, role });
+
 // User endpoints
 export const getUsers = () => api.get('/users');
 export const getUser = (userId) => api.get(`/users/${userId}`);

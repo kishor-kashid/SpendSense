@@ -22,6 +22,73 @@
 
 ## Recent Changes
 
+### Latest Updates (Post-PR #26)
+1. **UI Modernization** ✅
+   - Comprehensive styling overhaul across all frontend components
+   - Modern design system with CSS variables (colors, spacing, shadows, transitions)
+   - Gradient backgrounds, pill-style tabs, enhanced card components
+   - Improved navigation with backdrop blur and hover effects
+   - Responsive design improvements across all components
+   - Custom scrollbar styling for better UX
+   - Updated components: Dashboard, OperatorDashboard, Navigation, Card, Button, Login
+
+2. **Authentication System Update** ✅
+   - Changed from simple user dropdown to username/password authentication
+   - User model updated with `first_name`, `last_name`, `username`, `password` fields
+   - Username generation: concatenated first_name + last_name (lowercase, no spaces)
+   - Password generation: first_name + last_name + "123" (lowercase, simple, no encryption)
+   - Operator credentials: username "operator", password "operator123"
+   - New authentication endpoint: `POST /auth/login`
+   - Updated Login component with username/password input fields
+   - Updated AuthContext to store user data from login response
+
+3. **Database Schema Evolution** ✅
+   - Migration script enhanced to detect and handle schema changes
+   - Automatic table recreation when old schema detected (username/password missing)
+   - Prevents UNIQUE constraint violations during data loading
+   - Improved error handling and logging in data loader
+
+4. **Operator UI Fixes** ✅
+   - Fixed scrolling issue in operator dashboard user list panel
+   - Updated Card component to support flex layout for scrollable content
+   - Fixed sidebar height constraints and overflow handling
+   - User list now properly scrolls through all 75 users
+
+5. **Review Queue Improvements** ✅
+   - Removed duplicate "Review Queue" headers
+   - Implemented collapsed user list view in review queue
+   - Click on user to expand and see recommendations
+   - Simplified recommendation display: only shows title/header and "View Resource →" link
+   - Removed all detailed information (description, rationale, benefits, disclaimers) from review queue
+
+6. **Navigation & Profile Menu** ✅
+   - Added profile icon button in navbar for both customers and operators
+   - Profile dropdown menu includes:
+     - Profile button (placeholder, no implementation)
+     - Data Processing Consent toggle (customers only)
+     - Logout button
+   - Removed consent toggle from dashboard (moved to navbar)
+   - Removed Behavioral Profile section from user dashboard
+   - Removed dashboard headers ("Your Financial Dashboard", "Operator Dashboard")
+
+7. **Refresh Functionality** ✅
+   - Removed refresh buttons from both user and operator dashboards
+   - Added refresh icon button in navbar (works for both roles)
+   - Uses custom events for cross-component communication
+   - Refresh button triggers appropriate refresh based on user role
+
+8. **User List Simplification** ✅
+   - Removed signal badges (Subscriptions, Savings, Credit, Income) from user list
+   - Kept only persona badge in purple
+   - Cleaner, more focused user list display
+
+9. **User Signals Data Mapping** ✅
+   - Fixed data transformation in operator dashboard
+   - Maps `behavioral_signals` to `signals` with flattened structure
+   - Extracts data from `short_term` objects for 30-day metrics
+   - Maps `assigned_persona` to `persona` structure
+   - User Signals section now displays correctly for users with consent
+
 ### Completed (PRs #1-10)
 1. **PR #1: Project Setup & Infrastructure** ✅
    - Monorepo structure initialized (backend + frontend)
@@ -270,12 +337,15 @@
 ## Active Decisions & Considerations
 
 ### Authentication Approach
-**Decision:** Simplified demo mode authentication
-- No passwords or JWT tokens
-- Role selection (Customer/Operator) + user dropdown
-- localStorage persistence
+**Decision:** Username/password authentication (simplified, no encryption)
+- Username: Concatenated first_name + last_name (lowercase, no spaces)
+- Password: first_name + last_name + "123" (lowercase, simple)
+- Operator credentials: username "operator", password "operator123"
+- No encryption (per user request for simplicity)
+- localStorage persistence for session
+- API endpoint: POST /auth/login
 - Demo banner for disclaimer
-- **Rationale:** Focus on core functionality over production-ready auth
+- **Rationale:** Simple authentication system that requires credentials but doesn't need production-grade security
 
 ### Data Generation Strategy
 **Decision:** One-time generation, persistent storage

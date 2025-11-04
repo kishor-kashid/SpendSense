@@ -5,7 +5,8 @@ Globs: **/*
 
 ## Project Context
 - **Project:** SpendSense - Explainable financial insights system
-- **Status:** Backend complete (PRs 1-19), Frontend next (PRs 20-26)
+- **Status:** Core development complete (PRs 1-26), Polish phase next (PRs 27-30)
+- **Progress:** 87% complete (26/30 PRs done)
 - **Architecture:** Monorepo with Node.js/Express backend and React/Vite frontend
 - **Database:** SQLite (better-sqlite3) with local storage only
 
@@ -39,9 +40,11 @@ All recommendations must pass through:
 ### Testing Requirements
 - Unit tests for all services
 - Integration tests for all API endpoints
+- Evaluation tests for metrics calculation
 - Current: 316 tests passing (227 unit + 67 integration + 20 evaluation)
 - Test command: `npm test` (backend)
 - Use test database for isolation
+- Remaining: End-to-end workflow tests (PR #27)
 
 ### Data Generation
 - Synthetic data only (no real PII)
