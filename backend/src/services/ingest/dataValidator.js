@@ -13,8 +13,8 @@ function validateUser(user) {
     errors.push('User name is required and must be a non-empty string');
   }
 
-  if (user.consent_status && !['pending', 'granted', 'revoked'].includes(user.consent_status)) {
-    errors.push('consent_status must be one of: pending, granted, revoked');
+  if (user.consent_status && !['granted', 'revoked'].includes(user.consent_status)) {
+    errors.push('consent_status must be one of: granted, revoked');
   }
 
   return {

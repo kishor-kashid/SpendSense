@@ -15,7 +15,7 @@ function createTables() {
     CREATE TABLE IF NOT EXISTS users (
       user_id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
-      consent_status TEXT NOT NULL DEFAULT 'pending' CHECK(consent_status IN ('pending', 'granted', 'revoked')),
+      consent_status TEXT NOT NULL DEFAULT 'revoked' CHECK(consent_status IN ('granted', 'revoked')),
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     )

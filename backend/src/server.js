@@ -20,32 +20,34 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'SpendSense API is running' });
 });
 
-// Initialize database
-initializeDatabase()
-  .then(() => {
-    console.log('Database initialized successfully');
-    
-    // Start server
-    app.listen(PORT, () => {
-      console.log(`SpendSense backend server running on port ${PORT}`);
-      console.log(`Health check: http://localhost:${PORT}/health`);
-    });
-  })
-  .catch((error) => {
-    console.error('Failed to initialize database:', error);
-    process.exit(1);
-  });
+// API Routes
+const usersRoutes = require('./routes/users');
+app.use('/users', usersRoutes);
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error('Error:', err);
-  res.status(err.status || 500).json({
-    error: {
-      message: err.message || 'Internal server error',
-      ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
-    }
-  });
-});
+const consentRoutes = require('./routes/consent');
+app.use('/consent', consentRoutes);
+
+// Initialize database (only if not in test mode)
+if (process.env.NODE_ENV !== 'test') {
+  initializeDatabase()
+    .then(() => {
+      console.log('Database initialized successfully');
+      
+      // Start server
+      app.listen(PORT, () => {
+        console.log(`SpendSense backend server running on port ${PORT}`);
+        console.log(`Health check: http://localhost:${PORT}/health`);
+      });
+    })
+    .catch((error) => {
+      console.error('Failed to initialize database:', error);
+      process.exit(1);
+    });
+}
+
+// Error handling middleware (must be last)
+const { errorHandler } = require('./middleware/errorHandler');
+app.use(errorHandler);
 
 module.exports = app;
 

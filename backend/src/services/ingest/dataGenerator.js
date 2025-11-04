@@ -173,7 +173,7 @@ function generateUsers(count = 75) {
     users.push({
       user_id: i + 1, // Will be auto-incremented by database
       name: name,
-      consent_status: randomChoice(['pending', 'granted', 'revoked'])
+      consent_status: randomChoice(['granted', 'revoked'])
     });
   }
 
