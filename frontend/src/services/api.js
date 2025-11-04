@@ -59,6 +59,10 @@ export const getProfile = (userId) => api.get(`/profile/${userId}`);
 // Recommendations endpoints
 export const getRecommendations = (userId) => api.get(`/recommendations/${userId}`);
 
+// Transactions endpoints
+export const getTransactions = (userId, params = {}) => api.get(`/transactions/${userId}`, { params });
+export const getSpendingInsights = (userId, params = {}) => api.get(`/transactions/${userId}/insights`, { params });
+
 // Feedback endpoints
 export const submitFeedback = (feedbackData) => api.post('/feedback', feedbackData);
 
@@ -69,4 +73,3 @@ export const overrideRecommendation = (reviewId, notes) => api.post('/operator/o
 export const getOperatorUsers = () => api.get('/operator/users');
 
 export default api;
-

@@ -45,5 +45,8 @@ Globs: frontend/**/*.{js,jsx,css}
 
 ## Current Status
 - Frontend setup complete (React + Vite)
-- Next: PR #20 (Common Components) - Create Button, Card, Loading, Modal components
-- Then: PR #21 (Authentication & Context)
+- ✅ PRs #20-26 Complete: All frontend components, pages, and routing implemented
+- ✅ Spending Insights: Transaction viewing, category breakdown, analytics added
+- ✅ Consent Toggle: Always-visible toggle for consent management
+- ✅ Conditional Display: Content shown/hidden based on consent status
+- Next: PRs #27-30 (Polish Phase) - Integration Testing, Documentation, Performance, Final Evaluation

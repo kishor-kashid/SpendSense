@@ -39,6 +39,9 @@ app.use('/feedback', feedbackRoutes);
 const operatorRoutes = require('./routes/operator');
 app.use('/operator', operatorRoutes);
 
+const transactionsRoutes = require('./routes/transactions');
+app.use('/transactions', transactionsRoutes);
+
 // Initialize database (only if not in test mode)
 if (process.env.NODE_ENV !== 'test') {
   initializeDatabase()

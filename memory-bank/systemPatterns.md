@@ -52,21 +52,61 @@ Analysis performed on two windows:
 
 ### 6. API Request/Response Pattern
 - **Request Validation:** All inputs validated via middleware
-- **Consent Enforcement:** Profile and recommendations require consent (403 if not granted)
+- **Consent Enforcement:** 
+  - Profile and recommendations require consent (403 if not granted)
+  - Transactions and insights do NOT require consent (users can view their own data)
 - **Error Handling:** Consistent error format across all endpoints
 - **Response Format:**
   - Success: `{ success: true, data: {...} }`
   - Error: `{ success: false, error: { message, code } }`
 - **Integration:** All services integrated via REST API endpoints
+- **API Endpoints:**
+  - User: `/users`, `/users/:id`
+  - Consent: `/consent`, `/consent/:user_id`
+  - Profile: `/profile/:user_id` (requires consent)
+  - Recommendations: `/recommendations/:user_id` (requires consent, returns approved only)
+  - Transactions: `/transactions/:user_id`, `/transactions/:user_id/insights` (no consent required)
+  - Feedback: `/feedback`
+  - Operator: `/operator/review`, `/operator/approve`, `/operator/override`, `/operator/users`
 
 ### 7. Operator Review Pattern
 - **Automatic Storage:** Recommendations automatically stored in review queue when generated
+- **Single Review Per User:** `createOrUpdatePending` ensures only one pending review per user
 - **Review Queue:** Pending recommendations stored in `recommendation_reviews` table
 - **Decision Traces:** Full audit trail stored with each recommendation
 - **Approval Workflow:** Operators can approve or override recommendations
+- **User Visibility:** Users only see approved recommendations, pending shows message only
+- **Content Display:** Operators see full recommendation content (education items, partner offers) in review
 - **Audit Trail:** Operator notes, reviewed_by, and timestamps recorded
 
-### 8. Evaluation Pattern
+### 8. Consent Management Pattern
+- **Consent Toggle:** Always visible toggle switch for users to grant/revoke consent
+- **Conditional Display:**
+  - With Consent: Behavioral profile, recommendations visible
+  - Without Consent: Only transactions and insights visible (no profile, no recommendations)
+- **Real-time Updates:** UI updates immediately when consent status changes
+- **Data Access:**
+  - Transactions/insights: Always available (no consent required)
+  - Profile/recommendations: Only available with consent
+- **API Behavior:** Profile and recommendations endpoints return 403 if consent not granted
+
+### 9. Spending Insights Pattern
+- **Transaction Viewing:** Users can view all their transactions with search, filter, and sort
+- **Category Breakdown:** Visual breakdown of spending by category with percentages
+- **Spending Analytics:** Summary cards (total spending, income, net flow, savings rate)
+- **Trends:** Daily and monthly spending trends
+- **Top Merchants:** Lists top merchants by spending amount
+- **No Consent Required:** Transactions and insights available without consent
+- **Components:** TransactionList, SpendingBreakdown, SpendingInsights
+
+### 10. Recommendation Approval Pattern
+- **Generation:** Recommendations generated and stored as 'pending' in review queue
+- **User View:** Users see "Pending Approval" message (no content) until approved
+- **Operator Review:** Operators see full recommendation content for review
+- **Approval:** Once approved, recommendations become visible to users
+- **Duplicate Prevention:** Only one pending review per user (updated if regenerated)
+
+### 11. Evaluation Pattern
 - **Metrics Calculation:** Four key metrics calculated for system evaluation
   - Coverage: % users with persona + ≥3 behaviors
   - Explainability: % recommendations with rationales
@@ -384,26 +424,57 @@ Example: "This resource, 'Debt Paydown Strategy: The Snowball Method', is recomm
 App
 ├── Login (role selection + user dropdown)
 ├── UserPortal
-│   ├── ConsentPrompt
-│   ├── BehavioralProfile
-│   └── Dashboard (recommendations)
+│   ├── ConsentToggle (always visible)
+│   ├── BehavioralProfile (with consent only)
+│   ├── Dashboard
+│   │   ├── Overview Tab (SpendingInsights, SpendingBreakdown)
+│   │   ├── Transactions Tab (TransactionList)
+│   │   └── Insights Tab (SpendingInsights, SpendingBreakdown)
+│   └── Recommendations (with consent only, approved only)
 └── OperatorPortal
-    ├── UserList
-    ├── SignalViewer
-    ├── RecommendationReview
-    └── MetricsPanel
+    ├── UserList (filterable)
+    ├── SignalViewer (detailed signals)
+    ├── RecommendationReview (approve/override)
+    └── MetricsPanel (system metrics)
 ```
 
 ### State Management
 - **AuthContext:** Role and user selection (localStorage persistence)
-- **UserContext:** Current user data
-- **API Service:** Centralized backend communication
+- **UserContext:** Current user data and profile
+- **Custom Hooks:** useAuth, useConsent, useRecommendations
+- **API Service:** Centralized backend communication with axios interceptors
+- **Local State:** Component-level state with useState for UI state
 
 ### Simplified Authentication Pattern
 - **No passwords:** Demo mode with role selection
 - **User Dropdown:** Select from synthetic users
 - **localStorage:** Persist session across page refreshes
-- **Protected Routes:** Role-based access control
+- **Protected Routes:** Role-based access control (ProtectedRoute component)
+- **Session Management:** Automatic logout on refresh if no stored session
+
+### Consent Management Pattern (Frontend)
+- **ConsentToggle Component:** Always visible toggle switch at top of dashboard
+- **Conditional Rendering:**
+  - With Consent: Behavioral profile, recommendations visible
+  - Without Consent: Only transactions and insights visible
+- **Real-time Updates:** UI updates immediately when consent changes
+- **Data Loading:** Profile and recommendations only load when consent granted
+- **User Feedback:** Clear messaging about what requires consent
+
+### Spending Insights Pattern (Frontend)
+- **Tabbed Interface:** Overview, Transactions, Insights tabs
+- **TransactionList:** Search, filter by category, sort by date/amount/merchant
+- **SpendingBreakdown:** Visual category breakdown with percentages
+- **SpendingInsights:** Summary cards, trends, top merchants
+- **No Consent Required:** All spending features work without consent
+- **Components:** TransactionList, SpendingBreakdown, SpendingInsights
+
+### Recommendation Display Pattern (Frontend)
+- **Approval Status:** Users only see approved recommendations
+- **Pending State:** Shows "Pending Approval" message (no content)
+- **Approved State:** Shows full recommendation content
+- **Status Badges:** Visual indicators for pending/approved status
+- **Auto-refresh:** Recommendations refresh when user returns
 
 ## Testing Patterns
 

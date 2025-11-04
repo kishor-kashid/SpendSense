@@ -1,13 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import ConsentPrompt from './ConsentPrompt';
+import ConsentToggle from './ConsentToggle';
 import BehavioralProfile from './BehavioralProfile';
 import RecommendationCard from './RecommendationCard';
+import TransactionList from './TransactionList';
+import SpendingBreakdown from './SpendingBreakdown';
+import SpendingInsights from './SpendingInsights';
 import Loading from '../common/Loading';
 import Card from '../common/Card';
 import { useAuth } from '../../context/AuthContext';
 import { useConsent } from '../../hooks/useConsent';
 import { useRecommendations } from '../../hooks/useRecommendations';
 import { useUser } from '../../context/UserContext';
+import { getTransactions, getSpendingInsights } from '../../services/api';
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -17,6 +22,13 @@ const Dashboard = () => {
   const { recommendations, loadRecommendations, loading: recommendationsLoading } = useRecommendations(userId);
   const [loadingConsent, setLoadingConsent] = useState(false);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
+  
+  // Transactions and insights state
+  const [transactions, setTransactions] = useState([]);
+  const [insights, setInsights] = useState(null);
+  const [loadingTransactions, setLoadingTransactions] = useState(false);
+  const [loadingInsights, setLoadingInsights] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview'); // overview, transactions, insights
 
   useEffect(() => {
     if (userId) {
@@ -35,18 +47,58 @@ const Dashboard = () => {
     }
   }, [hasConsent, userId, loadRecommendations]);
 
-  const handleGrantConsent = async () => {
+  // Load transactions and insights regardless of consent (users can always see their own data)
+  useEffect(() => {
+    if (userId) {
+      loadTransactionsAndInsights();
+    }
+  }, [userId]);
+
+  const loadTransactionsAndInsights = async () => {
+    if (!userId) return;
+
+    setLoadingTransactions(true);
+    setLoadingInsights(true);
+
+    try {
+      const [transactionsData, insightsData] = await Promise.all([
+        getTransactions(userId, { includePending: false }),
+        getSpendingInsights(userId, {})
+      ]);
+
+      // Handle API response structure
+      const transactionsArray = transactionsData.transactions || transactionsData.data?.transactions || transactionsData.data || [];
+      const insightsObj = insightsData.insights || insightsData.data?.insights || insightsData.data || insightsData;
+
+      setTransactions(transactionsArray);
+      setInsights(insightsObj);
+    } catch (error) {
+      console.error('Error loading transactions/insights:', error);
+      // Don't set error state - just log it
+    } finally {
+      setLoadingTransactions(false);
+      setLoadingInsights(false);
+    }
+  };
+
+  const handleToggleConsent = async () => {
     setLoadingConsent(true);
     try {
-      const success = await grant();
-      if (success) {
-        // Refresh profile first
-        await refreshProfile();
-        // Then load recommendations
-        await loadRecommendations();
+      if (hasConsent) {
+        // Revoke consent
+        await revoke();
+        // Note: Recommendations will be hidden by conditional rendering based on hasConsent
+      } else {
+        // Grant consent
+        const success = await grant();
+        if (success) {
+          // Load profile and recommendations when consent is granted
+          await refreshProfile();
+          await loadRecommendations();
+        }
       }
     } catch (error) {
-      console.error('Error granting consent:', error);
+      console.error('Error toggling consent:', error);
     } finally {
       setLoadingConsent(false);
     }
@@ -57,29 +109,16 @@ const Dashboard = () => {
     if (userId) {
       setLoadingRecommendations(true);
       try {
-        await refreshProfile();
-        await loadRecommendations();
+        if (hasConsent) {
+          await refreshProfile();
+          await loadRecommendations();
+        }
+        await loadTransactionsAndInsights();
       } catch (error) {
-        console.error('Error refreshing recommendations:', error);
+        console.error('Error refreshing data:', error);
       } finally {
         setLoadingRecommendations(false);
       }
-    }
-  };
-
-  const handleDenyConsent = () => {
-    // User declined - could navigate away or show message
-    console.log('User declined consent');
-  };
-
-  const handleRevokeConsent = async () => {
-    setLoadingConsent(true);
-    try {
-      await revoke();
-    } catch (error) {
-      console.error('Error revoking consent:', error);
-    } finally {
-      setLoadingConsent(false);
     }
   };
 
@@ -101,18 +140,6 @@ const Dashboard = () => {
     );
   }
 
-  if (!hasConsent) {
-    return (
-      <div className="dashboard-container">
-        <ConsentPrompt 
-          onGrant={handleGrantConsent}
-          onDeny={handleDenyConsent}
-          loading={loadingConsent}
-        />
-      </div>
-    );
-  }
-
   return (
     <div className="dashboard-container">
       <div className="dashboard-header">
@@ -122,31 +149,78 @@ const Dashboard = () => {
             onClick={handleRefresh}
             className="refresh-button"
             disabled={recommendationsLoading || loadingConsent}
-            title="Refresh recommendations"
+            title="Refresh data"
           >
             🔄 Refresh
-          </button>
-          <button 
-            onClick={handleRevokeConsent}
-            className="revoke-consent-button"
-            disabled={loadingConsent}
-          >
-            Revoke Consent
           </button>
         </div>
       </div>
 
-      <BehavioralProfile profile={profile} />
+      {/* Consent Toggle - Always visible */}
+      <ConsentToggle
+        hasConsent={hasConsent}
+        onToggle={handleToggleConsent}
+        loading={loadingConsent}
+        disabled={false}
+      />
 
-      <div className="recommendations-section">
-        <div className="recommendations-header">
-          <h2 className="section-title">Personalized Recommendations</h2>
-          {recommendations?.status === 'approved' && (
-            <span className="recommendations-status-badge approved">
-              ✓ Approved
-            </span>
-          )}
-        </div>
+      {/* Behavioral Profile - Only shown when consent is granted */}
+      {hasConsent && <BehavioralProfile profile={profile} />}
+
+      {/* Tabs for different views */}
+      <div className="dashboard-tabs">
+        <button
+          className={`dashboard-tab ${activeTab === 'overview' ? 'active' : ''}`}
+          onClick={() => setActiveTab('overview')}
+        >
+          Overview
+        </button>
+        <button
+          className={`dashboard-tab ${activeTab === 'transactions' ? 'active' : ''}`}
+          onClick={() => setActiveTab('transactions')}
+        >
+          Transactions
+        </button>
+        <button
+          className={`dashboard-tab ${activeTab === 'insights' ? 'active' : ''}`}
+          onClick={() => setActiveTab('insights')}
+        >
+          Insights
+        </button>
+      </div>
+
+      {/* Overview Tab */}
+      {activeTab === 'overview' && (
+        <>
+          <SpendingInsights insights={insights} loading={loadingInsights} />
+          <SpendingBreakdown insights={insights} loading={loadingInsights} />
+        </>
+      )}
+
+      {/* Transactions Tab */}
+      {activeTab === 'transactions' && (
+        <TransactionList transactions={transactions} loading={loadingTransactions} />
+      )}
+
+      {/* Insights Tab */}
+      {activeTab === 'insights' && (
+        <>
+          <SpendingInsights insights={insights} loading={loadingInsights} />
+          <SpendingBreakdown insights={insights} loading={loadingInsights} />
+        </>
+      )}
+
+      {/* Recommendations Section - Only shown when consent is granted */}
+      {hasConsent && (
+        <div className="recommendations-section">
+          <div className="recommendations-header">
+            <h2 className="section-title">Personalized Recommendations</h2>
+            {recommendations?.status === 'approved' && (
+              <span className="recommendations-status-badge approved">
+                ✓ Approved
+              </span>
+            )}
+          </div>
         
         {recommendationsLoading && (
           <Loading message="Loading recommendations..." />
@@ -227,7 +301,19 @@ const Dashboard = () => {
             <p>No recommendations available. Please check back later.</p>
           </Card>
         )}
-      </div>
+        </div>
+      )}
+
+      {/* Show message when consent is revoked */}
+      {!hasConsent && (
+        <Card className="no-consent-message">
+          <p>
+            <strong>Consent Required for Personalized Features</strong><br />
+            Enable data processing consent above to view your behavioral profile and receive personalized recommendations.
+            You can still view your transactions and spending insights without consent.
+          </p>
+        </Card>
+      )}
     </div>
   );
 };

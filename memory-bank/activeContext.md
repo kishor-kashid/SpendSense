@@ -1,19 +1,22 @@
 # Active Context: SpendSense
 
 ## Current Status
-**Project Phase:** Backend Complete - Ready for Frontend
-**Date:** After PR #19 completion
+**Project Phase:** Frontend Complete - Ready for Polish
+**Date:** After PR #26 completion + Spending Insights Features
 
 ## Current Work Focus
-- **PRs #1-19 Complete:** All behavioral signal detection, persona system, content catalogs, recommendation engine, guardrails, API endpoints, and evaluation system implemented
+- **PRs #1-26 Complete:** All backend features, frontend interfaces, and spending insights implemented
 - **Feature detection:** All 4 behavioral signals working (subscriptions, savings, credit, income)
 - **Persona system:** Complete with 5 personas and prioritization logic
 - **Content catalogs:** Education items and partner offers catalogs ready
 - **Recommendation engine:** Complete with rationale generation and data citation
 - **Guardrails:** All guardrails complete (consent, eligibility, tone validation)
-- **API Layer:** User, consent, profile, recommendations, feedback, and operator endpoints complete
+- **API Layer:** User, consent, profile, recommendations, feedback, operator, and transactions endpoints complete
 - **Evaluation System:** Complete with coverage, explainability, latency, and auditability metrics
-- **Next steps:** Ready to begin PR #20 (Frontend - Common Components)
+- **Frontend:** Complete user and operator interfaces with all components
+- **Spending Insights:** Transaction viewing, category breakdown, spending analytics, trends
+- **Consent Management:** Toggle functionality, conditional display, real-time updates
+- **Next steps:** Ready for PRs #27-30 (Integration Testing, Documentation, Performance, Final Evaluation)
 - **Data status:** 75 users, 218 accounts, 8,133 transactions, 66 liabilities loaded
 - **Test status:** 316 tests passing across all modules (227 unit + 67 integration + 20 evaluation tests)
 
@@ -237,14 +240,32 @@
 ### Phase 3: Backend API (PRs #15-19) - COMPLETE ✅
 **All backend tasks complete!** Ready for Phase 4: Frontend Core
 
-### Phase 4: Frontend Core (PRs #20-21) - Next Up
-**Next up: PR #20: Frontend - Common Components**
-- Create Button component
-- Create Card component
-- Create Loading spinner component
-- Create Modal component
-- Set up global styles
-- Create utility functions (formatters, validators)
+### Phase 4: Frontend Core (PRs #20-21) - COMPLETE ✅
+**Completed: PRs #20-21: Frontend - Common Components & Authentication**
+- ✅ Button component (variants, sizes)
+- ✅ Card component
+- ✅ Loading spinner component
+- ✅ Modal component
+- ✅ Global styles with CSS variables
+- ✅ Utility functions (formatters, validators)
+- ✅ AuthContext and UserContext
+- ✅ ProtectedRoute component
+
+### Phase 5: Frontend Features (PRs #22-26) - COMPLETE ✅
+**Completed: PRs #22-26: User & Operator Interfaces**
+- ✅ User dashboard components (BehavioralProfile, RecommendationCard, etc.)
+- ✅ User portal page
+- ✅ Operator dashboard components (OperatorDashboard, RecommendationReview, etc.)
+- ✅ Operator portal page
+- ✅ Navigation and routing
+
+### Additional Features - COMPLETE ✅
+**Spending Insights & Consent Management**
+- ✅ Transaction viewing and filtering
+- ✅ Spending category breakdown
+- ✅ Spending insights and analytics
+- ✅ Consent toggle functionality
+- ✅ Conditional content display
 
 ## Active Decisions & Considerations
 
@@ -317,6 +338,39 @@
 18. ✅ **Consent status:** Simplified to only 'granted' or 'revoked' (removed 'pending')
 19. ✅ **Evaluation & Metrics System:** Complete with coverage, explainability, latency, and auditability metrics
 20. ✅ **Report Generation:** JSON, CSV, and Markdown reports with decision trace exports
+
+21. ✅ **Frontend Implementation (PRs #20-26):** Complete
+    - Common components (Button, Card, Loading, Modal, Navigation)
+    - Authentication & Context (AuthContext, UserContext, ProtectedRoute)
+    - User dashboard components (Dashboard, BehavioralProfile, RecommendationCard, etc.)
+    - Operator dashboard components (OperatorDashboard, RecommendationReview, etc.)
+    - Navigation and routing (React Router, protected routes)
+    - All pages (Login, UserPortal, OperatorPortal, NotFound)
+
+22. ✅ **Spending Insights Features:** Complete
+    - TransactionList component (search, filter, sort)
+    - SpendingBreakdown component (category analysis with visual bars)
+    - SpendingInsights component (summary, trends, top merchants)
+    - Transactions API endpoints (GET /transactions/:user_id)
+    - Spending insights API endpoints (GET /transactions/:user_id/insights)
+    - Tabbed interface (Overview, Transactions, Insights tabs)
+    - No consent required for viewing transactions/insights
+
+23. ✅ **Consent Toggle Functionality:** Complete
+    - ConsentToggle component (always visible, toggle switch)
+    - Real-time consent status updates
+    - Conditional content display:
+      - With consent: Behavioral profile, recommendations
+      - Without consent: Only transactions and insights
+    - Automatic data refresh when consent changes
+
+24. ✅ **Recommendation Approval Flow:** Complete
+    - Users only see approved recommendations
+    - Pending recommendations show message (no content visible)
+    - Single review per user (createOrUpdatePending)
+    - Full recommendation content displayed to operators
+    - Status badges (pending/approved)
+    - Automatic refresh after operator approval
 
 ## Questions to Resolve
 1. **Custom Persona (Persona 6):** Deferred - 5 personas implemented, custom persona can be added later if needed

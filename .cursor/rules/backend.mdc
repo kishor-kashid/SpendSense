@@ -38,6 +38,12 @@ Globs: backend/**/*.js
 - Use error handler from `backend/src/middleware/errorHandler.js`
 - Consistent error response format: `{ success: false, error: { message, code } }`
 - Register routes in `backend/src/server.js`
+- **Consent Requirements:**
+  - Profile and recommendations: Require consent (403 if not granted)
+  - Transactions and insights: No consent required (users can view their own data)
+- **Transactions Routes:** `backend/src/routes/transactions.js`
+  - GET `/transactions/:user_id` - Get all transactions for a user
+  - GET `/transactions/:user_id/insights` - Get spending insights and analytics
 
 ## Database Models
 - Models in `backend/src/models/` using better-sqlite3
