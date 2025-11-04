@@ -79,6 +79,42 @@ const PARTNER_OFFER_THRESHOLDS = {
   DEFAULT_MAX_UTILIZATION: null
 };
 
+// Prohibited product types (predatory products that should never be recommended)
+const PROHIBITED_PRODUCT_TYPES = [
+  'payday loan',
+  'payday loans',
+  'cash advance',
+  'title loan',
+  'title loans',
+  'pawn shop',
+  'pawn',
+  'check cashing',
+  'rent-to-own',
+  'rent to own',
+  'predatory lending',
+  'high-cost loan',
+  'high cost loan',
+  'installment loan', // Generic installment loans can be predatory - be cautious
+  // Note: We're not blocking all installment loans, just being aware
+  // Debt consolidation loans are OK if properly vetted
+];
+
+// Eligibility filter rules
+const ELIGIBILITY_RULES = {
+  // Income estimation methods
+  USE_LONG_TERM_INCOME: true, // Prefer 180-day analysis for income
+  MIN_INCOME_THRESHOLD: 10000, // Absolute minimum annual income to consider any offer
+  
+  // Credit score estimation
+  ESTIMATE_CREDIT_SCORE: true, // Use utilization-based estimation if no actual score
+  MIN_CREDIT_SCORE_THRESHOLD: 300, // Minimum possible credit score
+  MAX_CREDIT_SCORE_THRESHOLD: 850, // Maximum possible credit score
+  
+  // Account type matching
+  STRICT_ACCOUNT_TYPE_MATCHING: false, // If true, requires exact matches
+  // If false, allows partial matches (e.g., "savings" matches "savings_account")
+};
+
 // Data generation constants
 const DATA_GENERATION = {
   DEFAULT_USER_COUNT: 75,
@@ -109,6 +145,8 @@ module.exports = {
   PERSONA_PRIORITY,
   RECOMMENDATION_LIMITS,
   PARTNER_OFFER_THRESHOLDS,
+  PROHIBITED_PRODUCT_TYPES,
+  ELIGIBILITY_RULES,
   DATA_GENERATION,
   API_ENDPOINTS
 };
