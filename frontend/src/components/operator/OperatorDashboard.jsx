@@ -17,6 +17,7 @@ const OperatorDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('reviews'); // Default to reviews tab
 
   const loadData = async () => {
     try {
@@ -82,29 +83,13 @@ const OperatorDashboard = () => {
       const rawProfile = profileData.profile || profileData.data?.profile || profileData.data || profileData;
       
       // Transform the profile data to match what SignalViewer expects
+      // Keep the full behavioral_signals structure with both short_term and long_term
       const transformedProfile = {
         ...rawProfile,
-        // Map behavioral_signals to signals with flattened structure
-        signals: rawProfile.behavioral_signals ? {
-          subscriptions: rawProfile.behavioral_signals.subscriptions?.short_term ? {
-            recurring_merchants: rawProfile.behavioral_signals.subscriptions.short_term.recurring_merchants || [],
-            monthly_recurring_spend_30d: rawProfile.behavioral_signals.subscriptions.short_term.total_monthly_recurring_spend || 0,
-            subscription_share_30d: rawProfile.behavioral_signals.subscriptions.short_term.subscription_share || 0
-          } : null,
-          savings: rawProfile.behavioral_signals.savings?.short_term ? {
-            growth_rate_30d: rawProfile.behavioral_signals.savings.short_term.growth_rate || 0,
-            emergency_fund_coverage_30d: rawProfile.behavioral_signals.savings.short_term.emergency_fund_coverage_months || 0,
-            net_inflow_30d: rawProfile.behavioral_signals.savings.short_term.net_inflow || 0
-          } : null,
-          credit: rawProfile.behavioral_signals.credit?.short_term ? {
-            cards: rawProfile.behavioral_signals.credit.short_term.cards || []
-          } : null,
-          income: rawProfile.behavioral_signals.income?.short_term ? {
-            payment_frequency: rawProfile.behavioral_signals.income.short_term.payment_frequency || 'Unknown',
-            median_pay_gap_days: rawProfile.behavioral_signals.income.short_term.median_pay_gap_days || 0,
-            cash_flow_buffer_months: rawProfile.behavioral_signals.income.short_term.cash_flow_buffer_months || 0
-          } : null
-        } : null,
+        // Include persona assignments from user data if available
+        persona_assignments: rawProfile.persona_assignments || null,
+        // Pass behavioral_signals as-is so SignalViewer can access both time windows
+        signals: rawProfile.behavioral_signals || null,
         // Map assigned_persona to persona
         persona: rawProfile.assigned_persona ? {
           name: rawProfile.assigned_persona.name,
@@ -139,11 +124,15 @@ const OperatorDashboard = () => {
       loadData();
     };
 
-    window.addEventListener('operator-dashboard-refresh', handleRefreshEvent);
+    window.addEventListener('refreshOperatorData', handleRefreshEvent);
     return () => {
-      window.removeEventListener('operator-dashboard-refresh', handleRefreshEvent);
+      window.removeEventListener('refreshOperatorData', handleRefreshEvent);
     };
   }, []);
+
+  // Get persona assignments for selected user from users list
+  const selectedUser = users.find(u => u.user_id === selectedUserId);
+  const selectedUserPersonaAssignments = selectedUser?.persona_assignments;
 
   const handleApprove = async (reviewId, notes) => {
     try {
@@ -173,6 +162,16 @@ const OperatorDashboard = () => {
     );
   }
 
+  // Calculate stats
+  const stats = {
+    totalUsers: users.length,
+    pendingReviews: reviews.length,
+    usersWithConsent: users.filter(u => {
+      const consent = u.consent_status || u.consent?.has_consent;
+      return consent === 'granted' || consent === true;
+    }).length
+  };
+
   return (
     <div className="operator-dashboard-container">
       {error && (
@@ -181,46 +180,124 @@ const OperatorDashboard = () => {
         </div>
       )}
 
+      {/* Quick Stats Dashboard */}
+      <div className="dashboard-stats-bar">
+        <div className="stat-card">
+          <span className="stat-label">Total Users</span>
+          <span className="stat-value">{stats.totalUsers}</span>
+        </div>
+        <div className="stat-card warning">
+          <span className="stat-label">Pending Reviews</span>
+          <span className="stat-value">{stats.pendingReviews}</span>
+        </div>
+        <div className="stat-card success">
+          <span className="stat-label">Users with Consent</span>
+          <span className="stat-value">{stats.usersWithConsent}</span>
+        </div>
+      </div>
+
       <div className="operator-dashboard-grid">
         <div className="operator-dashboard-sidebar">
           <UserList
             users={users}
-            onUserSelect={setSelectedUserId}
+            onUserSelect={(userId) => {
+              setSelectedUserId(userId);
+              setActiveTab('analysis'); // Switch to analysis tab when user is selected
+            }}
             selectedUserId={selectedUserId}
           />
         </div>
 
         <div className="operator-dashboard-main">
-          {selectedUserId && (
-            <div className="operator-dashboard-section">
-              <h2>User Signals</h2>
-              <SignalViewer
-                signals={selectedUserProfile?.signals}
-                persona={selectedUserProfile?.persona}
-                loading={loadingProfile}
-              />
-            </div>
-          )}
-
-          {selectedUserId && selectedUserProfile?.decision_trace && (
-            <div className="operator-dashboard-section">
-              <DecisionTrace decisionTrace={selectedUserProfile.decision_trace} />
-            </div>
-          )}
-
-          <div className="operator-dashboard-section">
-            <h2>Review Queue</h2>
-            <RecommendationReview
-              reviews={reviews}
-              onApprove={handleApprove}
-              onOverride={handleOverride}
-              loading={false}
-            />
+          {/* Tab Navigation */}
+          <div className="dashboard-tabs">
+            <button 
+              className={`tab ${activeTab === 'analysis' ? 'active' : ''}`}
+              onClick={() => setActiveTab('analysis')}
+              disabled={!selectedUserId}
+            >
+              <span className="tab-icon">📊</span>
+              User Analysis
+              {selectedUserId && selectedUserProfile && (
+                <span className="tab-indicator"></span>
+              )}
+            </button>
+            <button 
+              className={`tab ${activeTab === 'reviews' ? 'active' : ''}`}
+              onClick={() => setActiveTab('reviews')}
+            >
+              <span className="tab-icon">✅</span>
+              Review Queue
+              {reviews.length > 0 && (
+                <span className="tab-badge">{reviews.length}</span>
+              )}
+            </button>
           </div>
 
-          {metrics && (
-            <div className="operator-dashboard-section">
-              <MetricsPanel metrics={metrics} loading={false} />
+          {/* Tab Content */}
+          {activeTab === 'analysis' && (
+            <div className="analysis-panel">
+              {!selectedUserId ? (
+                <div className="empty-state">
+                  <div className="empty-state-icon">👤</div>
+                  <h3>Select a User</h3>
+                  <p>Choose a user from the sidebar to view their analysis and signals.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="panel-section">
+                    <h2>
+                      <span className="section-icon">📊</span>
+                      User Signals
+                    </h2>
+                    <SignalViewer
+                      signals={selectedUserProfile?.signals}
+                      persona={selectedUserProfile?.persona}
+                      loading={loadingProfile}
+                    />
+                  </div>
+
+                  {selectedUserId && selectedUserProfile?.decision_trace && (
+                    <div className="panel-section">
+                      <h2>
+                        <span className="section-icon">🔍</span>
+                        Decision Trace
+                      </h2>
+                      <DecisionTrace decisionTrace={selectedUserProfile.decision_trace} />
+                    </div>
+                  )}
+
+                  {metrics && (
+                    <div className="panel-section">
+                      <h2>
+                        <span className="section-icon">📈</span>
+                        Metrics
+                      </h2>
+                      <MetricsPanel metrics={metrics} loading={false} />
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'reviews' && (
+            <div className="reviews-panel">
+              <div className="panel-section">
+                <h2>
+                  <span className="section-icon">✅</span>
+                  Review Queue
+                  {reviews.length > 0 && (
+                    <span className="section-badge">{reviews.length} pending</span>
+                  )}
+                </h2>
+                <RecommendationReview
+                  reviews={reviews}
+                  onApprove={handleApprove}
+                  onOverride={handleOverride}
+                  loading={false}
+                />
+              </div>
             </div>
           )}
         </div>

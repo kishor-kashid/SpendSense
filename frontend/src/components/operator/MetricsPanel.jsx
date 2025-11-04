@@ -1,5 +1,4 @@
 import React from 'react';
-import Card from '../common/Card';
 import Loading from '../common/Loading';
 import { formatPercentage } from '../../utils/formatters';
 import './MetricsPanel.css';
@@ -7,17 +6,13 @@ import './MetricsPanel.css';
 const MetricsPanel = ({ metrics, loading }) => {
   if (loading) {
     return (
-      <Card>
-        <Loading message="Loading metrics..." />
-      </Card>
+      <Loading message="Loading metrics..." />
     );
   }
 
   if (!metrics) {
     return (
-      <Card>
-        <p>No metrics available.</p>
-      </Card>
+      <p>No metrics available.</p>
     );
   }
 
@@ -50,7 +45,7 @@ const MetricsPanel = ({ metrics, loading }) => {
   ];
 
   return (
-    <Card title="System Metrics" className="metrics-panel">
+    <div className="metrics-panel">
       <div className="metrics-grid">
         {metricItems.map((metric, index) => {
           const isTargetMet = metric.isLatency 
@@ -122,7 +117,7 @@ const MetricsPanel = ({ metrics, loading }) => {
           )}
         </div>
       )}
-    </Card>
+    </div>
   );
 };
 

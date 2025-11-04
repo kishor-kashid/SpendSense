@@ -8,7 +8,7 @@ const router = express.Router();
 const { validateRequiredFields } = require('../middleware/validator');
 const RecommendationReview = require('../models/RecommendationReview');
 const { generateRecommendations } = require('../services/recommend/recommendationEngine');
-const { assignPersonaToUser } = require('../services/personas/personaAssigner');
+const { assignPersonaToUser, getPersonaAssignmentsForTimeWindows } = require('../services/personas/personaAssigner');
 const User = require('../models/User');
 
 /**
@@ -29,6 +29,8 @@ router.get('/review', (req, res, next) => {
         recommendation_data: review.recommendation_data,
         decision_trace: review.decision_trace,
         status: review.status,
+        flagged: review.flagged || 0,
+        flag_reason: review.flag_reason || null,
         created_at: review.created_at
       }))
     });
@@ -87,6 +89,108 @@ router.post('/approve', validateRequiredFields(['review_id']), (req, res, next) 
         operator_notes: updatedReview.operator_notes,
         reviewed_at: updatedReview.reviewed_at,
         reviewed_by: updatedReview.reviewed_by
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /operator/flag
+ * Flag a recommendation for review
+ * Body: { review_id: number, flag_reason?: string }
+ * Returns: Updated review record
+ */
+router.post('/flag', validateRequiredFields(['review_id']), (req, res, next) => {
+  try {
+    const reviewId = parseInt(req.body.review_id, 10);
+    
+    if (isNaN(reviewId) || reviewId <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          message: `Invalid review_id: ${req.body.review_id}. Must be a positive integer.`,
+          code: 'INVALID_REVIEW_ID'
+        }
+      });
+    }
+    
+    // Check if review exists
+    const existingReview = RecommendationReview.findById(reviewId);
+    if (!existingReview) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          message: `Review with ID ${reviewId} not found`,
+          code: 'REVIEW_NOT_FOUND'
+        }
+      });
+    }
+    
+    // Flag the review
+    const updatedReview = RecommendationReview.flagReview(
+      reviewId,
+      req.body.flag_reason || null
+    );
+    
+    res.json({
+      success: true,
+      message: 'Review flagged successfully',
+      review: {
+        review_id: updatedReview.review_id,
+        user_id: updatedReview.user_id,
+        flagged: updatedReview.flagged,
+        flag_reason: updatedReview.flag_reason
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /operator/unflag
+ * Unflag a recommendation
+ * Body: { review_id: number }
+ * Returns: Updated review record
+ */
+router.post('/unflag', validateRequiredFields(['review_id']), (req, res, next) => {
+  try {
+    const reviewId = parseInt(req.body.review_id, 10);
+    
+    if (isNaN(reviewId) || reviewId <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          message: `Invalid review_id: ${req.body.review_id}. Must be a positive integer.`,
+          code: 'INVALID_REVIEW_ID'
+        }
+      });
+    }
+    
+    // Check if review exists
+    const existingReview = RecommendationReview.findById(reviewId);
+    if (!existingReview) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          message: `Review with ID ${reviewId} not found`,
+          code: 'REVIEW_NOT_FOUND'
+        }
+      });
+    }
+    
+    // Unflag the review
+    const updatedReview = RecommendationReview.unflagReview(reviewId);
+    
+    res.json({
+      success: true,
+      message: 'Review unflagged successfully',
+      review: {
+        review_id: updatedReview.review_id,
+        user_id: updatedReview.user_id,
+        flagged: updatedReview.flagged
       }
     });
   } catch (error) {
@@ -166,11 +270,21 @@ router.get('/users', (req, res, next) => {
         // Try to get profile (will fail if no consent)
         const profile = assignPersonaToUser(user.user_id);
         
+        // Get persona assignments for both 30d and 180d windows
+        let personaAssignments = null;
+        try {
+          personaAssignments = getPersonaAssignmentsForTimeWindows(user.user_id);
+        } catch (err) {
+          // If separate window calculation fails, continue without it
+          console.warn(`Could not calculate separate window personas for user ${user.user_id}:`, err.message);
+        }
+        
         return {
           user_id: user.user_id,
           name: user.name,
           consent_status: user.consent_status,
           assigned_persona: profile.assigned_persona,
+          persona_assignments: personaAssignments, // 30d and 180d assignments
           behavioral_signals: {
             credit: profile.behavioral_signals.credit,
             income: profile.behavioral_signals.income,
@@ -186,6 +300,7 @@ router.get('/users', (req, res, next) => {
           name: user.name,
           consent_status: user.consent_status,
           assigned_persona: null,
+          persona_assignments: null,
           behavioral_signals: null,
           has_profile: false,
           error: error.message

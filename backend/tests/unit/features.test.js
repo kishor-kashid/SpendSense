@@ -50,8 +50,13 @@ describe('Subscription Detection', () => {
     await initializeDatabase();
     
     // Create a test user
+    const uniqueId = Date.now();
     const user = User.create({
       name: 'Test User',
+      first_name: 'Test',
+      last_name: 'User',
+      username: `testuser${uniqueId}`,
+      password: 'testuser123',
       consent_status: 'granted'
     });
     testUserId = user.user_id;
@@ -454,8 +459,13 @@ describe('Savings Detection', () => {
   beforeAll(async () => {
     await initializeDatabase();
     
+    const uniqueId = Date.now();
     const user = User.create({
       name: 'Savings Test User',
+      first_name: 'Savings',
+      last_name: 'Test',
+      username: `savingstest${uniqueId}`,
+      password: 'savingstest123',
       consent_status: 'granted'
     });
     testUserId = user.user_id;
@@ -543,8 +553,13 @@ describe('Savings Detection', () => {
     });
 
     test('should return zero for user with no savings accounts', async () => {
+      const uniqueId = Date.now();
       const newUser = User.create({
         name: 'No Savings User',
+        first_name: 'No',
+        last_name: 'Savings',
+        username: `nosavings${uniqueId}`,
+        password: 'nosavings123',
         consent_status: 'granted'
       });
 
@@ -629,8 +644,13 @@ describe('Savings Detection', () => {
     });
 
     test('should handle user with no savings accounts', () => {
+      const uniqueId = Date.now() + 1;
       const newUser = User.create({
         name: 'No Savings User 2',
+        first_name: 'No',
+        last_name: 'Savings2',
+        username: `nosavings2${uniqueId}`,
+        password: 'nosavings2123',
         consent_status: 'granted'
       });
 
@@ -663,8 +683,13 @@ describe('Credit Detection', () => {
   beforeAll(async () => {
     await initializeDatabase();
     
+    const uniqueId = Date.now();
     const user = User.create({
       name: 'Credit Test User',
+      first_name: 'Credit',
+      last_name: 'Test',
+      username: `credittest${uniqueId}`,
+      password: 'credittest123',
       consent_status: 'granted'
     });
     testUserId = user.user_id;
@@ -783,8 +808,13 @@ describe('Credit Detection', () => {
     });
 
     test('should handle user with no credit cards', () => {
+      const uniqueId = Date.now();
       const newUser = User.create({
         name: 'No Credit User',
+        first_name: 'No',
+        last_name: 'Credit',
+        username: `nocredit${uniqueId}`,
+        password: 'nocredit123',
         consent_status: 'granted'
       });
 
@@ -818,8 +848,13 @@ describe('Income Detection', () => {
   beforeAll(async () => {
     await initializeDatabase();
     
+    const uniqueId = Date.now();
     const user = User.create({
       name: 'Income Test User',
+      first_name: 'Income',
+      last_name: 'Test',
+      username: `incometest${uniqueId}`,
+      password: 'incometest123',
       consent_status: 'granted'
     });
     testUserId = user.user_id;
@@ -1015,8 +1050,13 @@ describe('Income Detection', () => {
     });
 
     test('should handle user with no payroll income', () => {
+      const uniqueId = Date.now();
       const newUser = User.create({
         name: 'No Income User',
+        first_name: 'No',
+        last_name: 'Income',
+        username: `noincome${uniqueId}`,
+        password: 'noincome123',
         consent_status: 'granted'
       });
 

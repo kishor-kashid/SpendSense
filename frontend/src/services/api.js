@@ -73,6 +73,8 @@ export const submitFeedback = (feedbackData) => api.post('/feedback', feedbackDa
 export const getReviewQueue = () => api.get('/operator/review');
 export const approveRecommendation = (reviewId, notes) => api.post('/operator/approve', { review_id: reviewId, operator_notes: notes });
 export const overrideRecommendation = (reviewId, notes) => api.post('/operator/override', { review_id: reviewId, operator_notes: notes });
+export const flagReview = (reviewId, flagReason) => api.post('/operator/flag', { review_id: reviewId, flag_reason: flagReason });
+export const unflagReview = (reviewId) => api.post('/operator/unflag', { review_id: reviewId });
 export const getOperatorUsers = () => api.get('/operator/users');
 
 export default api;

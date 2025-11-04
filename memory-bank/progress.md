@@ -1,8 +1,8 @@
 # Progress: SpendSense
 
-## Project Status: 🟢 Frontend Complete - Ready for Polish
+## Project Status: 🟢 Documentation Complete - Ready for Performance & Final Evaluation
 
-**Overall Progress:** 87% (26/30 PRs completed)
+**Overall Progress:** 90% (27/30 PRs completed)
 
 ## What Works
 
@@ -301,6 +301,13 @@
   - Fixed data mapping for operator dashboard
   - Signals now display correctly for users with consent
 
+- ✅ **Recommendation Display Improvements**
+  - Eligibility filtering: Ineligible partner offers filtered out in backend and frontend
+  - Horizontal scrollable layout: Recommendations display in single row with horizontal scrolling
+  - Navigation buttons: Left/right buttons replace scrollbar for better UX
+  - Consistent card heights: All cards in each row have same height using flexbox
+  - Applied to both educational resources and partner offers sections
+
 ## What's Left to Build
 
 ### Phase 2: Backend Core (11/11 PRs) - COMPLETE ✅
@@ -334,9 +341,9 @@
 - [x] PR #25: Frontend - Operator Portal Page ✅
 - [x] PR #26: Frontend - Navigation & Final Routing ✅
 
-### Phase 6: Polish (0/4 PRs)
+### Phase 6: Polish (1/4 PRs)
 - [ ] PR #27: Integration & End-to-End Testing
-- [ ] PR #28: Documentation & Decision Log
+- [x] PR #28: Documentation & Decision Log ✅
 - [ ] PR #29: Performance Optimization & Latency
 - [ ] PR #30: Final Evaluation & Report
 
@@ -418,12 +425,15 @@
   - Report generation: 10 tests
 - [ ] End-to-end tests
 
-### Documentation ⚠️
-- [x] Schema documentation
-- [ ] API documentation
-- [ ] Decision log
-- [ ] Limitations documentation
-- [ ] Evaluation report
+### Documentation ✅
+- [x] Schema documentation (SCHEMA.md - updated with latest schema)
+- [x] API documentation (API.md - complete with all endpoints and examples)
+- [x] Decision log (DECISION_LOG.md - architectural decisions explained)
+- [x] Limitations documentation (LIMITATIONS.md - current limitations and future improvements)
+- [x] Root README (comprehensive setup, usage examples, data generation)
+- [x] Backend README (enhanced documentation with data generation)
+- [x] Frontend README (enhanced documentation)
+- [ ] Evaluation report (pending PR #30)
 
 ## Success Metrics Status
 
@@ -434,7 +444,7 @@
 | Latency | <5s | N/A | Not started |
 | Auditability | 100% | **100%** | ✅ **Achieved** |
 | Code Quality | ≥10 tests | **316** | ✅ **Exceeded** |
-| Documentation | Complete | Partial | In progress |
+| Documentation | Complete | **Complete** | ✅ **Achieved** |
 
 ## Known Issues
 - None currently - all issues resolved
@@ -476,11 +486,20 @@
 ## Next Milestones
 
 ### Immediate (Current)
-- **PRs #27-30: Polish Phase** - Next tasks
-- Integration & End-to-End Testing
-- Documentation & Decision Log
-- Performance Optimization & Latency
-- Final Evaluation & Report
+- **PRs #27, #29-30: Remaining Polish Phase** - Next tasks
+- Integration & End-to-End Testing (PR #27)
+- Performance Optimization & Latency (PR #29)
+- Final Evaluation & Report (PR #30)
+
+### Completed (Polish Phase)
+- ✅ **PR #28: Documentation & Decision Log** - Complete
+  - Comprehensive README with setup instructions and usage examples
+  - Complete API documentation with all endpoints
+  - Updated database schema documentation
+  - Decision log explaining architectural choices
+  - Limitations documentation with future improvements
+  - Enhanced backend and frontend READMEs
+  - Data generation commands and information documented
 
 ### Short-term (Weeks 2-4)
 - ✅ Complete PRs #5-7 (Remaining behavioral signal detection) - DONE

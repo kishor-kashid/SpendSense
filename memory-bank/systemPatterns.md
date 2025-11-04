@@ -118,12 +118,18 @@ Analysis performed on two windows:
 - **Card Components:** Enhanced with hover effects, accent bars, and smooth transitions
 - **Navigation:** Backdrop blur effect, gradient text, hover animations, profile menu with dropdown
 - **Scrollable Content:** Flex-based layouts with proper overflow handling
-- **Custom Scrollbars:** Styled scrollbars for better visual consistency
+- **Custom Scrollbars:** Styled scrollbars for better visual consistency (hidden for recommendations)
 - **Responsive Design:** Media queries for mobile and tablet breakpoints
 - **Component Structure:** Component-specific CSS files with global CSS variables
 - **Profile Menu:** Profile icon in navbar with dropdown (Profile, Consent toggle, Logout)
 - **Centralized Actions:** Refresh button in navbar, consent toggle in profile menu
 - **Simplified Displays:** Clean user lists, collapsed review queues, minimal headers
+- **Recommendation Layout:** Horizontal scrollable rows with navigation buttons
+  - Single row layout (no wrapping)
+  - Consistent card heights using flexbox stretch
+  - Left/right navigation buttons instead of scrollbar
+  - Smooth scrolling behavior
+  - Button state management based on scroll position
 
 ### 12. Recommendation Approval Pattern
 - **Generation:** Recommendations generated and stored as 'pending' in review queue
@@ -501,6 +507,11 @@ App
 - **Approved State:** Shows full recommendation content
 - **Status Badges:** Visual indicators for pending/approved status
 - **Auto-refresh:** Recommendations refresh when user returns
+- **Layout:** Horizontal scrollable row (no grid, no wrapping)
+- **Eligibility Filtering:** Only eligible partner offers shown (filtered in backend and frontend)
+- **Navigation:** Left/right buttons for scrolling (hidden scrollbar)
+- **Card Heights:** All cards in row have same height (flexbox stretch)
+- **Consistent Sizing:** Fixed card widths (320px desktop, 280px mobile)
 
 ## Testing Patterns
 

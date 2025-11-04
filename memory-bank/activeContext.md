@@ -1,11 +1,11 @@
 # Active Context: SpendSense
 
 ## Current Status
-**Project Phase:** Frontend Complete - Ready for Polish
-**Date:** After PR #26 completion + Spending Insights Features
+**Project Phase:** Documentation Complete - Ready for Performance & Final Evaluation
+**Date:** After PR #28 completion (Documentation & Decision Log)
 
 ## Current Work Focus
-- **PRs #1-26 Complete:** All backend features, frontend interfaces, and spending insights implemented
+- **PRs #1-28 Complete:** All backend features, frontend interfaces, spending insights, and documentation implemented
 - **Feature detection:** All 4 behavioral signals working (subscriptions, savings, credit, income)
 - **Persona system:** Complete with 5 personas and prioritization logic
 - **Content catalogs:** Education items and partner offers catalogs ready
@@ -16,13 +16,63 @@
 - **Frontend:** Complete user and operator interfaces with all components
 - **Spending Insights:** Transaction viewing, category breakdown, spending analytics, trends
 - **Consent Management:** Toggle functionality, conditional display, real-time updates
-- **Next steps:** Ready for PRs #27-30 (Integration Testing, Documentation, Performance, Final Evaluation)
+- **Documentation:** Complete API docs, schema docs, decision log, limitations, and READMEs
+- **Operator Dashboard:** Optimized with tabs, visual differentiation, quick stats, urgency indicators, filters
+- **Next steps:** Ready for PRs #27, #29-30 (Integration Testing, Performance, Final Evaluation)
 - **Data status:** 75 users, 218 accounts, 8,133 transactions, 66 liabilities loaded
 - **Test status:** 316 tests passing across all modules (227 unit + 67 integration + 20 evaluation tests)
 
 ## Recent Changes
 
-### Latest Updates (Post-PR #26)
+### Latest Updates (Post-PR #28 - Continued)
+
+1. **Recommendation Display Improvements** ✅
+   - **Eligibility Filtering:** Fixed issue where ineligible partner offers were showing on user dashboard
+     - Backend now filters out ineligible offers in both new and approved recommendations
+     - Frontend added safety filter to prevent any ineligible offers from displaying
+     - Only eligible partner offers appear to users
+   - **Horizontal Scrollable Layout:** Changed recommendation display from grid to horizontal scrollable row
+     - Educational content and partner offers display in single horizontal row
+     - No wrapping to new rows
+     - Consistent card widths (320px desktop, 280px mobile)
+     - Scrollbar hidden for cleaner UI
+   - **Navigation Buttons:** Replaced scrollbar with left/right navigation buttons
+     - Circular buttons (← →) next to section titles
+     - Buttons only show when 2+ items exist
+     - Buttons disabled when at start/end of scroll
+     - Smooth scrolling (80% of visible width per click)
+     - Real-time button state updates based on scroll position
+   - **Consistent Card Heights:** Fixed height inconsistency issues
+     - All cards in each row now have same height (matching tallest card)
+     - Used flexbox with `align-items: stretch` and `align-self: stretch`
+     - Cards use `height: 100%` and proper flex properties
+     - Fixed sections (headers, titles) don't shrink
+     - Expandable sections (rationale, benefits) grow to fill space
+     - Bottom sections (actions, disclaimers) pushed to bottom with `margin-top: auto`
+     - Removed transform animations that could affect height
+     - Applied to both educational resources and partner offers
+
+### Previous Updates (Post-PR #28)
+
+1. **PR #28: Documentation & Decision Log** ✅
+   - **Root README.md:** Comprehensive setup instructions, usage examples, data generation commands
+   - **API Documentation:** Complete API reference (backend/docs/API.md) with all endpoints, request/response examples, error codes
+   - **Schema Documentation:** Updated SCHEMA.md with username/password fields, feedback table, recommendation_reviews table
+   - **Decision Log:** Created DECISION_LOG.md explaining architectural choices (authentication, database, service layer, personas, recommendations, guardrails, explainability)
+   - **Limitations Documentation:** Created LIMITATIONS.md documenting current limitations and future improvements
+   - **Backend README:** Enhanced with data generation commands, project structure, service descriptions
+   - **Frontend README:** Enhanced with component architecture, state management, styling approach
+   - **Data Generation:** Documented npm run generate-data command with custom parameters and limits
+
+2. **Operator Dashboard Optimizations** ✅
+   - Tab navigation separating User Analysis and Review Queue
+   - Quick stats dashboard with key metrics
+   - Visual differentiation with color coding and badges
+   - Review queue improvements: urgency indicators, filters, sorting
+   - Removed nested panel structure for cleaner UI
+   - Enhanced user list with persona badges
+
+### Previous Updates (Post-PR #26)
 1. **UI Modernization** ✅
    - Comprehensive styling overhaul across all frontend components
    - Modern design system with CSS variables (colors, spacing, shadows, transitions)
@@ -475,6 +525,12 @@
 ## Communication Notes
 - Foundation phase (PRs 1-3) successfully completed
 - All behavioral signal detection (PRs 4-7) successfully completed
+- PR #28 (Documentation & Decision Log) successfully completed
+  - All documentation requirements met
+  - API documentation complete with examples
+  - Decision log explains key architectural choices
+  - Limitations documented with migration path
+  - Data generation commands documented
 - Persona system (PR #8) successfully completed
 - Content catalogs (PRs 9-10) successfully completed
 - Recommendation engine (PR #11) successfully completed with rationale generation

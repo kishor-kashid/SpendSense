@@ -38,20 +38,33 @@ describe('Evaluation & Metrics System', () => {
     await initializeDatabase();
     
     // Create test users with consent
+    const uniqueId = Date.now();
     const user1 = User.create({
       name: 'Eval Test User 1',
+      first_name: 'Eval',
+      last_name: 'Test1',
+      username: `evaltest1${uniqueId}`,
+      password: 'evaltest1123',
       consent_status: 'granted'
     });
     testUserId = user1.user_id;
 
     const user2 = User.create({
       name: 'Eval Test User 2',
+      first_name: 'Eval',
+      last_name: 'Test2',
+      username: `evaltest2${uniqueId}`,
+      password: 'evaltest2123',
       consent_status: 'granted'
     });
     testUserId2 = user2.user_id;
 
     const user3 = User.create({
       name: 'Eval Test User 3',
+      first_name: 'Eval',
+      last_name: 'Test3',
+      username: `evaltest3${uniqueId}`,
+      password: 'evaltest3123',
       consent_status: 'granted'
     });
     testUserId3 = user3.user_id;
@@ -176,8 +189,13 @@ describe('Evaluation & Metrics System', () => {
     });
 
     test('should return 0% coverage for users without consent', () => {
+      const uniqueId = Date.now();
       const userWithoutConsent = User.create({
         name: 'No Consent User',
+        first_name: 'No',
+        last_name: 'Consent',
+        username: `noconsent${uniqueId}`,
+        password: 'noconsent123',
         consent_status: 'revoked'
       });
 
@@ -222,8 +240,13 @@ describe('Evaluation & Metrics System', () => {
     });
 
     test('should handle users without consent gracefully', () => {
+      const uniqueId = Date.now();
       const userWithoutConsent = User.create({
         name: 'No Consent User',
+        first_name: 'No',
+        last_name: 'Consent',
+        username: `noconsent${uniqueId}`,
+        password: 'noconsent123',
         consent_status: 'revoked'
       });
 
@@ -297,8 +320,13 @@ describe('Evaluation & Metrics System', () => {
     });
 
     test('should return 0% auditability for users without recommendations', () => {
+      const uniqueId = Date.now();
       const userWithoutConsent = User.create({
         name: 'No Consent User',
+        first_name: 'No',
+        last_name: 'Consent',
+        username: `noconsent${uniqueId}`,
+        password: 'noconsent123',
         consent_status: 'revoked'
       });
 

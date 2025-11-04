@@ -1,1 +1,11 @@
 /* RecommendationCard uses EducationItem and PartnerOffer styles */
+
+/* Ensure all recommendation cards have consistent height */
+.education-item.card,
+.partner-offer.card {
+  height: 100%;
+  min-height: 100%;
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+}

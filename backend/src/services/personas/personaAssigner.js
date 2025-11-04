@@ -123,8 +123,125 @@ function assignPersonasToUsers(userIds, options = {}) {
   });
 }
 
+/**
+ * Calculate persona assignments for both 30d and 180d windows separately
+ * Returns persona assignments for short-term and long-term analysis
+ * 
+ * @param {number} userId - User ID
+ * @returns {Object} Persona assignments for both time windows
+ */
+function getPersonaAssignmentsForTimeWindows(userId) {
+  // Check consent before processing
+  requireConsent(userId);
+
+  // Get user data
+  const user = User.findById(userId);
+  if (!user) {
+    throw new Error(`User ${userId} not found`);
+  }
+
+  // Get account data
+  const accounts = Account.findByUserId(userId);
+  const accountData = {
+    account_count: accounts.length,
+    accounts: accounts
+  };
+
+  // Run all feature analyses (both windows are included)
+  const featureAnalyses = {
+    creditAnalysis: analyzeCreditForUser(userId),
+    incomeAnalysis: analyzeIncomeForUser(userId),
+    subscriptionAnalysis: analyzeSubscriptionsForUser(userId),
+    savingsAnalysis: analyzeSavingsForUser(userId)
+  };
+
+  // Calculate persona for short-term (30d) window
+  const shortTermFeatureAnalyses = {
+    creditAnalysis: {
+      ...featureAnalyses.creditAnalysis,
+      short_term: featureAnalyses.creditAnalysis.short_term,
+      long_term: null // Only use short-term
+    },
+    incomeAnalysis: {
+      ...featureAnalyses.incomeAnalysis,
+      short_term: featureAnalyses.incomeAnalysis.short_term,
+      long_term: null
+    },
+    subscriptionAnalysis: {
+      ...featureAnalyses.subscriptionAnalysis,
+      short_term: featureAnalyses.subscriptionAnalysis.short_term,
+      long_term: null
+    },
+    savingsAnalysis: {
+      ...featureAnalyses.savingsAnalysis,
+      short_term: featureAnalyses.savingsAnalysis.short_term,
+      long_term: null
+    }
+  };
+
+  // Calculate persona for long-term (180d) window
+  const longTermFeatureAnalyses = {
+    creditAnalysis: {
+      ...featureAnalyses.creditAnalysis,
+      short_term: null, // Only use long-term
+      long_term: featureAnalyses.creditAnalysis.long_term
+    },
+    incomeAnalysis: {
+      ...featureAnalyses.incomeAnalysis,
+      short_term: null,
+      long_term: featureAnalyses.incomeAnalysis.long_term
+    },
+    subscriptionAnalysis: {
+      ...featureAnalyses.subscriptionAnalysis,
+      short_term: null,
+      long_term: featureAnalyses.subscriptionAnalysis.long_term
+    },
+    savingsAnalysis: {
+      ...featureAnalyses.savingsAnalysis,
+      short_term: null,
+      long_term: featureAnalyses.savingsAnalysis.long_term
+    }
+  };
+
+  // Assign personas for each window
+  const shortTermAssignment = assignPersona(user, shortTermFeatureAnalyses, accountData);
+  const longTermAssignment = assignPersona(user, longTermFeatureAnalyses, accountData);
+
+  return {
+    short_term_30d: {
+      assigned_persona: {
+        id: shortTermAssignment.assignedPersona.id,
+        name: shortTermAssignment.assignedPersona.name,
+        description: shortTermAssignment.assignedPersona.description,
+        priority: shortTermAssignment.assignedPersona.priority
+      },
+      rationale: shortTermAssignment.rationale,
+      matching_personas: shortTermAssignment.matchingPersonas.map(p => ({
+        id: p.id,
+        name: p.name,
+        priority: p.priority
+      }))
+    },
+    long_term_180d: {
+      assigned_persona: {
+        id: longTermAssignment.assignedPersona.id,
+        name: longTermAssignment.assignedPersona.name,
+        description: longTermAssignment.assignedPersona.description,
+        priority: longTermAssignment.assignedPersona.priority
+      },
+      rationale: longTermAssignment.rationale,
+      matching_personas: longTermAssignment.matchingPersonas.map(p => ({
+        id: p.id,
+        name: p.name,
+        priority: p.priority
+      }))
+    }
+  };
+}
+
 module.exports = {
   assignPersonaToUser,
-  assignPersonasToUsers
+  assignPersonasToUsers,
+  getPersonaAssignmentsForTimeWindows
 };
 

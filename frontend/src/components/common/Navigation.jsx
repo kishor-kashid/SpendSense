@@ -50,6 +50,8 @@ const Navigation = () => {
         if (success && userContext?.refreshProfile) {
           // Only refresh profile if UserProvider is available
           await userContext.refreshProfile();
+          // Trigger a refresh event so Dashboard can load recommendations
+          window.dispatchEvent(new CustomEvent('dashboard-refresh'));
         }
       }
     } catch (error) {
