@@ -1,0 +1,143 @@
+.transaction-list {
+  width: 100%;
+}
+
+.transaction-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.transaction-list-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.transaction-list-summary {
+  display: flex;
+  gap: var(--spacing-md);
+  font-size: 0.875rem;
+}
+
+.summary-item {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+}
+
+.summary-item.spending {
+  background-color: #fee;
+  color: #c33;
+}
+
+.summary-item.income {
+  background-color: #efe;
+  color: #3c3;
+}
+
+.transaction-filters {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.transaction-search {
+  flex: 1;
+  min-width: 200px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+}
+
+.transaction-category-filter,
+.transaction-sort {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  background-color: white;
+  cursor: pointer;
+}
+
+.transaction-list-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.transaction-item {
+  padding: var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background-color: white;
+  transition: box-shadow 0.2s ease;
+}
+
+.transaction-item:hover {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.transaction-item-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.transaction-item-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.transaction-merchant {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+}
+
+.transaction-details {
+  display: flex;
+  gap: var(--spacing-sm);
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.transaction-category {
+  text-transform: capitalize;
+}
+
+.transaction-amount {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.transaction-amount.spending {
+  color: #c33;
+}
+
+.transaction-amount.income {
+  color: #3c3;
+}
+
+.transaction-pending-badge {
+  margin-top: var(--spacing-xs);
+  display: inline-block;
+  padding: 2px 8px;
+  background-color: #fff3cd;
+  color: #856404;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+

@@ -1,0 +1,280 @@
+import React, { useState } from 'react';
+import Card from '../common/Card';
+import Button from '../common/Button';
+import Modal from '../common/Modal';
+import Loading from '../common/Loading';
+import './RecommendationReview.css';
+
+const RecommendationReview = ({ 
+  reviews, 
+  onApprove, 
+  onOverride, 
+  loading = false 
+}) => {
+  const [expandedReviewId, setExpandedReviewId] = useState(null);
+  const [selectedReview, setSelectedReview] = useState(null);
+  const [notes, setNotes] = useState('');
+  const [actionType, setActionType] = useState(null); // 'approve' or 'override'
+
+  // Ensure reviews is an array
+  if (!reviews || !Array.isArray(reviews) || reviews.length === 0) {
+    return (
+      <p>No recommendations pending review.</p>
+    );
+  }
+
+  const toggleReview = (reviewId) => {
+    setExpandedReviewId(expandedReviewId === reviewId ? null : reviewId);
+  };
+
+  const handleAction = (review, type) => {
+    setSelectedReview(review);
+    setActionType(type);
+    setNotes('');
+  };
+
+  // Simplified recommendation item component - only title and link
+  const SimpleRecommendationItem = ({ item, type }) => {
+    const url = item.url || item.provider_url;
+    const title = item.title || item.name;
+    
+    return (
+      <div className="simple-recommendation-item">
+        <div className="simple-recommendation-title">{title}</div>
+        {url && (
+          <a 
+            href={url} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="simple-recommendation-link"
+          >
+            View Resource →
+          </a>
+        )}
+      </div>
+    );
+  };
+
+  const confirmAction = () => {
+    if (!selectedReview) return;
+
+    if (actionType === 'approve') {
+      onApprove(selectedReview.review_id, notes);
+    } else if (actionType === 'override') {
+      onOverride(selectedReview.review_id, notes);
+    }
+
+    setSelectedReview(null);
+    setActionType(null);
+    setNotes('');
+  };
+
+  return (
+    <>
+      {loading && (
+        <Loading message="Loading reviews..." />
+      )}
+
+      {!loading && (
+        <div className="review-list">
+          {reviews.map((review) => {
+            const isExpanded = expandedReviewId === review.review_id;
+            const recData = review.recommendation_data || {};
+            const educationRecs = recData.recommendations?.education || recData.education_items || [];
+            const partnerOfferRecs = recData.recommendations?.partner_offers || recData.partner_offers || [];
+            const totalRecommendations = educationRecs.length + partnerOfferRecs.length;
+
+            return (
+              <Card key={review.review_id} className="review-item-card">
+                <div 
+                  className="review-item-header clickable"
+                  onClick={() => toggleReview(review.review_id)}
+                >
+                  <div>
+                    <strong>User ID: {review.user_id}</strong>
+                    <span className="review-item-date">
+                      Created: {new Date(review.created_at).toLocaleDateString()}
+                      {totalRecommendations > 0 && (
+                        <span className="review-item-count">
+                          {' '}• {totalRecommendations} recommendation{totalRecommendations !== 1 ? 's' : ''}
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+                    <span className="review-item-status pending">
+                      {review.status}
+                    </span>
+                    <span className="review-expand-icon">
+                      {isExpanded ? '▼' : '▶'}
+                    </span>
+                  </div>
+                </div>
+
+                {isExpanded && (
+                  <div className="review-item-content">
+                    {educationRecs.length > 0 && (
+                      <div className="review-section">
+                        <h4 className="review-section-title">
+                          📚 Educational Resources ({educationRecs.length})
+                        </h4>
+                        <div className="review-items-list">
+                          {educationRecs.map((rec, idx) => {
+                            const item = rec.item || rec;
+                            return (
+                              <SimpleRecommendationItem 
+                                key={idx} 
+                                item={item} 
+                                type="education"
+                              />
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {partnerOfferRecs.length > 0 && (
+                      <div className="review-section">
+                        <h4 className="review-section-title">
+                          💳 Partner Offers ({partnerOfferRecs.length})
+                        </h4>
+                        <div className="review-items-list">
+                          {partnerOfferRecs.map((rec, idx) => {
+                            const item = rec.item || rec;
+                            return (
+                              <SimpleRecommendationItem 
+                                key={idx} 
+                                item={item} 
+                                type="offer"
+                              />
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {educationRecs.length === 0 && partnerOfferRecs.length === 0 && (
+                      <div className="review-section">
+                        <p style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+                          No recommendations found in this review.
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="review-item-actions">
+                      <Button
+                        variant="primary"
+                        onClick={() => handleAction(review, 'approve')}
+                        fullWidth
+                      >
+                        ✓ Approve Recommendations
+                      </Button>
+                      <Button
+                        variant="danger"
+                        onClick={() => handleAction(review, 'override')}
+                        fullWidth
+                      >
+                        ✗ Override/Reject Recommendations
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      <Modal
+        isOpen={selectedReview !== null}
+        onClose={() => {
+          setSelectedReview(null);
+          setActionType(null);
+          setNotes('');
+        }}
+        title={actionType === 'approve' ? 'Approve Recommendations' : 'Override/Reject Recommendations'}
+        size="large"
+      >
+        {selectedReview && (
+          <div className="review-modal-content">
+            <div className="review-modal-header">
+              <p className="review-modal-user">
+                <strong>User ID:</strong> {selectedReview.user_id}
+              </p>
+              <p>
+                {actionType === 'approve' 
+                  ? 'Are you sure you want to approve these recommendations for this user?' 
+                  : 'Are you sure you want to override/reject these recommendations for this user?'}
+              </p>
+            </div>
+
+            <div className="review-modal-recommendations">
+              <h4>Recommendations Summary</h4>
+              {(() => {
+                const recData = selectedReview.recommendation_data || {};
+                const educationRecs = recData.recommendations?.education || recData.education_items || [];
+                const partnerOfferRecs = recData.recommendations?.partner_offers || recData.partner_offers || [];
+                return (
+                  <>
+                    {educationRecs.length > 0 && (
+                      <p>
+                        <strong>Education Items:</strong> {educationRecs.length}
+                      </p>
+                    )}
+                    {partnerOfferRecs.length > 0 && (
+                      <p>
+                        <strong>Partner Offers:</strong> {partnerOfferRecs.length}
+                      </p>
+                    )}
+                    {educationRecs.length === 0 && partnerOfferRecs.length === 0 && (
+                      <p style={{ color: 'var(--text-secondary)' }}>
+                        No recommendations found in this review.
+                      </p>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
+
+            <div className="review-modal-notes">
+              <label htmlFor="review-notes">
+                <strong>Notes {actionType === 'override' ? '(required for rejections)' : '(optional)'}:</strong>
+              </label>
+              <textarea
+                id="review-notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder={actionType === 'override' ? 'Please explain why you are overriding these recommendations...' : 'Add any notes about this decision...'}
+                rows={4}
+                className="review-notes-textarea"
+                required={actionType === 'override'}
+              />
+            </div>
+
+            <div className="review-modal-actions">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSelectedReview(null);
+                  setActionType(null);
+                  setNotes('');
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant={actionType === 'approve' ? 'primary' : 'danger'}
+                onClick={confirmAction}
+                disabled={actionType === 'override' && !notes.trim()}
+              >
+                Confirm {actionType === 'approve' ? 'Approval' : 'Override'}
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+    </>
+  );
+};
+
+export default RecommendationReview;

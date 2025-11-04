@@ -21,6 +21,9 @@ app.get('/health', (req, res) => {
 });
 
 // API Routes
+const authRoutes = require('./routes/auth');
+app.use('/auth', authRoutes);
+
 const usersRoutes = require('./routes/users');
 app.use('/users', usersRoutes);
 
@@ -38,6 +41,9 @@ app.use('/feedback', feedbackRoutes);
 
 const operatorRoutes = require('./routes/operator');
 app.use('/operator', operatorRoutes);
+
+const transactionsRoutes = require('./routes/transactions');
+app.use('/transactions', transactionsRoutes);
 
 // Initialize database (only if not in test mode)
 if (process.env.NODE_ENV !== 'test') {

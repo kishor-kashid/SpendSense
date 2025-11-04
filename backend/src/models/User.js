@@ -8,20 +8,34 @@ class User {
   /**
    * Create a new user
    * @param {Object} userData - User data
-   * @param {string} userData.name - User's name
+   * @param {string} userData.first_name - User's first name
+   * @param {string} userData.last_name - User's last name
+   * @param {string} userData.name - User's full name (optional, will be generated if not provided)
+   * @param {string} userData.username - User's username
+   * @param {string} userData.password - User's password
    * @param {string} userData.consent_status - Consent status ('granted', 'revoked')
    * @returns {Object} Created user
    */
   static create(userData) {
     const db = getDatabase();
-    const { name, consent_status = 'revoked' } = userData;
+    const { 
+      first_name, 
+      last_name, 
+      name, 
+      username, 
+      password, 
+      consent_status = 'revoked' 
+    } = userData;
+    
+    // Generate full name if not provided
+    const fullName = name || `${first_name} ${last_name}`;
     
     const stmt = db.prepare(`
-      INSERT INTO users (name, consent_status, created_at)
-      VALUES (?, ?, datetime('now'))
+      INSERT INTO users (first_name, last_name, name, username, password, consent_status, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
     `);
     
-    const result = stmt.run(name, consent_status);
+    const result = stmt.run(first_name, last_name, fullName, username, password, consent_status);
     return this.findById(result.lastInsertRowid);
   }
 
@@ -45,6 +59,36 @@ class User {
   }
 
   /**
+   * Find user by username
+   * @param {string} username - Username
+   * @returns {Object|null} User object or null
+   */
+  static findByUsername(username) {
+    const db = getDatabase();
+    return db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+  }
+
+  /**
+   * Verify user credentials
+   * @param {string} username - Username
+   * @param {string} password - Password
+   * @returns {Object|null} User object if credentials match, null otherwise
+   */
+  static verifyCredentials(username, password) {
+    const user = this.findByUsername(username);
+    if (!user) {
+      return null;
+    }
+    
+    // Simple password comparison (no encryption as requested)
+    if (user.password === password) {
+      return user;
+    }
+    
+    return null;
+  }
+
+  /**
    * Update user
    * @param {number} userId - User ID
    * @param {Object} updates - Fields to update
@@ -55,9 +99,25 @@ class User {
     const fields = [];
     const values = [];
 
+    if (updates.first_name !== undefined) {
+      fields.push('first_name = ?');
+      values.push(updates.first_name);
+    }
+    if (updates.last_name !== undefined) {
+      fields.push('last_name = ?');
+      values.push(updates.last_name);
+    }
     if (updates.name !== undefined) {
       fields.push('name = ?');
       values.push(updates.name);
+    }
+    if (updates.username !== undefined) {
+      fields.push('username = ?');
+      values.push(updates.username);
+    }
+    if (updates.password !== undefined) {
+      fields.push('password = ?');
+      values.push(updates.password);
     }
     if (updates.consent_status !== undefined) {
       fields.push('consent_status = ?');

@@ -1,0 +1,65 @@
+Description: Core SpendSense project rules and patterns
+Globs: **/*
+
+# SpendSense Core Rules
+
+## Project Context
+- **Project:** SpendSense - Explainable financial insights system
+- **Status:** Core development complete (PRs 1-26), Polish phase next (PRs 27-30)
+- **Progress:** 87% complete (26/30 PRs done)
+- **Architecture:** Monorepo with Node.js/Express backend and React/Vite frontend
+- **Database:** SQLite (better-sqlite3) with local storage only
+
+## Core Principles
+1. **Transparency over sophistication** - Every recommendation must have clear rationale
+2. **User control over automation** - Consent management required for all processing
+3. **Education over sales** - Focus on learning, not product promotion
+4. **Fairness built in** - No predatory products, no shaming language
+
+## Development Patterns
+
+### Service Layer Pattern
+- All business logic in `backend/src/services/`
+- Services organized by domain: `ingest/`, `features/`, `personas/`, `recommend/`, `guardrails/`, `eval/`
+- Services accept: User ID and time window (30d/180d)
+- Services return: Structured data with clear interfaces
+
+### Guardrail Pattern
+All recommendations must pass through:
+1. **Consent Check** - User must have opted in
+2. **Eligibility Filter** - Product requirements met, no duplicates, no prohibited products
+3. **Tone Validator** - No shaming/judgmental language
+4. **Disclaimer** - Mandatory disclaimer on all recommendations
+
+### Explainability Pattern
+- Every recommendation includes rationale with specific data citation
+- Rationales use plain language (no jargon)
+- Decision traces stored for auditability
+- Example: "Visa ending in 4523 at 68% utilization ($3,400 of $5,000 limit)"
+
+### Testing Requirements
+- Unit tests for all services
+- Integration tests for all API endpoints
+- Evaluation tests for metrics calculation
+- Current: 316 tests passing (227 unit + 67 integration + 20 evaluation)
+- Test command: `npm test` (backend)
+- Use test database for isolation
+- Remaining: End-to-end workflow tests (PR #27)
+
+### Data Generation
+- Synthetic data only (no real PII)
+- Generate with: `npm run generate-data [userCount] [daysOfHistory]`
+- Data persists in SQLite (not regenerated on startup)
+- JSON exports in `backend/data/synthetic/` (excluded from git)
+
+## Code Style
+- Use ESLint and Prettier
+- Semantic commits: `feat:`, `fix:`, `docs:`, `test:`, `refactor:`
+- Clear module structure with separation of concerns
+- Inline comments for complex logic
+
+## File Organization
+- Backend: `backend/src/` with services, routes, models, middleware
+- Frontend: `frontend/src/` with components, pages, context, hooks
+- Documentation: `memory-bank/` for project context
+- Tests: `backend/tests/` with unit/ and integration/ subdirectories

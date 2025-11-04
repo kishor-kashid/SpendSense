@@ -1,23 +1,51 @@
-import React from 'react'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import { UserProvider } from './context/UserContext';
+import ProtectedRoute from './components/common/ProtectedRoute';
+import DemoBanner from './components/common/DemoBanner';
+import Navigation from './components/common/Navigation';
+import Login from './pages/Login';
+import UserPortal from './pages/UserPortal';
+import OperatorPortal from './pages/OperatorPortal';
+import NotFound from './pages/NotFound';
+import './styles/globals.css';
 
 function App() {
   return (
-    <div className="App">
+    <AuthProvider>
       <Router>
-        <Routes>
-          <Route path="/" element={
-            <div style={{ padding: '2rem', textAlign: 'center' }}>
-              <h1>SpendSense</h1>
-              <p>Financial Insights Platform</p>
-              <p>Frontend is running on port 3000</p>
-            </div>
-          } />
-        </Routes>
+        <div className="App">
+          <DemoBanner />
+          <Navigation />
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute requireRole="customer">
+                  <UserProvider>
+                    <UserPortal />
+                  </UserProvider>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/operator"
+              element={
+                <ProtectedRoute requireRole="operator">
+                  <OperatorPortal />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </div>
       </Router>
-    </div>
-  )
+    </AuthProvider>
+  );
 }
 
-export default App
+export default App;
 

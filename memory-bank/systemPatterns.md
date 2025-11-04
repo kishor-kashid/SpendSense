@@ -52,21 +52,87 @@ Analysis performed on two windows:
 
 ### 6. API Request/Response Pattern
 - **Request Validation:** All inputs validated via middleware
-- **Consent Enforcement:** Profile and recommendations require consent (403 if not granted)
+- **Consent Enforcement:** 
+  - Profile and recommendations require consent (403 if not granted)
+  - Transactions and insights do NOT require consent (users can view their own data)
 - **Error Handling:** Consistent error format across all endpoints
 - **Response Format:**
   - Success: `{ success: true, data: {...} }`
   - Error: `{ success: false, error: { message, code } }`
 - **Integration:** All services integrated via REST API endpoints
+- **API Endpoints:**
+  - Authentication: `/auth/login` (POST - username, password, role)
+  - User: `/users`, `/users/:id`
+  - Consent: `/consent`, `/consent/:user_id`
+  - Profile: `/profile/:user_id` (requires consent)
+  - Recommendations: `/recommendations/:user_id` (requires consent, returns approved only)
+  - Transactions: `/transactions/:user_id`, `/transactions/:user_id/insights` (no consent required)
+  - Feedback: `/feedback`
+  - Operator: `/operator/review`, `/operator/approve`, `/operator/override`, `/operator/users`
 
 ### 7. Operator Review Pattern
 - **Automatic Storage:** Recommendations automatically stored in review queue when generated
+- **Single Review Per User:** `createOrUpdatePending` ensures only one pending review per user
 - **Review Queue:** Pending recommendations stored in `recommendation_reviews` table
 - **Decision Traces:** Full audit trail stored with each recommendation
 - **Approval Workflow:** Operators can approve or override recommendations
+- **User Visibility:** Users only see approved recommendations, pending shows message only
+- **Content Display:** Operators see full recommendation content (education items, partner offers) in review
 - **Audit Trail:** Operator notes, reviewed_by, and timestamps recorded
 
-### 8. Evaluation Pattern
+### 8. Consent Management Pattern
+- **Consent Toggle:** Always visible toggle switch for users to grant/revoke consent
+- **Conditional Display:**
+  - With Consent: Behavioral profile, recommendations visible
+  - Without Consent: Only transactions and insights visible (no profile, no recommendations)
+- **Real-time Updates:** UI updates immediately when consent status changes
+- **Data Access:**
+  - Transactions/insights: Always available (no consent required)
+  - Profile/recommendations: Only available with consent
+- **API Behavior:** Profile and recommendations endpoints return 403 if consent not granted
+
+### 9. Spending Insights Pattern
+- **Transaction Viewing:** Users can view all their transactions with search, filter, and sort
+- **Category Breakdown:** Visual breakdown of spending by category with percentages
+- **Spending Analytics:** Summary cards (total spending, income, net flow, savings rate)
+- **Trends:** Daily and monthly spending trends
+- **Top Merchants:** Lists top merchants by spending amount
+- **No Consent Required:** Transactions and insights available without consent
+- **Components:** TransactionList, SpendingBreakdown, SpendingInsights
+
+### 10. Authentication Pattern
+- **Username/Password System:** Simple authentication without encryption (demo mode)
+- **User Credentials:** Username = first_name + last_name (lowercase, no spaces), Password = first_name + last_name + "123"
+- **Operator Credentials:** Username "operator", Password "operator123"
+- **Login Endpoint:** POST /auth/login (validates username, password, role)
+- **Session Management:** localStorage persistence for role, userId, and userData
+- **Password Verification:** Simple string comparison (User.verifyCredentials method)
+- **User Model:** Includes first_name, last_name, username (unique), password fields
+- **Data Generation:** Usernames and passwords generated during synthetic data creation
+- **Frontend:** Login component with username/password input fields for both roles
+
+### 11. UI Design Pattern
+- **Modern Design System:** CSS variables for colors, spacing, shadows, transitions
+- **Gradient Backgrounds:** Linear gradients for headers, buttons, and accent elements
+- **Pill-Style Components:** Rounded tabs, badges, and buttons
+- **Card Components:** Enhanced with hover effects, accent bars, and smooth transitions
+- **Navigation:** Backdrop blur effect, gradient text, hover animations, profile menu with dropdown
+- **Scrollable Content:** Flex-based layouts with proper overflow handling
+- **Custom Scrollbars:** Styled scrollbars for better visual consistency
+- **Responsive Design:** Media queries for mobile and tablet breakpoints
+- **Component Structure:** Component-specific CSS files with global CSS variables
+- **Profile Menu:** Profile icon in navbar with dropdown (Profile, Consent toggle, Logout)
+- **Centralized Actions:** Refresh button in navbar, consent toggle in profile menu
+- **Simplified Displays:** Clean user lists, collapsed review queues, minimal headers
+
+### 12. Recommendation Approval Pattern
+- **Generation:** Recommendations generated and stored as 'pending' in review queue
+- **User View:** Users see "Pending Approval" message (no content) until approved
+- **Operator Review:** Operators see full recommendation content for review
+- **Approval:** Once approved, recommendations become visible to users
+- **Duplicate Prevention:** Only one pending review per user (updated if regenerated)
+
+### 13. Evaluation Pattern
 - **Metrics Calculation:** Four key metrics calculated for system evaluation
   - Coverage: % users with persona + ≥3 behaviors
   - Explainability: % recommendations with rationales
@@ -80,7 +146,7 @@ Analysis performed on two windows:
 ## Data Models & Relationships
 
 ### Core Entities
-- **User:** Base entity with consent status (user_id, name, consent_status: 'granted'|'revoked', created_at, updated_at)
+- **User:** Base entity with consent status (user_id, name, first_name, last_name, username (unique), password, consent_status: 'granted'|'revoked', created_at, updated_at)
 - **Account:** Financial accounts linked to users (account_id, user_id, type, subtype, available_balance, current_balance, credit_limit, iso_currency_code, holder_category, created_at, updated_at)
 - **Transaction:** Individual transactions linked to accounts (transaction_id, account_id, date, amount, merchant_name, merchant_entity_id, payment_channel, personal_finance_category_primary, personal_finance_category_detailed, pending, created_at)
 - **Liability:** Credit card liabilities linked to accounts (liability_id, account_id, apr_type, apr_percentage, interest_rate, minimum_payment_amount, last_payment_amount, is_overdue, next_payment_due_date, last_statement_balance, created_at, updated_at)
@@ -384,26 +450,57 @@ Example: "This resource, 'Debt Paydown Strategy: The Snowball Method', is recomm
 App
 ├── Login (role selection + user dropdown)
 ├── UserPortal
-│   ├── ConsentPrompt
-│   ├── BehavioralProfile
-│   └── Dashboard (recommendations)
+│   ├── ConsentToggle (always visible)
+│   ├── BehavioralProfile (with consent only)
+│   ├── Dashboard
+│   │   ├── Overview Tab (SpendingInsights, SpendingBreakdown)
+│   │   ├── Transactions Tab (TransactionList)
+│   │   └── Insights Tab (SpendingInsights, SpendingBreakdown)
+│   └── Recommendations (with consent only, approved only)
 └── OperatorPortal
-    ├── UserList
-    ├── SignalViewer
-    ├── RecommendationReview
-    └── MetricsPanel
+    ├── UserList (filterable)
+    ├── SignalViewer (detailed signals)
+    ├── RecommendationReview (approve/override)
+    └── MetricsPanel (system metrics)
 ```
 
 ### State Management
 - **AuthContext:** Role and user selection (localStorage persistence)
-- **UserContext:** Current user data
-- **API Service:** Centralized backend communication
+- **UserContext:** Current user data and profile
+- **Custom Hooks:** useAuth, useConsent, useRecommendations
+- **API Service:** Centralized backend communication with axios interceptors
+- **Local State:** Component-level state with useState for UI state
 
 ### Simplified Authentication Pattern
 - **No passwords:** Demo mode with role selection
 - **User Dropdown:** Select from synthetic users
 - **localStorage:** Persist session across page refreshes
-- **Protected Routes:** Role-based access control
+- **Protected Routes:** Role-based access control (ProtectedRoute component)
+- **Session Management:** Automatic logout on refresh if no stored session
+
+### Consent Management Pattern (Frontend)
+- **ConsentToggle Component:** Always visible toggle switch at top of dashboard
+- **Conditional Rendering:**
+  - With Consent: Behavioral profile, recommendations visible
+  - Without Consent: Only transactions and insights visible
+- **Real-time Updates:** UI updates immediately when consent changes
+- **Data Loading:** Profile and recommendations only load when consent granted
+- **User Feedback:** Clear messaging about what requires consent
+
+### Spending Insights Pattern (Frontend)
+- **Tabbed Interface:** Overview, Transactions, Insights tabs
+- **TransactionList:** Search, filter by category, sort by date/amount/merchant
+- **SpendingBreakdown:** Visual category breakdown with percentages
+- **SpendingInsights:** Summary cards, trends, top merchants
+- **No Consent Required:** All spending features work without consent
+- **Components:** TransactionList, SpendingBreakdown, SpendingInsights
+
+### Recommendation Display Pattern (Frontend)
+- **Approval Status:** Users only see approved recommendations
+- **Pending State:** Shows "Pending Approval" message (no content)
+- **Approved State:** Shows full recommendation content
+- **Status Badges:** Visual indicators for pending/approved status
+- **Auto-refresh:** Recommendations refresh when user returns
 
 ## Testing Patterns
 

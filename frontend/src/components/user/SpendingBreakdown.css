@@ -1,0 +1,90 @@
+.spending-breakdown {
+  padding: var(--spacing-lg);
+}
+
+.spending-breakdown-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 var(--spacing-md) 0;
+}
+
+.spending-breakdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.spending-breakdown-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.spending-breakdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.spending-category-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex: 1;
+}
+
+.spending-category-icon {
+  font-size: 1.25rem;
+}
+
+.spending-category-name {
+  font-weight: 500;
+  color: var(--text-primary);
+  text-transform: capitalize;
+}
+
+.spending-category-count {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.spending-category-amount {
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.spending-category-percentage {
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.spending-breakdown-bar {
+  width: 100%;
+  height: 8px;
+  background-color: var(--background);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.spending-breakdown-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary-color), var(--primary-hover));
+  border-radius: var(--radius-sm);
+  transition: width 0.3s ease;
+}
+
+.spending-breakdown-total {
+  padding-top: var(--spacing-md);
+  border-top: 2px solid var(--border-color);
+  font-size: 1.125rem;
+  color: var(--text-primary);
+  text-align: right;
+}
+

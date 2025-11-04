@@ -17,10 +17,13 @@ router.get('/', (req, res, next) => {
   try {
     const users = User.findAll();
     
-    // Return only id and name for login dropdown
+    // Return id, name, and username for reference
     const userList = users.map(user => ({
       id: user.user_id,
-      name: user.name
+      name: user.name,
+      username: user.username,
+      first_name: user.first_name,
+      last_name: user.last_name
     }));
     
     res.json({
