@@ -8,6 +8,7 @@ const { analyzeIncomeForUser } = require('../features/incomeAnalyzer');
 const { analyzeSubscriptionsForUser } = require('../features/subscriptionDetector');
 const { analyzeSavingsForUser } = require('../features/savingsAnalyzer');
 const { assignPersona } = require('./personaPrioritizer');
+const { requireConsent } = require('../guardrails/consentChecker');
 const Account = require('../../models/Account');
 const User = require('../../models/User');
 
@@ -23,6 +24,9 @@ const User = require('../../models/User');
  */
 function assignPersonaToUser(userId, options = {}) {
   const { useShortTerm = true, useLongTerm = true } = options;
+
+  // Check consent before processing
+  requireConsent(userId);
 
   // Get user data
   const user = User.findById(userId);
