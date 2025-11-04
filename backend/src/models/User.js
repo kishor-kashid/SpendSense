@@ -9,12 +9,12 @@ class User {
    * Create a new user
    * @param {Object} userData - User data
    * @param {string} userData.name - User's name
-   * @param {string} userData.consent_status - Consent status ('pending', 'granted', 'revoked')
+   * @param {string} userData.consent_status - Consent status ('granted', 'revoked')
    * @returns {Object} Created user
    */
   static create(userData) {
     const db = getDatabase();
-    const { name, consent_status = 'pending' } = userData;
+    const { name, consent_status = 'revoked' } = userData;
     
     const stmt = db.prepare(`
       INSERT INTO users (name, consent_status, created_at)

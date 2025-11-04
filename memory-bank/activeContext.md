@@ -1,19 +1,21 @@
 # Active Context: SpendSense
 
 ## Current Status
-**Project Phase:** Backend Core Complete - Ready for API Phase
-**Date:** After PR #14 completion
+**Project Phase:** Backend Complete - Ready for Frontend
+**Date:** After PR #19 completion
 
 ## Current Work Focus
-- **PRs #1-14 Complete:** All behavioral signal detection, persona system, content catalogs, recommendation engine, and guardrails implemented
+- **PRs #1-19 Complete:** All behavioral signal detection, persona system, content catalogs, recommendation engine, guardrails, API endpoints, and evaluation system implemented
 - **Feature detection:** All 4 behavioral signals working (subscriptions, savings, credit, income)
 - **Persona system:** Complete with 5 personas and prioritization logic
 - **Content catalogs:** Education items and partner offers catalogs ready
 - **Recommendation engine:** Complete with rationale generation and data citation
 - **Guardrails:** All guardrails complete (consent, eligibility, tone validation)
-- **Next steps:** Ready to begin PR #15 (REST API - User Endpoints)
+- **API Layer:** User, consent, profile, recommendations, feedback, and operator endpoints complete
+- **Evaluation System:** Complete with coverage, explainability, latency, and auditability metrics
+- **Next steps:** Ready to begin PR #20 (Frontend - Common Components)
 - **Data status:** 75 users, 218 accounts, 8,133 transactions, 66 liabilities loaded
-- **Test status:** 227 tests passing across all modules
+- **Test status:** 316 tests passing across all modules (227 unit + 67 integration + 20 evaluation tests)
 
 ## Recent Changes
 
@@ -158,6 +160,66 @@
     - Data: `backend/data/content/prohibited_phrases.json`
     - Functions: validateTone, validateContent, requireValidTone, checkTone, getToneSummary
 
+15. **PR #15: REST API - User Endpoints** ✅
+    - User routes service (routes/users.js)
+    - GET /users - Returns list of all users (id, name) for login dropdown
+    - GET /users/:id - Returns full user details
+    - Validation middleware (middleware/validator.js) for input validation
+    - Error handler middleware (middleware/errorHandler.js) for consistent error responses
+    - Integration tests (15 tests, all passing)
+    - Routes: `backend/src/routes/users.js`
+    - Middleware: `backend/src/middleware/validator.js`, `backend/src/middleware/errorHandler.js`
+
+16. **PR #16: REST API - Consent Endpoints** ✅
+    - Consent routes service (routes/consent.js)
+    - POST /consent - Grants consent for a user (records opt-in)
+    - GET /consent/:user_id - Returns current consent status
+    - DELETE /consent/:user_id - Revokes consent (opt-out)
+    - Timestamps recorded for all consent operations
+    - Integration tests (18 tests, all passing)
+    - Routes: `backend/src/routes/consent.js`
+    - Updated: Consent status simplified to only 'granted' or 'revoked' (removed 'pending')
+    - Updated: consentChecker.js now checks users.consent_status as fallback
+
+17. **PR #17: REST API - Profile & Recommendations** ✅
+    - Profile routes service (routes/profile.js)
+    - Recommendations routes service (routes/recommendations.js)
+    - GET /profile/:user_id - Returns behavioral profile with detected signals and persona
+    - GET /recommendations/:user_id - Returns 3-5 education items + 1-3 partner offers with rationales
+    - All guardrails applied: consent check, eligibility filter, tone validation
+    - Mandatory disclaimer included in all recommendations
+    - Recommendations automatically stored in review queue for operator oversight
+    - Integration tests (18 tests, all passing)
+    - Routes: `backend/src/routes/profile.js`, `backend/src/routes/recommendations.js`
+
+18. **PR #18: REST API - Feedback & Operator** ✅
+    - Feedback routes service (routes/feedback.js)
+    - Operator routes service (routes/operator.js)
+    - POST /feedback - Records user feedback on recommendations
+    - GET /operator/review - Returns pending recommendations queue
+    - POST /operator/approve - Approves a recommendation
+    - POST /operator/override - Overrides/rejects a recommendation
+    - GET /operator/users - Returns all users with persona info and signals
+    - New models: Feedback.js, RecommendationReview.js
+    - New database tables: feedback, recommendation_reviews
+    - Decision traces logged for auditability
+    - Integration tests (16 tests, all passing)
+    - Routes: `backend/src/routes/feedback.js`, `backend/src/routes/operator.js`
+    - Models: `backend/src/models/Feedback.js`, `backend/src/models/RecommendationReview.js`
+
+19. **PR #19: Evaluation & Metrics System** ✅
+    - Metrics calculator service (eval/metricsCalculator.js)
+    - Report generator service (eval/reportGenerator.js)
+    - Coverage metric: % users with persona + ≥3 behaviors
+    - Explainability metric: % recommendations with rationales
+    - Latency metric: Average recommendation generation time
+    - Auditability metric: % recommendations with decision traces
+    - JSON/CSV/Markdown report generation
+    - Per-user decision trace export
+    - Unit tests (20 tests, all passing)
+    - Services: `backend/src/services/eval/metricsCalculator.js`, `backend/src/services/eval/reportGenerator.js`
+    - Documentation: `backend/docs/EVALUATION.md`
+
 ### Technical Decisions
 - **Frontend build tool:** Vite (not Create React App)
 - **Database driver:** better-sqlite3 (synchronous, better performance)
@@ -172,13 +234,17 @@
 ### Phase 2: Backend Core (PRs #4-14) - COMPLETE ✅
 **All guardrails complete!** Ready for Phase 3: Backend API
 
-### Phase 3: Backend API (PRs #15-19) - Next Up
-**Next up: PR #15: REST API - User Endpoints**
-- Implement GET /users (list all users for login dropdown)
-- Implement GET /users/:id (get user details)
-- Add validation middleware
-- Add error handling
-- Write integration tests
+### Phase 3: Backend API (PRs #15-19) - COMPLETE ✅
+**All backend tasks complete!** Ready for Phase 4: Frontend Core
+
+### Phase 4: Frontend Core (PRs #20-21) - Next Up
+**Next up: PR #20: Frontend - Common Components**
+- Create Button component
+- Create Card component
+- Create Loading spinner component
+- Create Modal component
+- Set up global styles
+- Create utility functions (formatters, validators)
 
 ## Active Decisions & Considerations
 
@@ -223,8 +289,9 @@
 5. ✅ Recommendation Engine (PR #11) - COMPLETE
 6. ✅ Consent Management (PR #12) - COMPLETE
 7. ✅ Guardrails (PRs 13-14) - COMPLETE
-8. API endpoints (PRs 15-19) - NEXT
-9. Frontend interfaces (PRs 20-26)
+8. ✅ API endpoints (PRs 15-18) - COMPLETE
+9. ✅ Evaluation & Metrics (PR #19) - COMPLETE
+10. Frontend interfaces (PRs 20-26) - NEXT
 
 ## Current Blockers
 - None at this time
@@ -243,6 +310,13 @@
 11. ✅ **Consent management:** Complete with enforcement in processing paths
 12. ✅ **Eligibility filter:** Complete with income, credit score, account type, and prohibited product checks
 13. ✅ **Tone validator:** Complete with shaming/judgmental phrase detection and content validation
+14. ✅ **User API endpoints:** Complete with validation and error handling
+15. ✅ **Consent API endpoints:** Complete with grant/revoke/status operations
+16. ✅ **Profile & Recommendations API:** Complete with guardrails and tone validation
+17. ✅ **Feedback & Operator API:** Complete with review queue and approval workflow
+18. ✅ **Consent status:** Simplified to only 'granted' or 'revoked' (removed 'pending')
+19. ✅ **Evaluation & Metrics System:** Complete with coverage, explainability, latency, and auditability metrics
+20. ✅ **Report Generation:** JSON, CSV, and Markdown reports with decision trace exports
 
 ## Questions to Resolve
 1. **Custom Persona (Persona 6):** Deferred - 5 personas implemented, custom persona can be added later if needed
@@ -261,7 +335,9 @@
 - Consent management: 26 tests passing
 - Eligibility filter: 32 tests passing
 - Tone validator: 42 tests passing
-- Total: 227 tests passing across all modules
+- API integration tests: 67 tests passing (user, consent, profile, recommendations, feedback, operator)
+- Evaluation tests: 20 tests passing (metrics calculation, report generation)
+- Total: 316 tests passing across all modules (227 unit + 67 integration + 20 evaluation)
 - Test command: `npm test` (runs Jest with test database)
 
 ## Key Metrics to Track
@@ -281,6 +357,11 @@
 - Consent management (PR #12) successfully completed with enforcement
 - Eligibility filter (PR #13) successfully completed with comprehensive checks
 - Tone validator (PR #14) successfully completed with phrase detection
-- All unit tests passing (227/227)
-- Backend core phase (PRs #1-14) complete - ready for API phase
+- User API endpoints (PR #15) successfully completed with validation middleware
+- Consent API endpoints (PR #16) successfully completed with status management
+- Profile & Recommendations API (PR #17) successfully completed with all guardrails
+- Feedback & Operator API (PR #18) successfully completed with review queue
+- Evaluation & Metrics System (PR #19) successfully completed with all 4 metrics
+- All tests passing (316/316: 227 unit + 67 integration + 20 evaluation)
+- Backend phase (PRs #1-19) complete - ready for frontend development
 - Following structured PR approach for organization

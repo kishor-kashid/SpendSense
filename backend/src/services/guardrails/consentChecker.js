@@ -4,14 +4,24 @@
  */
 
 const Consent = require('../../models/Consent');
+const User = require('../../models/User');
 
 /**
  * Check if user has granted consent
+ * Checks consent table first, then falls back to users.consent_status
  * @param {number} userId - User ID
  * @returns {boolean} True if user has consented
  */
 function hasConsent(userId) {
-  return Consent.hasConsent(userId);
+  // Check consent table first (authoritative source)
+  if (Consent.hasConsent(userId)) {
+    return true;
+  }
+  
+  // Fallback: Check users table consent_status field
+  // This handles cases where users were loaded with consent_status but no consent record was created
+  const user = User.findById(userId);
+  return user && user.consent_status === 'granted';
 }
 
 /**
@@ -28,31 +38,60 @@ function requireConsent(userId) {
 
 /**
  * Get consent status for a user
+ * Checks consent table first, then falls back to users.consent_status
  * @param {number} userId - User ID
  * @returns {Object} Consent status object
  */
 function getConsentStatus(userId) {
   const consent = Consent.findByUserId(userId);
   
-  if (!consent) {
+  // If consent record exists in consent table, use it (this is the authoritative source)
+  if (consent) {
     return {
       user_id: userId,
-      has_consent: false,
-      status: 'no_consent',
-      message: 'No consent record found. User has not opted in.',
-      timestamp: null
+      has_consent: consent.opted_in === 1,
+      status: consent.opted_in === 1 ? 'granted' : 'revoked',
+      message: consent.opted_in === 1 
+        ? 'User has granted consent for data processing.'
+        : 'User has revoked consent. Data processing is blocked.',
+      timestamp: consent.timestamp,
+      consent_id: consent.consent_id
     };
   }
 
+  // Fallback: Check users table consent_status field
+  // This handles cases where users were loaded with consent_status but no consent record was created
+  const user = User.findById(userId);
+  if (user) {
+    if (user.consent_status === 'granted') {
+      return {
+        user_id: userId,
+        has_consent: true,
+        status: 'granted',
+        message: 'User has granted consent for data processing.',
+        timestamp: null, // No explicit consent record timestamp
+        consent_id: null
+      };
+    } else if (user.consent_status === 'revoked') {
+      return {
+        user_id: userId,
+        has_consent: false,
+        status: 'revoked',
+        message: 'User has revoked consent. Data processing is blocked.',
+        timestamp: null,
+        consent_id: null
+      };
+    }
+    // If consent_status is null or any other value, treat as no_consent
+  }
+
+  // No consent found and user doesn't exist or has no consent_status
   return {
     user_id: userId,
-    has_consent: consent.opted_in === 1,
-    status: consent.opted_in === 1 ? 'granted' : 'revoked',
-    message: consent.opted_in === 1 
-      ? 'User has granted consent for data processing.'
-      : 'User has revoked consent. Data processing is blocked.',
-    timestamp: consent.timestamp,
-    consent_id: consent.consent_id
+    has_consent: false,
+    status: 'no_consent',
+    message: 'No consent record found. User has not opted in.',
+    timestamp: null
   };
 }
 

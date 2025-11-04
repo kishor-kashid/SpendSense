@@ -30,13 +30,13 @@ describe('Consent Management', () => {
     // Create test users
     const user1 = User.create({
       name: 'Consent Test User 1',
-      consent_status: 'pending'
+      consent_status: 'revoked'
     });
     testUserId = user1.user_id;
 
     const user2 = User.create({
       name: 'Consent Test User 2',
-      consent_status: 'pending'
+      consent_status: 'revoked'
     });
     testUserId2 = user2.user_id;
   });
@@ -141,6 +141,9 @@ describe('Consent Management', () => {
       const db = require('../../src/config/database').getDatabase();
       db.prepare('DELETE FROM consent WHERE user_id = ?').run(testUserId);
       
+      // Also set user consent_status to revoked to ensure we get revoked status
+      User.update(testUserId, { consent_status: 'revoked' });
+      
       const status = getConsentStatus(testUserId);
       
       expect(status).toHaveProperty('user_id');
@@ -148,7 +151,8 @@ describe('Consent Management', () => {
       expect(status).toHaveProperty('status');
       expect(status).toHaveProperty('message');
       expect(status.has_consent).toBe(false);
-      expect(status.status).toBe('no_consent');
+      // Status should be 'revoked' since user has revoked consent
+      expect(status.status).toBe('revoked');
     });
 
     test('should get consent status for user with granted consent', () => {
@@ -368,13 +372,13 @@ describe('Eligibility Filter', () => {
     // Create test users
     const user1 = User.create({
       name: 'Eligibility Test User 1',
-      consent_status: 'pending'
+      consent_status: 'revoked'
     });
     testUserId = user1.user_id;
 
     const user2 = User.create({
       name: 'Eligibility Test User 2',
-      consent_status: 'pending'
+      consent_status: 'revoked'
     });
     testUserId2 = user2.user_id;
   });
