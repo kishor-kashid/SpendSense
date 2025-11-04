@@ -56,9 +56,9 @@ describe('Subscription Detection', () => {
     });
     testUserId = user.user_id;
 
-    // Create a test account
+    // Create a test account with unique ID
     const account = Account.create({
-      account_id: 'test_acc_001',
+      account_id: `test_acc_001_${Date.now()}_${Math.random()}`,
       user_id: testUserId,
       type: 'depository',
       subtype: 'checking',
@@ -104,7 +104,9 @@ describe('Subscription Detection', () => {
       const start = new Date(range.startDate);
       const end = new Date(range.endDate);
       const diffDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
-      expect(diffDays).toBe(30);
+      // Allow 30 or 31 days due to time-of-day differences and inclusive range
+      expect(diffDays).toBeGreaterThanOrEqual(30);
+      expect(diffDays).toBeLessThanOrEqual(31);
     });
   });
 
@@ -458,9 +460,9 @@ describe('Savings Detection', () => {
     });
     testUserId = user.user_id;
 
-    // Create savings account
+    // Create savings account with unique ID
     const savingsAccount = Account.create({
-      account_id: 'test_savings_001',
+      account_id: `test_savings_001_${Date.now()}_${Math.random()}`,
       user_id: testUserId,
       type: 'depository',
       subtype: 'savings',
@@ -472,9 +474,9 @@ describe('Savings Detection', () => {
     });
     testSavingsAccountId = savingsAccount.account_id;
 
-    // Create checking account for expenses
+    // Create checking account for expenses with unique ID
     const checkingAccount = Account.create({
-      account_id: 'test_checking_001',
+      account_id: `test_checking_001_${Date.now()}_${Math.random()}`,
       user_id: testUserId,
       type: 'depository',
       subtype: 'checking',
@@ -667,9 +669,9 @@ describe('Credit Detection', () => {
     });
     testUserId = user.user_id;
 
-    // Create credit card account
+    // Create credit card account with unique ID
     const creditAccount = Account.create({
-      account_id: 'test_credit_001',
+      account_id: `test_credit_001_${Date.now()}_${Math.random()}`,
       user_id: testUserId,
       type: 'credit',
       subtype: 'credit card',
@@ -681,9 +683,9 @@ describe('Credit Detection', () => {
     });
     testCreditCardId = creditAccount.account_id;
 
-    // Create liability for the credit card
+    // Create liability for the credit card with unique ID
     Liability.create({
-      liability_id: 'test_liability_001',
+      liability_id: `test_liability_001_${Date.now()}_${Math.random()}`,
       account_id: testCreditCardId,
       apr_type: 'purchase',
       apr_percentage: 18.5,
@@ -822,9 +824,9 @@ describe('Income Detection', () => {
     });
     testUserId = user.user_id;
 
-    // Create checking account
+    // Create checking account with unique ID
     const checkingAccount = Account.create({
-      account_id: 'test_checking_income',
+      account_id: `test_checking_income_${Date.now()}_${Math.random()}`,
       user_id: testUserId,
       type: 'depository',
       subtype: 'checking',

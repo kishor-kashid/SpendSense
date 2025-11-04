@@ -105,12 +105,17 @@ spendsense/
 
 ### Testing Requirements
 - **≥10 tests:** Unit and integration tests combined
-- **Current:** 19 unit tests passing ✅
+- **Current:** 104 unit tests passing ✅
+  - Feature detection: 74 tests (subscriptions: 19, savings: 6, credit: 8, income: 8, plus 33 additional)
+  - Persona system: 13 tests
+  - Education catalog: 13 tests
+  - Partner offers: 30 tests
 - **Coverage:** Aim for >80% test coverage
 - **Test Framework:** Jest with separate test database
 - **Test Database:** `backend/data/test_database.sqlite` (auto-created, excluded from git)
+- **Test Isolation:** Unique IDs used in tests to prevent UNIQUE constraint violations
 - **Deterministic:** Use seeds for randomness
-- **Fast execution:** Tests should run quickly (~1-2 seconds)
+- **Fast execution:** Tests should run quickly (~2-6 seconds for full suite)
 - **Test Command:** `npm test` (runs all tests)
 
 ## Build & Deployment

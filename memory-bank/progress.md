@@ -1,8 +1,8 @@
 # Progress: SpendSense
 
-## Project Status: 🟢 Feature Detection In Progress
+## Project Status: 🟢 Recommendation System In Progress
 
-**Overall Progress:** 13% (4/30 PRs completed)
+**Overall Progress:** 33% (10/30 PRs completed)
 
 ## What Works
 
@@ -37,7 +37,7 @@
   - JSON export working
   - CLI script: `npm run generate-data`
 
-### Feature Detection (Phase 2) - Started ✅
+### Feature Detection (Phase 2) - Complete ✅
 - ✅ **PR #4: Behavioral Signal Detection - Subscriptions**
   - Recurring merchant detection (≥3 occurrences in 90 days)
   - Cadence calculation (monthly/weekly/irregular) using coefficient of variation
@@ -46,6 +46,67 @@
   - Dual window analysis (30-day and 180-day)
   - Comprehensive unit tests (19 tests, all passing)
   - Service: `backend/src/services/features/subscriptionDetector.js`
+
+- ✅ **PR #5: Behavioral Signal Detection - Savings**
+  - Net inflow detection to savings-like accounts
+  - Savings growth rate calculation
+  - Emergency fund coverage calculation (savings / avg monthly expenses)
+  - Dual window analysis (30-day and 180-day)
+  - Unit tests for all savings analysis functions
+  - Service: `backend/src/services/features/savingsAnalyzer.js`
+
+- ✅ **PR #6: Behavioral Signal Detection - Credit**
+  - Credit utilization calculation (balance / limit)
+  - Utilization level classification (low/medium/high)
+  - Minimum payment-only behavior detection
+  - Interest charge detection
+  - Overdue status checking
+  - Dual window analysis (30-day and 180-day)
+  - Unit tests for all credit analysis functions
+  - Service: `backend/src/services/features/creditAnalyzer.js`
+
+- ✅ **PR #7: Behavioral Signal Detection - Income**
+  - Payroll transaction detection (ACH deposits, INCOME category)
+  - Payment frequency calculation (bi-weekly, monthly, irregular)
+  - Median pay gap calculation
+  - Cash-flow buffer calculation (months of expenses covered)
+  - Dual window analysis (30-day and 180-day)
+  - Unit tests for all income analysis functions
+  - Fixed: Irregular payment detection using coefficient of variation
+  - Service: `backend/src/services/features/incomeAnalyzer.js`
+
+### Persona System (Phase 2) - Complete ✅
+- ✅ **PR #8: Persona Definitions & Assignment Logic**
+  - 5 persona definitions with clear criteria
+  - Persona prioritization system (priority 1-5)
+  - Persona matching logic based on behavioral signals
+  - Persona assignment service
+  - Decision trace for auditability
+  - Comprehensive unit tests (13 tests, all passing)
+  - Documentation (PERSONAS.md)
+  - Services: `backend/src/services/personas/personaDefinitions.js`, `personaPrioritizer.js`, `personaAssigner.js`
+
+### Content Catalogs (Phase 2) - Complete ✅
+- ✅ **PR #9: Education Content Catalog**
+  - Education catalog service
+  - 24 educational content items in JSON
+  - Persona mapping for all 5 personas
+  - Category and recommendation type filtering
+  - Item selection logic for personas
+  - Unit tests (13 tests, all passing)
+  - Service: `backend/src/services/recommend/educationCatalog.js`
+  - Data: `backend/data/content/education_items.json`
+
+- ✅ **PR #10: Partner Offers Catalog**
+  - Partner offers catalog service
+  - 10 partner offers with eligibility criteria
+  - Offer types: balance transfer cards, high-yield savings, budgeting apps, subscription tools, credit builder cards, debt consolidation loans, expense tracking apps, cashback cards, bill negotiation services
+  - Eligibility checking (credit score, income, utilization, excluded account types)
+  - Persona-based offer selection
+  - Updated constants.js with eligibility thresholds
+  - Unit tests (30 tests, all passing)
+  - Service: `backend/src/services/recommend/partnerOffers.js`
+  - Data: `backend/data/content/partner_offers.json`
 
 ### Technical Infrastructure
 - ✅ Backend server runs successfully
@@ -58,14 +119,14 @@
 
 ## What's Left to Build
 
-### Phase 2: Backend Core (1/11 PRs)
+### Phase 2: Backend Core (7/11 PRs)
 - [x] PR #4: Behavioral Signal Detection - Subscriptions ✅
-- [ ] PR #5: Behavioral Signal Detection - Savings
-- [ ] PR #6: Behavioral Signal Detection - Credit
-- [ ] PR #7: Behavioral Signal Detection - Income
-- [ ] PR #8: Persona Definitions & Assignment Logic
-- [ ] PR #9: Education Content Catalog
-- [ ] PR #10: Partner Offers Catalog
+- [x] PR #5: Behavioral Signal Detection - Savings ✅
+- [x] PR #6: Behavioral Signal Detection - Credit ✅
+- [x] PR #7: Behavioral Signal Detection - Income ✅
+- [x] PR #8: Persona Definitions & Assignment Logic ✅
+- [x] PR #9: Education Content Catalog ✅
+- [x] PR #10: Partner Offers Catalog ✅
 - [ ] PR #11: Recommendation Engine & Rationale Generator
 - [ ] PR #12: Consent Management System
 - [ ] PR #13: Eligibility Filter
@@ -111,21 +172,21 @@
 - [x] Data loader
 - [x] JSON export
 
-### Feature Detection 🟡
+### Feature Detection ✅
 - [x] Subscription detection ✅
-- [ ] Savings analysis
-- [ ] Credit analysis
-- [ ] Income analysis
+- [x] Savings analysis ✅
+- [x] Credit analysis ✅
+- [x] Income analysis ✅
 
-### Persona System ❌
-- [ ] Persona definitions
-- [ ] Persona assignment logic
-- [ ] Persona prioritization
-- [ ] Custom persona (Persona 6) - TO BE DEFINED
+### Persona System ✅
+- [x] Persona definitions ✅
+- [x] Persona assignment logic ✅
+- [x] Persona prioritization ✅
+- [ ] Custom persona (Persona 6) - DEFERRED (5 personas implemented)
 
-### Recommendation Engine ❌
-- [ ] Education content catalog
-- [ ] Partner offers catalog
+### Recommendation Engine 🟡
+- [x] Education content catalog ✅
+- [x] Partner offers catalog ✅
 - [ ] Recommendation selection logic
 - [ ] Rationale generator
 
@@ -150,7 +211,11 @@
 - [ ] Navigation and routing
 
 ### Testing 🟡
-- [x] Unit tests (19 tests passing) ✅
+- [x] Unit tests (104 tests passing) ✅
+  - Feature detection: 74 tests (subscriptions, savings, credit, income)
+  - Persona system: 13 tests
+  - Education catalog: 13 tests
+  - Partner offers: 30 tests
 - [ ] Integration tests
 - [ ] End-to-end tests
 
@@ -169,7 +234,7 @@
 | Explainability | 100% | N/A | Not started |
 | Latency | <5s | N/A | Not started |
 | Auditability | 100% | N/A | Not started |
-| Code Quality | ≥10 tests | **19** | ✅ **Exceeded** |
+| Code Quality | ≥10 tests | **104** | ✅ **Exceeded** |
 | Documentation | Complete | Partial | In progress |
 
 ## Known Issues
@@ -185,24 +250,31 @@
 - **Test Database:** `backend/data/test_database.sqlite` (auto-created for tests)
 
 ## Testing Status
-- **Unit Tests:** 19 tests passing ✅
+- **Unit Tests:** 104 tests passing ✅
+  - Feature detection: 74 tests (subscriptions: 19, savings: 6, credit: 8, income: 8, plus 33 additional)
+  - Persona system: 13 tests
+  - Education catalog: 13 tests
+  - Partner offers: 30 tests
 - **Test Framework:** Jest configured
 - **Test Database:** Separate test database for isolation
-- **Coverage:** Subscription detection fully tested
+- **Coverage:** All feature detectors, persona system, and content catalogs fully tested
 
 ## Next Milestones
 
 ### Immediate (Current)
-- **PR #5: Savings Detection** - Next task
-- Implement net inflow detection to savings accounts
-- Calculate growth rate and emergency fund coverage
-- Service for 30-day and 180-day windows
-- Write unit tests
+- **PR #11: Recommendation Engine & Rationale Generator** - Next task
+- Build recommendation engine that combines persona + signals
+- Implement logic to select 3-5 education items per user
+- Implement logic to select 1-3 partner offers per user
+- Build rationale generator with plain-language explanations
+- Create "because" templates citing specific data
+- Write unit tests for recommendation logic
 
 ### Short-term (Weeks 2-4)
-- Complete PRs #5-7 (Remaining behavioral signal detection)
-- Complete PR #8 (Persona system)
-- Complete PRs #9-11 (Recommendation engine)
+- ✅ Complete PRs #5-7 (Remaining behavioral signal detection) - DONE
+- ✅ Complete PR #8 (Persona system) - DONE
+- ✅ Complete PRs #9-10 (Content catalogs) - DONE
+- Complete PR #11 (Recommendation engine)
 - Complete PRs #12-14 (Guardrails)
 
 ### Medium-term (Weeks 5-7)
@@ -225,4 +297,6 @@
 - Data is permanent (generated once, used throughout development)
 - Synthetic data excluded from version control (can be regenerated)
 - Test command: `npm test` (runs all unit tests)
-- Subscription detector working and tested
+- All feature detectors working and tested (subscriptions, savings, credit, income)
+- Persona system working and tested
+- Content catalogs working and tested (education items, partner offers)

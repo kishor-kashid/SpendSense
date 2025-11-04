@@ -1,18 +1,21 @@
 # Active Context: SpendSense
 
 ## Current Status
-**Project Phase:** Feature Detection In Progress
-**Date:** After PR #4 completion
+**Project Phase:** Recommendation System In Progress
+**Date:** After PR #10 completion
 
 ## Current Work Focus
-- **PR #4 Complete:** Subscription detection service implemented and tested
-- **Feature detection:** First behavioral signal detection service working
-- **Next steps:** Ready to begin PR #5 (Behavioral Signal Detection - Savings)
+- **PRs #5-10 Complete:** All behavioral signal detection, persona system, and content catalogs implemented
+- **Feature detection:** All 4 behavioral signals working (subscriptions, savings, credit, income)
+- **Persona system:** Complete with 5 personas and prioritization logic
+- **Content catalogs:** Education items and partner offers catalogs ready
+- **Next steps:** Ready to begin PR #11 (Recommendation Engine & Rationale Generator)
 - **Data status:** 75 users, 218 accounts, 8,133 transactions, 66 liabilities loaded
+- **Test status:** 104 tests passing across all modules
 
 ## Recent Changes
 
-### Completed (PRs #1-4)
+### Completed (PRs #1-10)
 1. **PR #1: Project Setup & Infrastructure** ✅
    - Monorepo structure initialized (backend + frontend)
    - Node.js/Express backend configured (port 3001)
@@ -48,6 +51,59 @@
    - Comprehensive unit tests (19 tests, all passing)
    - Fixed: Cadence detection using coefficient of variation for irregular patterns
 
+5. **PR #5: Behavioral Signal Detection - Savings** ✅
+   - Net inflow detection to savings-like accounts
+   - Savings growth rate calculation
+   - Emergency fund coverage calculation (savings / avg monthly expenses)
+   - Service for both 30-day and 180-day windows
+   - Unit tests for all savings analysis functions
+
+6. **PR #6: Behavioral Signal Detection - Credit** ✅
+   - Credit utilization calculation (balance / limit)
+   - Utilization level classification (low/medium/high)
+   - Minimum payment-only behavior detection
+   - Interest charge detection
+   - Overdue status checking
+   - Service for both 30-day and 180-day windows
+   - Unit tests for all credit analysis functions
+
+7. **PR #7: Behavioral Signal Detection - Income** ✅
+   - Payroll transaction detection (ACH deposits, INCOME category)
+   - Payment frequency calculation (bi-weekly, monthly, irregular)
+   - Median pay gap calculation
+   - Cash-flow buffer calculation (months of expenses covered)
+   - Service for both 30-day and 180-day windows
+   - Unit tests for all income analysis functions
+   - Fixed: Irregular payment detection using coefficient of variation
+
+8. **PR #8: Persona Definitions & Assignment Logic** ✅
+   - 5 persona definitions with clear criteria
+   - Persona prioritization system (priority 1-5)
+   - Persona matching logic based on behavioral signals
+   - Persona assignment service
+   - Decision trace for auditability
+   - Comprehensive unit tests
+   - Documentation (PERSONAS.md)
+
+9. **PR #9: Education Content Catalog** ✅
+   - Education catalog service (educationCatalog.js)
+   - 24 educational content items in JSON
+   - Persona mapping for all 5 personas
+   - Category and recommendation type filtering
+   - Item selection logic for personas
+   - Unit tests (13 tests, all passing)
+   - Fixed: File path resolution for JSON content
+
+10. **PR #10: Partner Offers Catalog** ✅
+    - Partner offers catalog service (partnerOffers.js)
+    - 10 partner offers with eligibility criteria
+    - Offer types: balance transfer cards, high-yield savings, budgeting apps, subscription tools, credit builder cards, debt consolidation loans, expense tracking apps, cashback cards, bill negotiation services
+    - Eligibility checking (credit score, income, utilization, excluded account types)
+    - Persona-based offer selection
+    - Updated constants.js with eligibility thresholds
+    - Unit tests (30 tests, all passing)
+    - Fixed: Account type matching logic for excluded account types
+
 ### Technical Decisions
 - **Frontend build tool:** Vite (not Create React App)
 - **Database driver:** better-sqlite3 (synchronous, better performance)
@@ -59,17 +115,20 @@
 
 ## Next Steps (Immediate)
 
-### Phase 2: Backend Core (PRs #4-7)
-**Next up: PR #5: Behavioral Signal Detection - Savings**
-- Detect net inflow to savings-like accounts
-- Calculate savings growth rate
-- Calculate emergency fund coverage
-- Service for 30-day and 180-day windows
-- Unit tests for savings analysis
+### Phase 2: Backend Core (PRs #4-14) - In Progress
+**Next up: PR #11: Recommendation Engine & Rationale Generator**
+- Build recommendation engine that combines persona + signals
+- Implement logic to select 3-5 education items per user
+- Implement logic to select 1-3 partner offers per user
+- Build rationale generator with plain-language explanations
+- Create "because" templates citing specific data
+- Ensure recommendations include concrete numbers
+- Write unit tests for recommendation logic
 
 Then continue with:
-- PR #6: Credit Detection
-- PR #7: Income Detection
+- PR #12: Consent Management System
+- PR #13: Eligibility Filter
+- PR #14: Tone Validator
 
 ## Active Decisions & Considerations
 
@@ -108,10 +167,10 @@ Then continue with:
 ### Development Priority
 **Focus Areas:**
 1. ✅ Foundation (PRs 1-3) - COMPLETE
-2. ✅ Subscription Detection (PR #4) - COMPLETE
-3. Core behavioral detection (PRs 5-7) - IN PROGRESS
-4. Persona system (PR #8)
-5. Recommendation engine (PR #11)
+2. ✅ Behavioral Signal Detection (PRs 4-7) - COMPLETE
+3. ✅ Persona System (PR #8) - COMPLETE
+4. ✅ Content Catalogs (PRs 9-10) - COMPLETE
+5. Recommendation engine (PR #11) - NEXT
 6. Guardrails (PRs 12-14)
 7. API endpoints (PRs 15-18)
 8. Frontend interfaces (PRs 20-26)
@@ -126,9 +185,12 @@ Then continue with:
 4. ✅ **Git strategy:** Synthetic data excluded from version control
 5. ✅ **Testing framework:** Jest configured with test database
 6. ✅ **Cadence detection:** Coefficient of variation used for irregular pattern detection
+7. ✅ **Persona system:** 5 personas implemented (custom persona deferred)
+8. ✅ **Content catalogs:** Education items and partner offers catalogs implemented
+9. ✅ **Test isolation:** Unique IDs in tests to prevent UNIQUE constraint violations
 
 ## Questions to Resolve
-1. **Custom Persona (Persona 6):** Criteria and rationale to be defined during PR #8
+1. **Custom Persona (Persona 6):** Deferred - 5 personas implemented, custom persona can be added later if needed
 
 ## Active Development Notes
 - Database file: `backend/data/database.sqlite` (persistent)
@@ -136,7 +198,11 @@ Then continue with:
 - Synthetic data: Generated in `backend/data/synthetic/` (excluded from git)
 - Data can be regenerated with: `npm run generate-data [userCount] [daysOfHistory]`
 - All models working correctly with foreign key constraints
-- Subscription detector: 19 unit tests all passing
+- All feature detectors: 74 tests passing (subscriptions, savings, credit, income)
+- Persona system: 13 tests passing
+- Education catalog: 13 tests passing
+- Partner offers catalog: 30 tests passing
+- Total: 104 tests passing across all modules
 - Test command: `npm test` (runs Jest with test database)
 
 ## Key Metrics to Track
@@ -144,11 +210,13 @@ Then continue with:
 - Explainability: % recommendations with rationales (target: 100%)
 - Latency: Recommendation generation time (target: <5s)
 - Auditability: % recommendations with decision traces (target: 100%)
-- Test coverage: Number of passing tests (target: ≥10) - **Current: 19 tests passing** ✅
+- Test coverage: Number of passing tests (target: ≥10) - **Current: 104 tests passing** ✅
 
 ## Communication Notes
 - Foundation phase (PRs 1-3) successfully completed
-- Subscription detection (PR #4) successfully completed
-- All unit tests passing (19/19)
-- Ready to proceed with savings detection (PR #5)
+- All behavioral signal detection (PRs 4-7) successfully completed
+- Persona system (PR #8) successfully completed
+- Content catalogs (PRs 9-10) successfully completed
+- All unit tests passing (104/104)
+- Ready to proceed with recommendation engine (PR #11)
 - Following structured PR approach for organization
