@@ -66,6 +66,17 @@ Analysis performed on two windows:
 - **Approval Workflow:** Operators can approve or override recommendations
 - **Audit Trail:** Operator notes, reviewed_by, and timestamps recorded
 
+### 8. Evaluation Pattern
+- **Metrics Calculation:** Four key metrics calculated for system evaluation
+  - Coverage: % users with persona + ≥3 behaviors
+  - Explainability: % recommendations with rationales
+  - Latency: Average recommendation generation time
+  - Auditability: % recommendations with decision traces
+- **Report Generation:** Multiple output formats (JSON, CSV, Markdown)
+- **Decision Trace Export:** Per-user decision traces exported for audit
+- **Service:** `backend/src/services/eval/metricsCalculator.js`, `backend/src/services/eval/reportGenerator.js`
+- **Targets:** 100% coverage, 100% explainability, <5s latency, 100% auditability
+
 ## Data Models & Relationships
 
 ### Core Entities

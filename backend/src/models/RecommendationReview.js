@@ -123,6 +123,21 @@ class RecommendationReview {
       decision_trace: result.decision_trace ? JSON.parse(result.decision_trace) : null
     }));
   }
+
+  /**
+   * Find all reviews
+   * @returns {Array} Array of all review records
+   */
+  static findAll() {
+    const db = getDatabase();
+    const results = db.prepare('SELECT * FROM recommendation_reviews ORDER BY created_at DESC').all();
+    
+    return results.map(result => ({
+      ...result,
+      recommendation_data: JSON.parse(result.recommendation_data),
+      decision_trace: result.decision_trace ? JSON.parse(result.decision_trace) : null
+    }));
+  }
 }
 
 module.exports = RecommendationReview;
