@@ -28,14 +28,23 @@ describe('Consent Management', () => {
     await initializeDatabase();
     
     // Create test users
+    const uniqueId = Date.now();
     const user1 = User.create({
       name: 'Consent Test User 1',
+      first_name: 'Consent',
+      last_name: 'Test1',
+      username: `consenttest1${uniqueId}`,
+      password: 'consenttest1123',
       consent_status: 'revoked'
     });
     testUserId = user1.user_id;
 
     const user2 = User.create({
       name: 'Consent Test User 2',
+      first_name: 'Consent',
+      last_name: 'Test2',
+      username: `consenttest2${uniqueId}`,
+      password: 'consenttest2123',
       consent_status: 'revoked'
     });
     testUserId2 = user2.user_id;
@@ -370,14 +379,23 @@ describe('Eligibility Filter', () => {
     await initializeDatabase();
     
     // Create test users
+    const uniqueId = Date.now();
     const user1 = User.create({
       name: 'Eligibility Test User 1',
+      first_name: 'Eligibility',
+      last_name: 'Test1',
+      username: `eligibilitytest1${uniqueId}`,
+      password: 'eligibilitytest1123',
       consent_status: 'revoked'
     });
     testUserId = user1.user_id;
 
     const user2 = User.create({
       name: 'Eligibility Test User 2',
+      first_name: 'Eligibility',
+      last_name: 'Test2',
+      username: `eligibilitytest2${uniqueId}`,
+      password: 'eligibilitytest2123',
       consent_status: 'revoked'
     });
     testUserId2 = user2.user_id;

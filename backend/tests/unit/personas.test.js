@@ -97,8 +97,13 @@ describe('Persona Assignment Logic', () => {
   beforeAll(async () => {
     await initializeDatabase();
     
+    const uniqueId = Date.now();
     const user = User.create({
       name: 'Test User',
+      first_name: 'Test',
+      last_name: 'User',
+      username: `testuser${uniqueId}`,
+      password: 'testuser123',
       consent_status: 'granted'
     });
     testUserId = user.user_id;
@@ -372,8 +377,13 @@ describe('Persona Assignment Logic', () => {
 
   describe('New User Persona', () => {
     test('should match new user with limited accounts', async () => {
+      const uniqueId = Date.now();
       const newUser = User.create({
         name: 'New User Test',
+        first_name: 'New',
+        last_name: 'User',
+        username: `newusertest${uniqueId}`,
+        password: 'newusertest123',
         consent_status: 'granted'
       });
 
@@ -437,8 +447,13 @@ describe('Persona Assignment Logic', () => {
 
     test('should handle user with no matching personas (fallback to New User)', async () => {
       // Create user with minimal data
+      const uniqueId = Date.now() + 1;
       const minimalUser = User.create({
         name: 'Minimal User',
+        first_name: 'Minimal',
+        last_name: 'User',
+        username: `minimaluser${uniqueId}`,
+        password: 'minimaluser123',
         consent_status: 'granted'
       });
 
