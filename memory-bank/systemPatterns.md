@@ -35,6 +35,8 @@ All recommendations pass through multiple guardrails:
 - **Eligibility Filter:** ✅ Must meet product requirements (PR #13 - implemented)
 - **Tone Validator:** ✅ Must pass language checks (PR #14 - implemented)
 - **Disclaimer:** ✅ Must include mandatory disclaimer (PR #11 - implemented)
+- **Guardrails Applied:** All guardrails enforced in recommendation generation (PR #17)
+- **Tone Validation:** Applied to all recommendation content (title, description, rationale)
 
 ### 4. Explainability Pattern
 Every recommendation includes:
@@ -48,14 +50,32 @@ Analysis performed on two windows:
 - **180-day window:** Long-term patterns
 - Both windows inform persona assignment and recommendations
 
+### 6. API Request/Response Pattern
+- **Request Validation:** All inputs validated via middleware
+- **Consent Enforcement:** Profile and recommendations require consent (403 if not granted)
+- **Error Handling:** Consistent error format across all endpoints
+- **Response Format:**
+  - Success: `{ success: true, data: {...} }`
+  - Error: `{ success: false, error: { message, code } }`
+- **Integration:** All services integrated via REST API endpoints
+
+### 7. Operator Review Pattern
+- **Automatic Storage:** Recommendations automatically stored in review queue when generated
+- **Review Queue:** Pending recommendations stored in `recommendation_reviews` table
+- **Decision Traces:** Full audit trail stored with each recommendation
+- **Approval Workflow:** Operators can approve or override recommendations
+- **Audit Trail:** Operator notes, reviewed_by, and timestamps recorded
+
 ## Data Models & Relationships
 
 ### Core Entities
-- **User:** Base entity with consent status (user_id, name, consent_status, created_at)
-- **Account:** Linked to User, has type/subtype and balances (account_id, user_id, type, subtype, available_balance, current_balance, credit_limit)
-- **Transaction:** Linked to Account, has date, amount, merchant, category (transaction_id, account_id, date, amount, merchant_name, category, pending)
-- **Liability:** Linked to Account, has APR, payment details, overdue status (liability_id, account_id, APR, payment details, overdue)
-- **Consent:** Linked to User, tracks opt-in/opt-out with timestamps (consent_id, user_id, opted_in, timestamp)
+- **User:** Base entity with consent status (user_id, name, consent_status: 'granted'|'revoked', created_at, updated_at)
+- **Account:** Financial accounts linked to users (account_id, user_id, type, subtype, available_balance, current_balance, credit_limit, iso_currency_code, holder_category, created_at, updated_at)
+- **Transaction:** Individual transactions linked to accounts (transaction_id, account_id, date, amount, merchant_name, merchant_entity_id, payment_channel, personal_finance_category_primary, personal_finance_category_detailed, pending, created_at)
+- **Liability:** Credit card liabilities linked to accounts (liability_id, account_id, apr_type, apr_percentage, interest_rate, minimum_payment_amount, last_payment_amount, is_overdue, next_payment_due_date, last_statement_balance, created_at, updated_at)
+- **Consent:** Consent records for users (consent_id, user_id, opted_in: 0|1, timestamp)
+- **Feedback:** User feedback on recommendations (feedback_id, user_id, recommendation_id, recommendation_type: 'education'|'offer', rating: 1-5, comment, helpful: 0|1, created_at)
+- **RecommendationReview:** Operator review queue for recommendations (review_id, user_id, recommendation_data: JSON, status: 'pending'|'approved'|'overridden', decision_trace: JSON, operator_notes, created_at, reviewed_at, reviewed_by)
 
 ### Relationships
 ```
@@ -63,13 +83,17 @@ User (1) → (N) Account
 Account (1) → (N) Transaction
 Account (1) → (0-1) Liability
 User (1) → (1) Consent
+User (1) → (N) Feedback
+User (1) → (N) RecommendationReview
 ```
 
 ### Database Schema
 - **Storage:** SQLite database (`backend/data/database.sqlite`)
-- **Migrations:** Automatic table creation on database initialization
+- **Migrations:** Automatic table creation on database initialization (`backend/src/migrations/createTables.js`)
+- **Tables:** users, accounts, transactions, liabilities, consent, feedback, recommendation_reviews
 - **Foreign Keys:** All relationships use ON DELETE CASCADE
-- **Indexes:** Created on frequently queried columns (user_id, account_id, date, merchant_name, etc.)
+- **Indexes:** Created on frequently queried columns (user_id, account_id, date, merchant_name, status, etc.)
+- **Consent Status:** Simplified to only 'granted' or 'revoked' (removed 'pending' status)
 
 ## Data Ingestion Patterns
 
@@ -285,18 +309,59 @@ Example: "This resource, 'Debt Paydown Strategy: The Snowball Method', is recomm
   - `getHistory()` - Get consent history
 - **Database:** Consent table tracks opted_in (0/1) and timestamp
 
-## API Design Patterns
+## API Design Patterns ✅
 
 ### RESTful Structure
-- `GET /users` - List all users (for demo login)
-- `POST /consent` - Record consent
-- `GET /profile/:user_id` - Get behavioral profile
-- `GET /recommendations/:user_id` - Get recommendations
-- `POST /feedback` - Record feedback
-- `GET /operator/review` - Operator approval queue
+- **User Endpoints:**
+  - `GET /users` - List all users (id, name) for login dropdown
+  - `GET /users/:id` - Get full user details
+- **Consent Endpoints:**
+  - `POST /consent` - Grant consent (opt-in)
+  - `GET /consent/:user_id` - Get consent status
+  - `DELETE /consent/:user_id` - Revoke consent (opt-out)
+- **Profile Endpoints:**
+  - `GET /profile/:user_id` - Get behavioral profile with signals and persona
+- **Recommendation Endpoints:**
+  - `GET /recommendations/:user_id` - Get 3-5 education items + 1-3 partner offers
+- **Feedback Endpoints:**
+  - `POST /feedback` - Record user feedback on recommendations
+- **Operator Endpoints:**
+  - `GET /operator/review` - Get pending recommendations queue
+  - `POST /operator/approve` - Approve a recommendation
+  - `POST /operator/override` - Override/reject a recommendation
+  - `GET /operator/users` - Get all users with persona info
+
+### Route Organization
+- **Routes:** `backend/src/routes/` (users.js, consent.js, profile.js, recommendations.js, feedback.js, operator.js)
+- **Middleware:** `backend/src/middleware/` (validator.js, errorHandler.js)
+- **Registration:** Routes registered in `backend/src/server.js`
+
+### Validation Pattern
+- **Middleware:** `validateUserId`, `validateRequiredFields`, `validateFieldTypes`, `validateQueryParams`
+- **Validation Points:**
+  - User ID: Must be positive integer
+  - Required fields: Checked via middleware
+  - Field types: Validated before processing
+  - Query parameters: Validated for filtering/sorting
 
 ### Error Handling Pattern
-- Consistent error response format
+- **Error Handler:** `backend/src/middleware/errorHandler.js`
+- **Functions:** `errorHandler`, `asyncHandler`, `createError`
+- **Consistent error response format:**
+  ```json
+  {
+    "success": false,
+    "error": {
+      "message": "Error description",
+      "code": "ERROR_CODE"
+    }
+  }
+  ```
+- **Status Codes:**
+  - 400: Bad Request (validation errors)
+  - 403: Forbidden (consent required)
+  - 404: Not Found (resource not found)
+  - 500: Internal Server Error
 - Proper HTTP status codes
 - Error messages logged for debugging
 - User-friendly error messages in frontend

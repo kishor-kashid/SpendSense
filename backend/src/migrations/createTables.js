@@ -87,6 +87,37 @@ function createTables() {
     )
   `);
 
+  // Create feedback table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS feedback (
+      feedback_id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      recommendation_id TEXT,
+      recommendation_type TEXT CHECK(recommendation_type IN ('education', 'offer')),
+      rating INTEGER CHECK(rating IN (1, 2, 3, 4, 5)),
+      comment TEXT,
+      helpful INTEGER CHECK(helpful IN (0, 1)),
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+    )
+  `);
+
+  // Create recommendation_reviews table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS recommendation_reviews (
+      review_id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      recommendation_data TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'approved', 'overridden')),
+      operator_notes TEXT,
+      decision_trace TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      reviewed_at TEXT,
+      reviewed_by TEXT,
+      FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+    )
+  `);
+
   // Create indexes for better query performance
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_accounts_user_id ON accounts(user_id);
@@ -98,6 +129,9 @@ function createTables() {
     CREATE INDEX IF NOT EXISTS idx_liabilities_account_id ON liabilities(account_id);
     CREATE INDEX IF NOT EXISTS idx_liabilities_overdue ON liabilities(is_overdue);
     CREATE INDEX IF NOT EXISTS idx_consent_user_id ON consent(user_id);
+    CREATE INDEX IF NOT EXISTS idx_feedback_user_id ON feedback(user_id);
+    CREATE INDEX IF NOT EXISTS idx_recommendation_reviews_user_id ON recommendation_reviews(user_id);
+    CREATE INDEX IF NOT EXISTS idx_recommendation_reviews_status ON recommendation_reviews(status);
   `);
 
   console.log('Database tables created successfully');
@@ -110,6 +144,8 @@ function dropTables() {
   const db = getDatabase();
   
   db.exec(`
+    DROP TABLE IF EXISTS recommendation_reviews;
+    DROP TABLE IF EXISTS feedback;
     DROP TABLE IF EXISTS consent;
     DROP TABLE IF EXISTS liabilities;
     DROP TABLE IF EXISTS transactions;

@@ -8,12 +8,16 @@ const Account = require('./Account');
 const Transaction = require('./Transaction');
 const Liability = require('./Liability');
 const Consent = require('./Consent');
+const Feedback = require('./Feedback');
+const RecommendationReview = require('./RecommendationReview');
 
 module.exports = {
   User,
   Account,
   Transaction,
   Liability,
-  Consent
+  Consent,
+  Feedback,
+  RecommendationReview
 };
 

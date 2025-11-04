@@ -27,6 +27,18 @@ app.use('/users', usersRoutes);
 const consentRoutes = require('./routes/consent');
 app.use('/consent', consentRoutes);
 
+const profileRoutes = require('./routes/profile');
+app.use('/profile', profileRoutes);
+
+const recommendationsRoutes = require('./routes/recommendations');
+app.use('/recommendations', recommendationsRoutes);
+
+const feedbackRoutes = require('./routes/feedback');
+app.use('/feedback', feedbackRoutes);
+
+const operatorRoutes = require('./routes/operator');
+app.use('/operator', operatorRoutes);
+
 // Initialize database (only if not in test mode)
 if (process.env.NODE_ENV !== 'test') {
   initializeDatabase()

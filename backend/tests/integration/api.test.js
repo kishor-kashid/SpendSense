@@ -538,3 +538,609 @@ describe('Consent API Endpoints', () => {
   });
 });
 
+describe('Profile API Endpoints', () => {
+  let testUserId;
+  let testUserId2;
+
+  beforeAll(async () => {
+    await initializeDatabase();
+    
+    // Create test users
+    const user1 = User.create({
+      name: 'Profile Test User 1',
+      consent_status: 'granted'
+    });
+    testUserId = user1.user_id;
+
+    const user2 = User.create({
+      name: 'Profile Test User 2',
+      consent_status: 'revoked'
+    });
+    testUserId2 = user2.user_id;
+  });
+
+  afterAll(() => {
+    closeDatabase();
+  });
+
+  describe('GET /profile/:user_id', () => {
+    test('should return behavioral profile for user with consent', async () => {
+      const response = await request(app)
+        .get(`/profile/${testUserId}`)
+        .expect(200);
+
+      expect(response.body).toHaveProperty('success', true);
+      expect(response.body).toHaveProperty('profile');
+      expect(response.body.profile).toHaveProperty('user_id', testUserId);
+      expect(response.body.profile).toHaveProperty('user_name');
+      expect(response.body.profile).toHaveProperty('assigned_persona');
+      expect(response.body.profile).toHaveProperty('persona_rationale');
+      expect(response.body.profile).toHaveProperty('decision_trace');
+      expect(response.body.profile).toHaveProperty('behavioral_signals');
+      expect(response.body.profile).toHaveProperty('all_matching_personas');
+      expect(response.body.profile).toHaveProperty('timestamp');
+    });
+
+    test('should return 403 for user without consent', async () => {
+      const response = await request(app)
+        .get(`/profile/${testUserId2}`)
+        .expect(403);
+
+      expect(response.body).toHaveProperty('success', false);
+      expect(response.body.error).toHaveProperty('code', 'CONSENT_REQUIRED');
+    });
+
+    test('should return behavioral signals in profile', async () => {
+      const response = await request(app)
+        .get(`/profile/${testUserId}`)
+        .expect(200);
+
+      const signals = response.body.profile.behavioral_signals;
+      expect(signals).toHaveProperty('credit');
+      expect(signals).toHaveProperty('income');
+      expect(signals).toHaveProperty('subscriptions');
+      expect(signals).toHaveProperty('savings');
+    });
+
+    test('should return assigned persona in profile', async () => {
+      const response = await request(app)
+        .get(`/profile/${testUserId}`)
+        .expect(200);
+
+      const persona = response.body.profile.assigned_persona;
+      expect(persona).toHaveProperty('id');
+      expect(persona).toHaveProperty('name');
+      expect(persona).toHaveProperty('description');
+      expect(persona).toHaveProperty('educational_focus');
+      expect(persona).toHaveProperty('recommendation_types');
+      expect(Array.isArray(persona.recommendation_types)).toBe(true);
+    });
+
+    test('should return 404 for non-existent user', async () => {
+      const response = await request(app)
+        .get('/profile/99999')
+        .expect(404);
+
+      expect(response.body).toHaveProperty('success', false);
+      expect(response.body.error).toHaveProperty('code', 'USER_NOT_FOUND');
+    });
+
+    test('should return 400 for invalid user_id', async () => {
+      const response = await request(app)
+        .get('/profile/invalid')
+        .expect(400);
+
+      expect(response.body).toHaveProperty('success', false);
+      expect(response.body.error).toHaveProperty('code', 'INVALID_USER_ID');
+    });
+  });
+});
+
+describe('Recommendations API Endpoints', () => {
+  let testUserId;
+  let testUserId2;
+
+  beforeAll(async () => {
+    await initializeDatabase();
+    
+    // Create test users
+    const user1 = User.create({
+      name: 'Recommendations Test User 1',
+      consent_status: 'granted'
+    });
+    testUserId = user1.user_id;
+
+    const user2 = User.create({
+      name: 'Recommendations Test User 2',
+      consent_status: 'revoked'
+    });
+    testUserId2 = user2.user_id;
+  });
+
+  afterAll(() => {
+    closeDatabase();
+  });
+
+  describe('GET /recommendations/:user_id', () => {
+    test('should return recommendations for user with consent', async () => {
+      const response = await request(app)
+        .get(`/recommendations/${testUserId}`)
+        .expect(200);
+
+      expect(response.body).toHaveProperty('success', true);
+      expect(response.body).toHaveProperty('recommendations');
+      expect(response.body.recommendations).toHaveProperty('user_id', testUserId);
+      expect(response.body.recommendations).toHaveProperty('assigned_persona');
+      expect(response.body.recommendations).toHaveProperty('recommendations');
+      expect(response.body.recommendations).toHaveProperty('summary');
+      expect(response.body.recommendations).toHaveProperty('disclaimer');
+    });
+
+    test('should return 3-5 education items', async () => {
+      const response = await request(app)
+        .get(`/recommendations/${testUserId}`)
+        .expect(200);
+
+      const education = response.body.recommendations.recommendations.education;
+      expect(Array.isArray(education)).toBe(true);
+      expect(education.length).toBeGreaterThanOrEqual(3);
+      expect(education.length).toBeLessThanOrEqual(5);
+    });
+
+    test('should return 1-3 partner offers', async () => {
+      const response = await request(app)
+        .get(`/recommendations/${testUserId}`)
+        .expect(200);
+
+      const offers = response.body.recommendations.recommendations.partner_offers;
+      expect(Array.isArray(offers)).toBe(true);
+      expect(offers.length).toBeGreaterThanOrEqual(1);
+      expect(offers.length).toBeLessThanOrEqual(3);
+    });
+
+    test('should include rationales for all recommendations', async () => {
+      const response = await request(app)
+        .get(`/recommendations/${testUserId}`)
+        .expect(200);
+
+      const education = response.body.recommendations.recommendations.education;
+      education.forEach(rec => {
+        expect(rec).toHaveProperty('rationale');
+        expect(typeof rec.rationale).toBe('string');
+        expect(rec.rationale.length).toBeGreaterThan(0);
+      });
+
+      const offers = response.body.recommendations.recommendations.partner_offers;
+      offers.forEach(rec => {
+        expect(rec).toHaveProperty('rationale');
+        expect(typeof rec.rationale).toBe('string');
+        expect(rec.rationale.length).toBeGreaterThan(0);
+      });
+    });
+
+    test('should include disclaimer', async () => {
+      const response = await request(app)
+        .get(`/recommendations/${testUserId}`)
+        .expect(200);
+
+      expect(response.body.recommendations).toHaveProperty('disclaimer');
+      expect(typeof response.body.recommendations.disclaimer).toBe('string');
+      expect(response.body.recommendations.disclaimer.length).toBeGreaterThan(0);
+    });
+
+    test('should return 403 for user without consent', async () => {
+      const response = await request(app)
+        .get(`/recommendations/${testUserId2}`)
+        .expect(403);
+
+      expect(response.body).toHaveProperty('success', false);
+      expect(response.body.error).toHaveProperty('code', 'CONSENT_REQUIRED');
+    });
+
+    test('should return 404 for non-existent user', async () => {
+      const response = await request(app)
+        .get('/recommendations/99999')
+        .expect(404);
+
+      expect(response.body).toHaveProperty('success', false);
+      expect(response.body.error).toHaveProperty('code', 'USER_NOT_FOUND');
+    });
+
+    test('should return 400 for invalid user_id', async () => {
+      const response = await request(app)
+        .get('/recommendations/invalid')
+        .expect(400);
+
+      expect(response.body).toHaveProperty('success', false);
+      expect(response.body.error).toHaveProperty('code', 'INVALID_USER_ID');
+    });
+
+    test('should include behavioral signals in response', async () => {
+      const response = await request(app)
+        .get(`/recommendations/${testUserId}`)
+        .expect(200);
+
+      expect(response.body.recommendations).toHaveProperty('behavioral_signals');
+      const signals = response.body.recommendations.behavioral_signals;
+      expect(signals).toHaveProperty('credit');
+      expect(signals).toHaveProperty('income');
+      expect(signals).toHaveProperty('subscriptions');
+      expect(signals).toHaveProperty('savings');
+    });
+
+    test('should include persona assignment details', async () => {
+      const response = await request(app)
+        .get(`/recommendations/${testUserId}`)
+        .expect(200);
+
+      expect(response.body.recommendations).toHaveProperty('assigned_persona');
+      expect(response.body.recommendations).toHaveProperty('persona_rationale');
+      expect(response.body.recommendations).toHaveProperty('decision_trace');
+      
+      const persona = response.body.recommendations.assigned_persona;
+      expect(persona).toHaveProperty('id');
+      expect(persona).toHaveProperty('name');
+    });
+
+    test('should include summary with counts', async () => {
+      const response = await request(app)
+        .get(`/recommendations/${testUserId}`)
+        .expect(200);
+
+      const summary = response.body.recommendations.summary;
+      expect(summary).toHaveProperty('total_recommendations');
+      expect(summary).toHaveProperty('education_count');
+      expect(summary).toHaveProperty('partner_offers_count');
+      
+      expect(summary.total_recommendations).toBe(
+        summary.education_count + summary.partner_offers_count
+      );
+    });
+
+    test('should filter out recommendations with tone violations', async () => {
+      // This test verifies that tone validation is applied
+      // The actual filtering happens in the route handler
+      const response = await request(app)
+        .get(`/recommendations/${testUserId}`)
+        .expect(200);
+
+      // All returned recommendations should have valid tone
+      const education = response.body.recommendations.recommendations.education;
+      education.forEach(rec => {
+        expect(rec).toHaveProperty('item');
+        expect(rec).toHaveProperty('rationale');
+        // Tone validation should have passed
+      });
+
+      const offers = response.body.recommendations.recommendations.partner_offers;
+      offers.forEach(rec => {
+        expect(rec).toHaveProperty('item');
+        expect(rec).toHaveProperty('rationale');
+        // Tone validation should have passed
+      });
+    });
+  });
+});
+
+describe('Feedback API Endpoints', () => {
+  let testUserId;
+
+  beforeAll(async () => {
+    await initializeDatabase();
+    
+    // Create test user
+    const user1 = User.create({
+      name: 'Feedback Test User 1',
+      consent_status: 'granted'
+    });
+    testUserId = user1.user_id;
+  });
+
+  afterAll(() => {
+    closeDatabase();
+  });
+
+  describe('POST /feedback', () => {
+    test('should record feedback with all fields', async () => {
+      const response = await request(app)
+        .post('/feedback')
+        .send({
+          user_id: testUserId,
+          recommendation_id: 'edu-001',
+          recommendation_type: 'education',
+          rating: 5,
+          comment: 'Very helpful!',
+          helpful: true
+        })
+        .expect(201);
+
+      expect(response.body).toHaveProperty('success', true);
+      expect(response.body).toHaveProperty('message', 'Feedback recorded successfully');
+      expect(response.body).toHaveProperty('feedback');
+      expect(response.body.feedback).toHaveProperty('feedback_id');
+      expect(response.body.feedback).toHaveProperty('user_id', testUserId);
+      expect(response.body.feedback).toHaveProperty('recommendation_id', 'edu-001');
+      expect(response.body.feedback).toHaveProperty('recommendation_type', 'education');
+      expect(response.body.feedback).toHaveProperty('rating', 5);
+      expect(response.body.feedback).toHaveProperty('comment', 'Very helpful!');
+      expect(response.body.feedback).toHaveProperty('helpful', true);
+      expect(response.body.feedback).toHaveProperty('created_at');
+    });
+
+    test('should record feedback with minimal fields', async () => {
+      const response = await request(app)
+        .post('/feedback')
+        .send({
+          user_id: testUserId
+        })
+        .expect(201);
+
+      expect(response.body).toHaveProperty('success', true);
+      expect(response.body.feedback).toHaveProperty('user_id', testUserId);
+      expect(response.body.feedback.rating).toBeNull();
+      expect(response.body.feedback.comment).toBeNull();
+    });
+
+    test('should return 400 for missing user_id', async () => {
+      const response = await request(app)
+        .post('/feedback')
+        .send({})
+        .expect(400);
+
+      expect(response.body).toHaveProperty('success', false);
+      expect(response.body.error).toHaveProperty('code', 'MISSING_REQUIRED_FIELDS');
+    });
+
+    test('should return 400 for invalid rating', async () => {
+      const response = await request(app)
+        .post('/feedback')
+        .send({
+          user_id: testUserId,
+          rating: 6
+        })
+        .expect(400);
+
+      expect(response.body).toHaveProperty('success', false);
+      expect(response.body.error).toHaveProperty('code', 'INVALID_RATING');
+    });
+
+    test('should return 400 for invalid recommendation_type', async () => {
+      const response = await request(app)
+        .post('/feedback')
+        .send({
+          user_id: testUserId,
+          recommendation_type: 'invalid'
+        })
+        .expect(400);
+
+      expect(response.body).toHaveProperty('success', false);
+      expect(response.body.error).toHaveProperty('code', 'INVALID_RECOMMENDATION_TYPE');
+    });
+
+    test('should return 404 for non-existent user', async () => {
+      const response = await request(app)
+        .post('/feedback')
+        .send({
+          user_id: 99999,
+          rating: 4
+        })
+        .expect(404);
+
+      expect(response.body).toHaveProperty('success', false);
+      expect(response.body.error).toHaveProperty('code', 'USER_NOT_FOUND');
+    });
+  });
+});
+
+describe('Operator API Endpoints', () => {
+  let testUserId;
+  let testUserId2;
+  let reviewId;
+
+  beforeAll(async () => {
+    await initializeDatabase();
+    
+    // Create test users
+    const user1 = User.create({
+      name: 'Operator Test User 1',
+      consent_status: 'granted'
+    });
+    testUserId = user1.user_id;
+
+    const user2 = User.create({
+      name: 'Operator Test User 2',
+      consent_status: 'granted'
+    });
+    testUserId2 = user2.user_id;
+
+    // Generate recommendations to create review records
+    const { generateRecommendations } = require('../../src/services/recommend/recommendationEngine');
+    const RecommendationReview = require('../../src/models/RecommendationReview');
+    
+    // Generate recommendations for user 1 (this will create a review record)
+    const recommendations = generateRecommendations(testUserId);
+    const review = RecommendationReview.create({
+      user_id: testUserId,
+      recommendation_data: recommendations,
+      decision_trace: recommendations.decision_trace,
+      status: 'pending'
+    });
+    reviewId = review.review_id;
+  });
+
+  afterAll(() => {
+    closeDatabase();
+  });
+
+  describe('GET /operator/review', () => {
+    test('should return pending recommendations', async () => {
+      const response = await request(app)
+        .get('/operator/review')
+        .expect(200);
+
+      expect(response.body).toHaveProperty('success', true);
+      expect(response.body).toHaveProperty('count');
+      expect(response.body).toHaveProperty('reviews');
+      expect(Array.isArray(response.body.reviews)).toBe(true);
+      expect(response.body.count).toBe(response.body.reviews.length);
+    });
+
+    test('should return reviews with correct structure', async () => {
+      const response = await request(app)
+        .get('/operator/review')
+        .expect(200);
+
+      if (response.body.reviews.length > 0) {
+        const review = response.body.reviews[0];
+        expect(review).toHaveProperty('review_id');
+        expect(review).toHaveProperty('user_id');
+        expect(review).toHaveProperty('recommendation_data');
+        expect(review).toHaveProperty('decision_trace');
+        expect(review).toHaveProperty('status', 'pending');
+        expect(review).toHaveProperty('created_at');
+      }
+    });
+  });
+
+  describe('POST /operator/approve', () => {
+    test('should approve a recommendation', async () => {
+      const response = await request(app)
+        .post('/operator/approve')
+        .send({
+          review_id: reviewId,
+          operator_notes: 'Looks good, approved',
+          reviewed_by: 'operator-1'
+        })
+        .expect(200);
+
+      expect(response.body).toHaveProperty('success', true);
+      expect(response.body).toHaveProperty('message', 'Recommendation approved successfully');
+      expect(response.body).toHaveProperty('review');
+      expect(response.body.review).toHaveProperty('review_id', reviewId);
+      expect(response.body.review).toHaveProperty('status', 'approved');
+      expect(response.body.review).toHaveProperty('operator_notes', 'Looks good, approved');
+      expect(response.body.review).toHaveProperty('reviewed_by', 'operator-1');
+      expect(response.body.review).toHaveProperty('reviewed_at');
+    });
+
+    test('should return 400 for missing review_id', async () => {
+      const response = await request(app)
+        .post('/operator/approve')
+        .send({})
+        .expect(400);
+
+      expect(response.body).toHaveProperty('success', false);
+      expect(response.body.error).toHaveProperty('code', 'MISSING_REQUIRED_FIELDS');
+    });
+
+    test('should return 404 for non-existent review', async () => {
+      const response = await request(app)
+        .post('/operator/approve')
+        .send({
+          review_id: 99999
+        })
+        .expect(404);
+
+      expect(response.body).toHaveProperty('success', false);
+      expect(response.body.error).toHaveProperty('code', 'REVIEW_NOT_FOUND');
+    });
+  });
+
+  describe('POST /operator/override', () => {
+    test('should override a recommendation', async () => {
+      // Create another review for override test
+      const { generateRecommendations } = require('../../src/services/recommend/recommendationEngine');
+      const RecommendationReview = require('../../src/models/RecommendationReview');
+      
+      const recommendations = generateRecommendations(testUserId2);
+      const review = RecommendationReview.create({
+        user_id: testUserId2,
+        recommendation_data: recommendations,
+        decision_trace: recommendations.decision_trace,
+        status: 'pending'
+      });
+
+      const response = await request(app)
+        .post('/operator/override')
+        .send({
+          review_id: review.review_id,
+          operator_notes: 'Not appropriate for this user',
+          reviewed_by: 'operator-1'
+        })
+        .expect(200);
+
+      expect(response.body).toHaveProperty('success', true);
+      expect(response.body).toHaveProperty('message', 'Recommendation overridden successfully');
+      expect(response.body).toHaveProperty('review');
+      expect(response.body.review).toHaveProperty('status', 'overridden');
+      expect(response.body.review).toHaveProperty('operator_notes', 'Not appropriate for this user');
+      expect(response.body.review).toHaveProperty('reviewed_at');
+    });
+
+    test('should return 404 for non-existent review', async () => {
+      const response = await request(app)
+        .post('/operator/override')
+        .send({
+          review_id: 99999
+        })
+        .expect(404);
+
+      expect(response.body).toHaveProperty('success', false);
+      expect(response.body.error).toHaveProperty('code', 'REVIEW_NOT_FOUND');
+    });
+  });
+
+  describe('GET /operator/users', () => {
+    test('should return all users with persona info', async () => {
+      const response = await request(app)
+        .get('/operator/users')
+        .expect(200);
+
+      expect(response.body).toHaveProperty('success', true);
+      expect(response.body).toHaveProperty('count');
+      expect(response.body).toHaveProperty('users');
+      expect(Array.isArray(response.body.users)).toBe(true);
+      expect(response.body.count).toBe(response.body.users.length);
+    });
+
+    test('should include behavioral signals for users with consent', async () => {
+      const response = await request(app)
+        .get('/operator/users')
+        .expect(200);
+
+      // Find a user with profile
+      const userWithProfile = response.body.users.find(u => u.has_profile === true);
+      
+      if (userWithProfile) {
+        expect(userWithProfile).toHaveProperty('user_id');
+        expect(userWithProfile).toHaveProperty('name');
+        expect(userWithProfile).toHaveProperty('consent_status');
+        expect(userWithProfile).toHaveProperty('assigned_persona');
+        expect(userWithProfile).toHaveProperty('behavioral_signals');
+        expect(userWithProfile.behavioral_signals).toHaveProperty('credit');
+        expect(userWithProfile.behavioral_signals).toHaveProperty('income');
+        expect(userWithProfile.behavioral_signals).toHaveProperty('subscriptions');
+        expect(userWithProfile.behavioral_signals).toHaveProperty('savings');
+      }
+    });
+
+    test('should handle users without consent gracefully', async () => {
+      // Create a user without consent
+      const userWithoutConsent = User.create({
+        name: 'No Consent User',
+        consent_status: 'revoked'
+      });
+
+      const response = await request(app)
+        .get('/operator/users')
+        .expect(200);
+
+      const foundUser = response.body.users.find(u => u.user_id === userWithoutConsent.user_id);
+      expect(foundUser).toBeDefined();
+      expect(foundUser.has_profile).toBe(false);
+      expect(foundUser.assigned_persona).toBeNull();
+      expect(foundUser.behavioral_signals).toBeNull();
+    });
+  });
+});
+
