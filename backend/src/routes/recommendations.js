@@ -44,7 +44,52 @@ router.get('/:user_id', (req, res, next) => {
       });
     }
     
-    // Generate recommendations (this already checks consent and applies eligibility filter)
+    // First check if there's an approved review for this user
+    // Users can ONLY see approved recommendations - pending ones are not visible
+    const approvedReview = RecommendationReview.findApprovedByUserId(userId);
+    if (approvedReview && approvedReview.recommendation_data) {
+      const recData = approvedReview.recommendation_data;
+      
+      // Transform approved recommendations for frontend
+      const transformedRecommendations = {
+        ...recData,
+        education_items: recData.recommendations?.education?.map(rec => ({
+          ...rec.item,
+          rationale: rec.rationale
+        })) || recData.education_items || [],
+        partner_offers: recData.recommendations?.partner_offers?.map(rec => ({
+          ...rec.item,
+          rationale: rec.rationale,
+          eligibility: rec.eligibility_check || rec.eligibility || null
+        })) || recData.partner_offers || [],
+        status: 'approved',
+        approved_at: approvedReview.reviewed_at
+      };
+      
+      return res.json({
+        success: true,
+        recommendations: transformedRecommendations
+      });
+    }
+    
+    // Check if there's a pending review - if so, return empty recommendations
+    // Users should NOT see pending recommendations until approved
+    const pendingReview = RecommendationReview.findPendingByUserId(userId);
+    if (pendingReview) {
+      // Return empty recommendations with pending status (but don't show the actual recommendations)
+      return res.json({
+        success: true,
+        recommendations: {
+          education_items: [],
+          partner_offers: [],
+          status: 'pending',
+          pending_message: 'Your recommendations are pending operator approval. Please check back later.'
+        }
+      });
+    }
+    
+    // No approved or pending review - generate new recommendations
+    // This already checks consent and applies eligibility filter
     const recommendations = generateRecommendations(userId);
     
     // Apply tone validation to all recommendation content
@@ -95,9 +140,10 @@ router.get('/:user_id', (req, res, next) => {
       partner_offers_count: validatedRecommendations.recommendations.partner_offers.length
     };
     
-    // Store recommendation in review queue as pending (for operator oversight)
+    // Store or update recommendation in review queue as pending (for operator oversight)
+    // If a pending review already exists for this user, update it instead of creating a duplicate
     try {
-      RecommendationReview.create({
+      RecommendationReview.createOrUpdatePending({
         user_id: userId,
         recommendation_data: validatedRecommendations,
         decision_trace: recommendations.decision_trace,
@@ -108,9 +154,24 @@ router.get('/:user_id', (req, res, next) => {
       console.error('Failed to store recommendation for review:', error);
     }
     
+    // Transform recommendations structure for frontend compatibility
+    // Frontend expects education_items and partner_offers at top level
+    const transformedRecommendations = {
+      ...validatedRecommendations,
+      education_items: validatedRecommendations.recommendations.education.map(rec => ({
+        ...rec.item,
+        rationale: rec.rationale
+      })),
+      partner_offers: validatedRecommendations.recommendations.partner_offers.map(rec => ({
+        ...rec.item,
+        rationale: rec.rationale,
+        eligibility: rec.eligibility_check || null
+      }))
+    };
+    
     res.json({
       success: true,
-      recommendations: validatedRecommendations
+      recommendations: transformedRecommendations
     });
   } catch (error) {
     // Handle consent errors specifically

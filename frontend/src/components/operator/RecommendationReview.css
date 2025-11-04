@@ -1,0 +1,207 @@
+.recommendation-review {
+  max-height: none;
+  overflow-y: visible;
+}
+
+.review-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.review-item-card {
+  margin-bottom: var(--spacing-lg);
+}
+
+.review-item {
+  padding: var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background-color: var(--surface);
+}
+
+.review-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.review-item-header strong {
+  color: var(--text-primary);
+  display: block;
+}
+
+.review-item-date {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  display: block;
+  margin-top: var(--spacing-xs);
+}
+
+.review-item-status {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.review-item-status.pending {
+  background-color: #fef3c7;
+  color: var(--warning-color);
+}
+
+.review-item-status.approved {
+  background-color: #d1fae5;
+  color: var(--success-color);
+}
+
+.review-item-status.overridden {
+  background-color: #fee2e2;
+  color: var(--error-color);
+}
+
+.review-item-content {
+  margin: var(--spacing-lg) 0;
+}
+
+.review-content-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 var(--spacing-lg) 0;
+}
+
+.review-section {
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.review-section:last-child {
+  border-bottom: none;
+}
+
+.review-section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 var(--spacing-md) 0;
+}
+
+.review-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.review-item-detail {
+  border-left: 3px solid var(--primary-color);
+  padding-left: var(--spacing-md);
+}
+
+.review-decision-trace {
+  background-color: var(--background);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
+.review-decision-trace p {
+  margin: var(--spacing-sm) 0;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.review-decision-trace strong {
+  color: var(--text-primary);
+}
+
+.review-item-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: flex-end;
+}
+
+.review-modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.review-modal-header {
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.review-modal-user {
+  font-size: 1rem;
+  color: var(--text-primary);
+  margin: 0 0 var(--spacing-sm) 0;
+}
+
+.review-modal-header p:last-child {
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.6;
+}
+
+.review-modal-recommendations {
+  background-color: var(--background);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
+.review-modal-recommendations h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 var(--spacing-sm) 0;
+}
+
+.review-modal-recommendations p {
+  margin: var(--spacing-xs) 0;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.review-modal-notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.review-modal-notes label {
+  font-weight: 500;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+}
+
+.review-notes-textarea {
+  padding: var(--spacing-sm);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: 0.875rem;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.review-notes-textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.review-modal-actions {
+  margin-top: var(--spacing-sm);
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: flex-end;
+}
+

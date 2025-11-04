@@ -1,0 +1,53 @@
+Description: Backend-specific patterns and conventions
+Globs: backend/**/*.js
+
+@base.mdc
+
+# Backend Rules
+
+## Service Structure
+- Services in `backend/src/services/` organized by domain
+- Each service exports functions, not classes
+- Services use database models from `backend/src/models/`
+- Configuration constants in `backend/src/config/constants.js`
+
+## Feature Detection Services
+- All feature detectors follow same pattern:
+  - `analyze(userId, windowDays)` - Main analysis function
+  - Returns both `short_term` (30d) and `long_term` (180d) results
+  - Includes threshold flags for persona assignment
+- Services: `subscriptionDetector.js`, `savingsAnalyzer.js`, `creditAnalyzer.js`, `incomeAnalyzer.js`
+
+## Persona Assignment
+- Persona definitions in `personaDefinitions.js`
+- Prioritization logic in `personaPrioritizer.js`
+- Assignment service in `personaAssigner.js`
+- Always requires consent before assignment
+- Returns decision trace for auditability
+
+## Recommendation Engine
+- Combines persona assignment, content selection, rationale generation
+- Requires consent before processing
+- Applies all guardrails (consent, eligibility, tone)
+- Generates 3-5 education items + 1-3 partner offers
+- All recommendations include rationales and disclaimers
+
+## API Routes
+- Routes in `backend/src/routes/` organized by domain
+- Use validation middleware from `backend/src/middleware/validator.js`
+- Use error handler from `backend/src/middleware/errorHandler.js`
+- Consistent error response format: `{ success: false, error: { message, code } }`
+- Register routes in `backend/src/server.js`
+
+## Database Models
+- Models in `backend/src/models/` using better-sqlite3
+- Models use static methods for database operations
+- Foreign key relationships with ON DELETE CASCADE
+- Automatic table creation via migrations
+
+## Testing
+- Unit tests in `backend/tests/unit/`
+- Integration tests in `backend/tests/integration/`
+- Use separate test database for isolation
+- Mock database interactions where appropriate
+- Test edge cases and error conditions

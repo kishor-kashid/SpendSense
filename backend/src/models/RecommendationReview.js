@@ -72,12 +72,60 @@ class RecommendationReview {
   }
 
   /**
+   * Find pending review for a user
+   * @param {number} userId - User ID
+   * @returns {Object|null} Pending review record or null
+   */
+  static findPendingByUserId(userId) {
+    const db = getDatabase();
+    const result = db.prepare("SELECT * FROM recommendation_reviews WHERE user_id = ? AND status = 'pending' ORDER BY created_at DESC LIMIT 1").get(userId);
+    
+    if (!result) return null;
+    
+    return {
+      ...result,
+      recommendation_data: JSON.parse(result.recommendation_data),
+      decision_trace: result.decision_trace ? JSON.parse(result.decision_trace) : null
+    };
+  }
+
+  /**
+   * Find approved review for a user (most recent)
+   * @param {number} userId - User ID
+   * @returns {Object|null} Approved review record or null
+   */
+  static findApprovedByUserId(userId) {
+    const db = getDatabase();
+    const result = db.prepare("SELECT * FROM recommendation_reviews WHERE user_id = ? AND status = 'approved' ORDER BY reviewed_at DESC, created_at DESC LIMIT 1").get(userId);
+    
+    if (!result) return null;
+    
+    return {
+      ...result,
+      recommendation_data: JSON.parse(result.recommendation_data),
+      decision_trace: result.decision_trace ? JSON.parse(result.decision_trace) : null
+    };
+  }
+
+  /**
    * Find all pending reviews
-   * @returns {Array} Array of pending review records
+   * @returns {Array} Array of pending review records (one per user, latest)
    */
   static findPending() {
     const db = getDatabase();
-    const results = db.prepare("SELECT * FROM recommendation_reviews WHERE status = 'pending' ORDER BY created_at DESC").all();
+    // Get the latest pending review for each user
+    const results = db.prepare(`
+      SELECT r1.* 
+      FROM recommendation_reviews r1
+      INNER JOIN (
+        SELECT user_id, MAX(created_at) as max_created_at
+        FROM recommendation_reviews
+        WHERE status = 'pending'
+        GROUP BY user_id
+      ) r2 ON r1.user_id = r2.user_id AND r1.created_at = r2.max_created_at
+      WHERE r1.status = 'pending'
+      ORDER BY r1.created_at DESC
+    `).all();
     
     return results.map(result => ({
       ...result,
@@ -106,6 +154,43 @@ class RecommendationReview {
     stmt.run(status, operatorNotes, reviewedBy, reviewId);
     
     return this.findById(reviewId);
+  }
+
+  /**
+   * Create or update pending review for a user
+   * If a pending review exists, update it; otherwise create a new one
+   * @param {Object} reviewData - Review data
+   * @param {number} reviewData.user_id - User ID
+   * @param {Object} reviewData.recommendation_data - Full recommendation data (JSON)
+   * @param {Object} reviewData.decision_trace - Decision trace information
+   * @returns {Object} Created or updated review record
+   */
+  static createOrUpdatePending(reviewData) {
+    const { user_id, recommendation_data, decision_trace } = reviewData;
+    
+    // Check if there's already a pending review for this user
+    const existing = this.findPendingByUserId(user_id);
+    
+    if (existing) {
+      // Update existing pending review
+      const db = getDatabase();
+      const stmt = db.prepare(`
+        UPDATE recommendation_reviews
+        SET recommendation_data = ?, decision_trace = ?, created_at = datetime('now')
+        WHERE review_id = ?
+      `);
+      
+      stmt.run(
+        JSON.stringify(recommendation_data),
+        decision_trace ? JSON.stringify(decision_trace) : null,
+        existing.review_id
+      );
+      
+      return this.findById(existing.review_id);
+    } else {
+      // Create new review
+      return this.create(reviewData);
+    }
   }
 
   /**

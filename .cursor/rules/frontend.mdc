@@ -1,0 +1,49 @@
+Description: Frontend-specific patterns and conventions
+Globs: frontend/**/*.{js,jsx,css}
+
+@base.mdc
+
+# Frontend Rules
+
+## Component Structure
+- Components in `frontend/src/components/` organized by feature:
+  - `common/` - Reusable components (Button, Card, Loading, Modal)
+  - `user/` - User-facing components (Dashboard, ConsentPrompt, etc.)
+  - `operator/` - Operator-facing components (OperatorDashboard, etc.)
+- Pages in `frontend/src/pages/` (Login, UserPortal, OperatorPortal)
+
+## Authentication Pattern
+- **Simplified demo mode** - No passwords or JWT tokens
+- Role selection (Customer/Operator) + user dropdown
+- AuthContext for role and user state
+- UserContext for current user data
+- localStorage persistence for session
+- ProtectedRoute component for access control
+
+## State Management
+- React Context API (AuthContext, UserContext)
+- Custom hooks: `useAuth`, `useConsent`, `useRecommendations`
+- API service: `frontend/src/services/api.js` for backend communication
+
+## Styling
+- Global styles in `frontend/src/styles/globals.css`
+- Component-specific CSS files when needed
+- Responsive design required
+- Clean, modern UI with good UX practices
+
+## API Integration
+- Use axios for HTTP requests
+- Centralized API service in `frontend/src/services/api.js`
+- Handle loading states and errors
+- Show user-friendly error messages
+
+## Routing
+- React Router for navigation
+- Protected routes require authentication
+- Role-based access control (customers vs operators)
+- 404/NotFound page for invalid routes
+
+## Current Status
+- Frontend setup complete (React + Vite)
+- Next: PR #20 (Common Components) - Create Button, Card, Loading, Modal components
+- Then: PR #21 (Authentication & Context)
