@@ -133,19 +133,6 @@
   text-transform: capitalize;
 }
 
-.user-list-item-signals {
-  display: flex;
-  gap: var(--spacing-xs);
-  flex-wrap: wrap;
-}
-
-.signal-badge {
-  padding: var(--spacing-xs) var(--spacing-sm);
-  background-color: var(--background);
-  border-radius: var(--radius-sm);
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-}
 
 .user-list-empty {
   text-align: center;

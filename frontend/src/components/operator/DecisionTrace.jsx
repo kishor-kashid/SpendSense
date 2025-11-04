@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import Card from '../common/Card';
 import Button from '../common/Button';
 import './DecisionTrace.css';
 
@@ -8,14 +7,12 @@ const DecisionTrace = ({ decisionTrace }) => {
 
   if (!decisionTrace) {
     return (
-      <Card>
-        <p>No decision trace available.</p>
-      </Card>
+      <p>No decision trace available.</p>
     );
   }
 
   return (
-    <Card title="Decision Trace" className="decision-trace">
+    <div className="decision-trace">
       <div className="decision-trace-content">
         <div className="decision-trace-section">
           <h4>Persona Assignment</h4>
@@ -134,7 +131,7 @@ const DecisionTrace = ({ decisionTrace }) => {
           </Button>
         </div>
       )}
-    </Card>
+    </div>
   );
 };
 

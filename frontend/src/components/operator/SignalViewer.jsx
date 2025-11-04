@@ -1,5 +1,4 @@
 import React from 'react';
-import Card from '../common/Card';
 import Loading from '../common/Loading';
 import { formatCurrency, formatPercentage } from '../../utils/formatters';
 import './SignalViewer.css';
@@ -7,22 +6,18 @@ import './SignalViewer.css';
 const SignalViewer = ({ signals, persona, loading }) => {
   if (loading) {
     return (
-      <Card>
-        <Loading message="Loading signals..." />
-      </Card>
+      <Loading message="Loading signals..." />
     );
   }
 
   if (!signals) {
     return (
-      <Card>
-        <p>No signals available for this user.</p>
-      </Card>
+      <p>No signals available for this user.</p>
     );
   }
 
   return (
-    <Card title="Detected Signals" className="signal-viewer">
+    <div className="signal-viewer">
       {persona && (
         <div className="signal-viewer-persona">
           <h3>Assigned Persona</h3>
@@ -124,7 +119,7 @@ const SignalViewer = ({ signals, persona, loading }) => {
           </div>
         )}
       </div>
-    </Card>
+    </div>
   );
 };
 

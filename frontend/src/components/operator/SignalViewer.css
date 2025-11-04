@@ -1,6 +1,5 @@
 .signal-viewer {
-  max-height: 600px;
-  overflow-y: auto;
+  width: 100%;
 }
 
 .signal-viewer-persona {

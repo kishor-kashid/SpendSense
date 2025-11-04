@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Card from '../common/Card';
 import Button from '../common/Button';
 import Modal from '../common/Modal';
@@ -15,13 +15,53 @@ const RecommendationReview = ({
   const [selectedReview, setSelectedReview] = useState(null);
   const [notes, setNotes] = useState('');
   const [actionType, setActionType] = useState(null); // 'approve' or 'override'
+  const [sortBy, setSortBy] = useState('date'); // 'date', 'user', 'urgency'
+  const [filterText, setFilterText] = useState('');
 
-  // Ensure reviews is an array
-  if (!reviews || !Array.isArray(reviews) || reviews.length === 0) {
-    return (
-      <p>No recommendations pending review.</p>
-    );
-  }
+  // Calculate urgency for a review
+  const getReviewUrgency = (review) => {
+    const daysOld = (Date.now() - new Date(review.created_at).getTime()) / (1000 * 60 * 60 * 24);
+    if (daysOld > 7) return { level: 'high', label: '🔴 Urgent', days: Math.floor(daysOld) };
+    if (daysOld > 3) return { level: 'medium', label: '🟡 Medium', days: Math.floor(daysOld) };
+    return { level: 'low', label: '🟢 Low', days: Math.floor(daysOld) };
+  };
+
+  // Filter and sort reviews
+  const filteredAndSortedReviews = useMemo(() => {
+    if (!reviews || !Array.isArray(reviews)) return [];
+    
+    let filtered = reviews;
+    
+    // Filter by search text
+    if (filterText) {
+      filtered = filtered.filter(review => 
+        review.user_id?.toString().includes(filterText) ||
+        review.review_id?.toString().includes(filterText)
+      );
+    }
+    
+    // Sort reviews
+    const sorted = [...filtered].sort((a, b) => {
+      if (sortBy === 'date') {
+        return new Date(b.created_at) - new Date(a.created_at);
+      }
+      if (sortBy === 'user') {
+        return (a.user_id || 0) - (b.user_id || 0);
+      }
+      if (sortBy === 'urgency') {
+        const urgencyA = getReviewUrgency(a);
+        const urgencyB = getReviewUrgency(b);
+        const urgencyOrder = { high: 3, medium: 2, low: 1 };
+        return urgencyOrder[urgencyB.level] - urgencyOrder[urgencyA.level];
+      }
+      return 0;
+    });
+    
+    return sorted;
+  }, [reviews, filterText, sortBy]);
+
+  // Check if reviews array is empty (before filtering)
+  const hasNoReviews = !reviews || !Array.isArray(reviews) || reviews.length === 0;
 
   const toggleReview = (reviewId) => {
     setExpandedReviewId(expandedReviewId === reviewId ? null : reviewId);
@@ -76,8 +116,37 @@ const RecommendationReview = ({
       )}
 
       {!loading && (
-        <div className="review-list">
-          {reviews.map((review) => {
+        <>
+          {hasNoReviews ? (
+            <div className="empty-reviews">
+              <div className="empty-reviews-icon">✅</div>
+              <p>No recommendations pending review.</p>
+            </div>
+          ) : (
+            <>
+              {/* Filters and Sort */}
+              <div className="review-filters">
+                <input
+                  type="text"
+                  placeholder="Search by User ID or Review ID..."
+                  value={filterText}
+                  onChange={(e) => setFilterText(e.target.value)}
+                  className="review-search-input"
+                />
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="review-sort-select"
+                >
+                  <option value="date">Sort by Date (Newest)</option>
+                  <option value="urgency">Sort by Urgency</option>
+                  <option value="user">Sort by User ID</option>
+                </select>
+              </div>
+
+              <div className="review-list">
+            {filteredAndSortedReviews.map((review) => {
+            const urgency = getReviewUrgency(review);
             const isExpanded = expandedReviewId === review.review_id;
             const recData = review.recommendation_data || {};
             const educationRecs = recData.recommendations?.education || recData.education_items || [];
@@ -94,6 +163,7 @@ const RecommendationReview = ({
                     <strong>User ID: {review.user_id}</strong>
                     <span className="review-item-date">
                       Created: {new Date(review.created_at).toLocaleDateString()}
+                      {' '}• {urgency.days} day{urgency.days !== 1 ? 's' : ''} ago
                       {totalRecommendations > 0 && (
                         <span className="review-item-count">
                           {' '}• {totalRecommendations} recommendation{totalRecommendations !== 1 ? 's' : ''}
@@ -102,6 +172,9 @@ const RecommendationReview = ({
                     </span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+                    <span className={`urgency-badge ${urgency.level}`}>
+                      {urgency.label}
+                    </span>
                     <span className="review-item-status pending">
                       {review.status}
                     </span>
@@ -182,7 +255,16 @@ const RecommendationReview = ({
               </Card>
             );
           })}
-        </div>
+          </div>
+          
+              {filteredAndSortedReviews.length === 0 && filterText && (
+                <div className="empty-reviews">
+                  <p>No reviews match your search criteria.</p>
+                </div>
+              )}
+            </>
+          )}
+        </>
       )}
 
       <Modal
