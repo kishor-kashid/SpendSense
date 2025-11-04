@@ -1,0 +1,271 @@
+[
+  {
+    "id": "balance_transfer_card_a",
+    "title": "Balance Transfer Credit Card - 0% APR for 18 Months",
+    "description": "Transfer high-interest credit card balances to a card with 0% introductory APR for 18 months. Save on interest while you pay down debt.",
+    "offer_type": "credit_card",
+    "offer_category": "balance_transfer",
+    "persona_fit": ["high_utilization"],
+    "recommendation_types": ["debt_paydown", "balance_transfer"],
+    "eligibility": {
+      "min_credit_score": 670,
+      "min_income": 30000,
+      "max_utilization": 0.90,
+      "requires_existing_account_type": false,
+      "excluded_account_types": []
+    },
+    "benefits": [
+      "0% APR on balance transfers for 18 months",
+      "No annual fee",
+      "3% balance transfer fee (one-time)"
+    ],
+    "provider_name": "SecureCredit Bank",
+    "provider_url": "https://securecredit.example.com/balance-transfer",
+    "estimated_savings": "Up to $500 in interest charges over 18 months",
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "high_yield_savings_a",
+    "title": "High-Yield Savings Account - 4.5% APY",
+    "description": "Earn competitive interest on your savings with no monthly fees and no minimum balance requirements. Perfect for building your emergency fund.",
+    "offer_type": "savings_account",
+    "offer_category": "high_yield_savings",
+    "persona_fit": ["savings_builder", "variable_income"],
+    "recommendation_types": ["savings_building", "emergency_fund"],
+    "eligibility": {
+      "min_credit_score": null,
+      "min_income": 20000,
+      "max_utilization": null,
+      "requires_existing_account_type": false,
+      "excluded_account_types": ["savings_account"]
+    },
+    "benefits": [
+      "4.5% Annual Percentage Yield (APY)",
+      "No monthly maintenance fees",
+      "No minimum balance required",
+      "FDIC insured up to $250,000"
+    ],
+    "provider_name": "Growth Savings Bank",
+    "provider_url": "https://growthsavings.example.com/high-yield",
+    "estimated_savings": "Earn $450 annually on $10,000 balance",
+    "difficulty": "beginner"
+  },
+  {
+    "id": "budgeting_app_a",
+    "title": "Budgeting App - Premium Free Trial",
+    "description": "Get a comprehensive budgeting tool that helps you track expenses, set savings goals, and manage your money all in one place. 3-month free trial.",
+    "offer_type": "financial_app",
+    "offer_category": "budgeting",
+    "persona_fit": ["variable_income", "subscription_heavy", "new_user"],
+    "recommendation_types": ["budgeting", "expense_tracking"],
+    "eligibility": {
+      "min_credit_score": null,
+      "min_income": null,
+      "max_utilization": null,
+      "requires_existing_account_type": false,
+      "excluded_account_types": []
+    },
+    "benefits": [
+      "3-month free premium trial",
+      "Automatic expense categorization",
+      "Bill reminders and alerts",
+      "Savings goal tracking",
+      "Bank-level security"
+    ],
+    "provider_name": "BudgetPro",
+    "provider_url": "https://budgetpro.example.com/premium-trial",
+    "estimated_savings": "Save $30 with free trial, potentially save $200+ monthly through better budgeting",
+    "difficulty": "beginner"
+  },
+  {
+    "id": "subscription_manager_a",
+    "title": "Subscription Management Tool - Free Plan",
+    "description": "Track and manage all your subscriptions in one place. Get alerts for price changes, cancel unused services, and save money on recurring expenses.",
+    "offer_type": "financial_app",
+    "offer_category": "subscription_management",
+    "persona_fit": ["subscription_heavy"],
+    "recommendation_types": ["subscription_management", "expense_reduction"],
+    "eligibility": {
+      "min_credit_score": null,
+      "min_income": null,
+      "max_utilization": null,
+      "requires_existing_account_type": false,
+      "excluded_account_types": []
+    },
+    "benefits": [
+      "Free forever plan available",
+      "Track unlimited subscriptions",
+      "Price change alerts",
+      "Cancel subscriptions with one click",
+      "Annual savings reports"
+    ],
+    "provider_name": "SubTracker",
+    "provider_url": "https://subtracker.example.com/free",
+    "estimated_savings": "Users save average $50/month by canceling unused subscriptions",
+    "difficulty": "beginner"
+  },
+  {
+    "id": "credit_builder_card",
+    "title": "Secured Credit Builder Card - No Credit Check",
+    "description": "Build or rebuild your credit with a secured card that reports to all three credit bureaus. Perfect for establishing credit history.",
+    "offer_type": "credit_card",
+    "offer_category": "credit_building",
+    "persona_fit": ["new_user", "high_utilization"],
+    "recommendation_types": ["credit_building", "credit_repair"],
+    "eligibility": {
+      "min_credit_score": null,
+      "min_income": 15000,
+      "max_utilization": null,
+      "requires_existing_account_type": false,
+      "excluded_account_types": ["credit_card"]
+    },
+    "benefits": [
+      "No credit check required",
+      "Reports to all three credit bureaus",
+      "Low annual fee ($35)",
+      "Credit limit from $200 to $5,000 based on deposit",
+      "Path to unsecured card after 12 months"
+    ],
+    "provider_name": "BuildCredit Bank",
+    "provider_url": "https://buildcredit.example.com/secured-card",
+    "estimated_savings": "Improve credit score by 50-100 points in 12 months with responsible use",
+    "difficulty": "beginner"
+  },
+  {
+    "id": "emergency_fund_savings",
+    "title": "Emergency Fund Savings Account - Bonus Offer",
+    "description": "Open a dedicated emergency fund account and earn a $100 bonus when you save $1,000 in the first 90 days. Plus 3.8% APY.",
+    "offer_type": "savings_account",
+    "offer_category": "emergency_fund",
+    "persona_fit": ["variable_income", "savings_builder"],
+    "recommendation_types": ["savings_building", "emergency_fund"],
+    "eligibility": {
+      "min_credit_score": null,
+      "min_income": 25000,
+      "max_utilization": null,
+      "requires_existing_account_type": false,
+      "excluded_account_types": []
+    },
+    "benefits": [
+      "$100 bonus for saving $1,000 in first 90 days",
+      "3.8% APY on all balances",
+      "No monthly fees",
+      "Up to 6 withdrawals per month",
+      "FDIC insured"
+    ],
+    "provider_name": "SafeHaven Savings",
+    "provider_url": "https://safehaven.example.com/emergency-fund",
+    "estimated_savings": "$100 bonus + $38 annual interest on $1,000 balance",
+    "difficulty": "beginner"
+  },
+  {
+    "id": "debt_consolidation_loan",
+    "title": "Personal Loan for Debt Consolidation - Fixed APR",
+    "description": "Consolidate multiple high-interest debts into one lower-rate personal loan. Simplify payments and save on interest.",
+    "offer_type": "personal_loan",
+    "offer_category": "debt_consolidation",
+    "persona_fit": ["high_utilization"],
+    "recommendation_types": ["debt_paydown", "debt_consolidation"],
+    "eligibility": {
+      "min_credit_score": 650,
+      "min_income": 40000,
+      "max_utilization": 0.85,
+      "requires_existing_account_type": false,
+      "excluded_account_types": []
+    },
+    "benefits": [
+      "Fixed APR from 7.99% to 18.99%",
+      "Loan amounts from $5,000 to $50,000",
+      "No prepayment penalties",
+      "Single monthly payment",
+      "Fast approval and funding"
+    ],
+    "provider_name": "ConsolidateNow Lending",
+    "provider_url": "https://consolidatenow.example.com/apply",
+    "estimated_savings": "Save $2,000-$5,000 in interest over loan term vs. credit cards",
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "expense_tracker_pro",
+    "title": "Expense Tracking App - Pro Features Free",
+    "description": "Advanced expense tracking with receipt scanning, tax categorization, and detailed spending reports. Free pro access for 6 months.",
+    "offer_type": "financial_app",
+    "offer_category": "expense_tracking",
+    "persona_fit": ["variable_income", "subscription_heavy", "new_user"],
+    "recommendation_types": ["expense_tracking", "budgeting"],
+    "eligibility": {
+      "min_credit_score": null,
+      "min_income": null,
+      "max_utilization": null,
+      "requires_existing_account_type": false,
+      "excluded_account_types": []
+    },
+    "benefits": [
+      "6 months free pro access",
+      "Receipt scanning with OCR",
+      "Automatic tax categorization",
+      "Custom spending categories",
+      "Export reports to CSV/PDF",
+      "Multi-account support"
+    ],
+    "provider_name": "ExpensePro",
+    "provider_url": "https://expensepro.example.com/pro-free",
+    "estimated_savings": "Save $60 on pro subscription + identify $100+ in deductible expenses",
+    "difficulty": "beginner"
+  },
+  {
+    "id": "cashback_card_low_apr",
+    "title": "Cashback Credit Card - Low APR",
+    "description": "Earn 2% cashback on all purchases with a low 13.99% APR. Perfect for everyday spending when you pay off balances monthly.",
+    "offer_type": "credit_card",
+    "offer_category": "cashback",
+    "persona_fit": ["savings_builder", "new_user"],
+    "recommendation_types": ["credit_building", "rewards"],
+    "eligibility": {
+      "min_credit_score": 680,
+      "min_income": 35000,
+      "max_utilization": 0.40,
+      "requires_existing_account_type": false,
+      "excluded_account_types": []
+    },
+    "benefits": [
+      "2% cashback on all purchases",
+      "13.99% APR (low for credit cards)",
+      "No annual fee",
+      "Cashback redeemed as statement credit or deposit",
+      "No foreign transaction fees"
+    ],
+    "provider_name": "RewardsFirst Bank",
+    "provider_url": "https://rewardsfirst.example.com/cashback-card",
+    "estimated_savings": "Earn $200-$400 annually in cashback on typical spending",
+    "difficulty": "beginner"
+  },
+  {
+    "id": "bill_negotiation_service",
+    "title": "Bill Negotiation Service - Save on Monthly Bills",
+    "description": "Professional negotiators work on your behalf to lower your monthly bills (cable, internet, insurance, etc.). They keep 50% of savings in first year.",
+    "offer_type": "service",
+    "offer_category": "bill_negotiation",
+    "persona_fit": ["subscription_heavy", "variable_income"],
+    "recommendation_types": ["expense_reduction", "bill_management"],
+    "eligibility": {
+      "min_credit_score": null,
+      "min_income": 30000,
+      "max_utilization": null,
+      "requires_existing_account_type": false,
+      "excluded_account_types": []
+    },
+    "benefits": [
+      "Negotiate cable, internet, insurance, phone bills",
+      "No upfront fees",
+      "Only pay if they save you money",
+      "Average savings of $200-$500 annually",
+      "Ongoing monitoring and renegotiation"
+    ],
+    "provider_name": "BillNegotiate Pro",
+    "provider_url": "https://billnegotiate.example.com/signup",
+    "estimated_savings": "Average $200-$500 saved annually on bills",
+    "difficulty": "beginner"
+  }
+]
+
