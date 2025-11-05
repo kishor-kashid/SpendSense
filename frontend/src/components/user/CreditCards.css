@@ -12,10 +12,11 @@
 }
 
 .credit-cards-title {
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
   color: var(--text-primary);
   margin: 0;
+  line-height: var(--line-height-normal);
 }
 
 .time-window-selector {
@@ -32,11 +33,12 @@
   border: none;
   background-color: transparent;
   color: var(--text-secondary);
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: all var(--transition-base);
+  line-height: var(--line-height-normal);
 }
 
 .time-window-btn:hover:not(:disabled) {
@@ -61,7 +63,7 @@
 }
 
 .credit-card-item {
-  padding: var(--spacing-md);
+  padding: var(--spacing-lg);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   background-color: var(--background);
@@ -70,7 +72,7 @@
 
 .credit-card-item:hover {
   border-color: var(--primary-color);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
 }
 
 .credit-card-header {
@@ -90,16 +92,19 @@
 }
 
 .credit-card-name strong {
-  font-size: 1rem;
+  font-size: var(--font-size-base);
   color: var(--text-primary);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-normal);
 }
 
 .credit-card-badge {
   padding: var(--spacing-xs) var(--spacing-sm);
   border-radius: var(--radius-sm);
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
   white-space: nowrap;
+  line-height: var(--line-height-normal);
 }
 
 .credit-card-badge.overdue {
@@ -128,15 +133,17 @@
 }
 
 .utilization-percentage {
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
 }
 
 .utilization-status {
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  line-height: var(--line-height-normal);
 }
 
 .credit-card-utilization.utilization-excellent .utilization-percentage,
@@ -175,13 +182,15 @@
 
 .credit-card-label {
   color: var(--text-secondary);
-  font-size: 0.875rem;
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
 }
 
 .credit-card-value {
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   color: var(--text-primary);
-  font-size: 0.875rem;
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
 }
 
 .credit-card-value.positive {
@@ -229,10 +238,11 @@
 }
 
 .credit-cards-summary h4 {
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
   color: var(--text-primary);
-  margin: 0 0 var(--spacing-md) 0;
+  margin: 0 0 var(--spacing-lg) 0;
+  line-height: var(--line-height-normal);
 }
 
 .summary-grid {
@@ -252,17 +262,19 @@
 }
 
 .summary-label {
-  font-size: 0.75rem;
+  font-size: var(--font-size-xs);
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-normal);
 }
 
 .summary-value {
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
   color: var(--text-primary);
+  line-height: var(--line-height-tight);
 }
 
 @media (max-width: 768px) {

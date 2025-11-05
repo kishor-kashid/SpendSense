@@ -42,12 +42,18 @@ export const useRecommendations = (userId) => {
     return loadRecommendations();
   }, [loadRecommendations]);
 
+  const clearRecommendations = useCallback(() => {
+    setRecommendations(null);
+    setError(null);
+  }, []);
+
   return {
     recommendations,
     loading,
     error,
     loadRecommendations,
     refresh,
+    clearRecommendations,
   };
 };
 

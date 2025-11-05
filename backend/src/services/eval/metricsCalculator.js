@@ -18,33 +18,38 @@ function countDetectedBehaviors(behavioralSignals) {
   
   let count = 0;
   
-  // Check each signal category
-  if (behavioralSignals.subscriptions && 
-      behavioralSignals.subscriptions.analysis_30d && 
-      behavioralSignals.subscriptions.analysis_30d.recurring_merchants &&
-      behavioralSignals.subscriptions.analysis_30d.recurring_merchants.length > 0) {
+  // Helper to get data from either short_term or analysis_30d (for backward compatibility)
+  const getObject = (signal) => {
+    return signal?.short_term || signal?.analysis_30d || null;
+  };
+  
+  // Check subscriptions: recurring merchants detected
+  const subscriptionData = getObject(behavioralSignals.subscriptions);
+  if (subscriptionData && 
+      subscriptionData.recurring_merchants &&
+      subscriptionData.recurring_merchants.length > 0) {
     count++;
   }
   
-  if (behavioralSignals.savings && 
-      behavioralSignals.savings.analysis_30d && 
-      behavioralSignals.savings.analysis_30d.meets_threshold) {
+  // Check savings: meets threshold
+  const savingsData = getObject(behavioralSignals.savings);
+  if (savingsData && savingsData.meets_threshold) {
     count++;
   }
   
-  if (behavioralSignals.credit && 
-      behavioralSignals.credit.analysis_30d) {
-    const credit = behavioralSignals.credit.analysis_30d;
-    if (credit.utilization_level === 'high' || 
-        credit.has_interest_charges || 
-        credit.has_overdue) {
+  // Check credit: high utilization, interest charges, or overdue
+  const creditData = getObject(behavioralSignals.credit);
+  if (creditData) {
+    if (creditData.utilization_level === 'high' || 
+        creditData.has_interest_charges || 
+        creditData.has_overdue) {
       count++;
     }
   }
   
-  if (behavioralSignals.income && 
-      behavioralSignals.income.analysis_30d && 
-      behavioralSignals.income.analysis_30d.has_variable_income) {
+  // Check income: variable income pattern
+  const incomeData = getObject(behavioralSignals.income);
+  if (incomeData && incomeData.has_variable_income) {
     count++;
   }
   
@@ -231,7 +236,8 @@ function calculateLatency(userIds = null, sampleSize = null) {
   for (const user of usersToEvaluate) {
     try {
       const startTime = Date.now();
-      generateRecommendations(user.user_id);
+      // Force refresh to measure actual generation time, not cache retrieval
+      generateRecommendations(user.user_id, { forceRefresh: true });
       const endTime = Date.now();
       
       const latency = endTime - startTime;

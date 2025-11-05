@@ -157,14 +157,31 @@ describe('End-to-End Workflows', () => {
       expect(profileWithConsent.body.profile).toHaveProperty('behavioral_signals');
 
       // Step 6: Get recommendations with consent (should succeed)
-      const recommendations = await request(app)
+      // Recommendations will be pending initially, so we need to approve them first
+      const recommendationsResponse = await request(app)
         .get(`/recommendations/${testUserId}`)
         .expect(200);
       
-      expect(recommendations.body.recommendations).toHaveProperty('education_items');
-      expect(recommendations.body.recommendations).toHaveProperty('partner_offers');
-      expect(Array.isArray(recommendations.body.recommendations.education_items)).toBe(true);
-      expect(recommendations.body.recommendations.education_items.length).toBeGreaterThanOrEqual(3);
+      expect(recommendationsResponse.body.recommendations).toHaveProperty('education_items');
+      expect(recommendationsResponse.body.recommendations).toHaveProperty('status');
+      
+      // If recommendations are pending, approve them so user can see them
+      if (recommendationsResponse.body.recommendations.status === 'pending') {
+        const pendingReview = RecommendationReview.findPendingByUserId(testUserId);
+        if (pendingReview) {
+          RecommendationReview.updateStatus(pendingReview.review_id, 'approved', 'Auto-approved for test', 'test');
+          // Get recommendations again after approval
+          const recommendations = await request(app)
+            .get(`/recommendations/${testUserId}`)
+            .expect(200);
+          
+          expect(Array.isArray(recommendations.body.recommendations.education_items)).toBe(true);
+          expect(recommendations.body.recommendations.education_items.length).toBeGreaterThanOrEqual(3);
+        }
+      } else {
+        expect(Array.isArray(recommendationsResponse.body.recommendations.education_items)).toBe(true);
+        expect(recommendationsResponse.body.recommendations.education_items.length).toBeGreaterThanOrEqual(3);
+      }
 
       // Step 7: Revoke consent
       const revokeResponse = await request(app)
@@ -237,37 +254,57 @@ describe('End-to-End Workflows', () => {
         db.prepare('DELETE FROM recommendation_reviews WHERE review_id = ?').run(review.review_id);
       });
 
-      // Generate recommendations
+      // Generate recommendations (will be stored as pending)
       const response = await request(app)
         .get(`/recommendations/${testUserId}`)
         .expect(200);
 
-      // Verify recommendations structure
+      // Verify recommendations are pending (empty arrays returned to user)
       expect(response.body.recommendations).toHaveProperty('education_items');
       expect(response.body.recommendations).toHaveProperty('partner_offers');
-      expect(response.body.recommendations.education_items.length).toBeGreaterThanOrEqual(3);
-      expect(response.body.recommendations.education_items.length).toBeLessThanOrEqual(5);
-      expect(response.body.recommendations.partner_offers.length).toBeGreaterThanOrEqual(1);
-      expect(response.body.recommendations.partner_offers.length).toBeLessThanOrEqual(3);
+      expect(response.body.recommendations.status).toBe('pending');
+      expect(response.body.recommendations.education_items.length).toBe(0);
+      expect(response.body.recommendations.partner_offers.length).toBe(0);
 
-      // Verify all recommendations have rationales
-      response.body.recommendations.education_items.forEach(rec => {
+      // Verify recommendations were stored in review queue (check operator API)
+      const reviewQueue = await request(app)
+        .get('/operator/review')
+        .expect(200);
+      
+      const userReview = reviewQueue.body.reviews.find(r => r.user_id === testUserId);
+      expect(userReview).toBeDefined();
+      expect(userReview.status).toBe('pending');
+      expect(userReview.recommendation_data).toBeDefined();
+      expect(userReview.recommendation_data.recommendations).toBeDefined();
+      
+      // Verify stored recommendations have correct structure
+      const storedRecs = userReview.recommendation_data.recommendations;
+      expect(storedRecs.education).toBeDefined();
+      expect(Array.isArray(storedRecs.education)).toBe(true);
+      expect(storedRecs.education.length).toBeGreaterThanOrEqual(3);
+      expect(storedRecs.education.length).toBeLessThanOrEqual(5);
+      expect(storedRecs.partner_offers).toBeDefined();
+      expect(Array.isArray(storedRecs.partner_offers)).toBe(true);
+      expect(storedRecs.partner_offers.length).toBeGreaterThanOrEqual(1);
+      expect(storedRecs.partner_offers.length).toBeLessThanOrEqual(3);
+
+      // Verify all stored recommendations have rationales
+      storedRecs.education.forEach(rec => {
         expect(rec).toHaveProperty('rationale');
         expect(typeof rec.rationale).toBe('string');
         expect(rec.rationale.length).toBeGreaterThan(0);
       });
 
-      response.body.recommendations.partner_offers.forEach(rec => {
+      storedRecs.partner_offers.forEach(rec => {
         expect(rec).toHaveProperty('rationale');
         expect(typeof rec.rationale).toBe('string');
         expect(rec.rationale.length).toBeGreaterThan(0);
       });
 
-      // Verify review queue has pending review
-      const review = RecommendationReview.findPendingByUserId(testUserId);
-      expect(review).not.toBeNull();
-      expect(review.status).toBe('pending');
-      expect(review.recommendation_data).toBeDefined();
+      // Verify review queue has pending review (already checked above)
+      expect(userReview).not.toBeNull();
+      expect(userReview.status).toBe('pending');
+      expect(userReview.recommendation_data).toBeDefined();
     });
 
     test('should return pending status when recommendations are pending approval', async () => {

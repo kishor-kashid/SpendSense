@@ -43,17 +43,26 @@ const Navigation = () => {
   const handleConsentToggle = async () => {
     setLoadingConsent(true);
     try {
+      let newConsentStatus = null;
       if (hasConsent) {
         await revoke();
+        newConsentStatus = 'revoked';
       } else {
         const success = await grant();
+        newConsentStatus = success ? 'granted' : 'revoked';
         if (success && userContext?.refreshProfile) {
           // Only refresh profile if UserProvider is available
           await userContext.refreshProfile();
-          // Trigger a refresh event so Dashboard can load recommendations
-          window.dispatchEvent(new CustomEvent('dashboard-refresh'));
         }
       }
+      // Notify both dashboards about consent change
+      window.dispatchEvent(new CustomEvent('consent-changed', { 
+        detail: { hasConsent: newConsentStatus === 'granted' } 
+      }));
+      // Also trigger dashboard refresh for user dashboard
+      window.dispatchEvent(new CustomEvent('dashboard-refresh'));
+      // Trigger operator dashboard refresh to update user consent status
+      window.dispatchEvent(new CustomEvent('refreshOperatorData'));
     } catch (error) {
       console.error('Error toggling consent:', error);
     } finally {
@@ -92,9 +101,9 @@ const Navigation = () => {
             className="nav-refresh-button"
             onClick={() => {
               if (isCustomer()) {
-                window.dispatchEvent(new Event('dashboard-refresh'));
+                window.dispatchEvent(new CustomEvent('dashboard-refresh'));
               } else if (isOperator()) {
-                window.dispatchEvent(new Event('operator-dashboard-refresh'));
+                window.dispatchEvent(new CustomEvent('refreshOperatorData'));
               }
             }}
             title="Refresh data"

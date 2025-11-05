@@ -58,15 +58,15 @@
 }
 
 .dashboard-header h1 {
-  font-size: 2.5rem;
-  font-weight: 800;
+  font-size: var(--font-size-4xl);
+  font-weight: var(--font-weight-extrabold);
   background: linear-gradient(135deg, var(--text-primary), var(--primary-color));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   margin: 0;
   letter-spacing: -0.03em;
-  line-height: 1.2;
+  line-height: var(--line-height-tight);
 }
 
 .revoke-consent-button {
@@ -263,11 +263,12 @@
 }
 
 .section-title {
-  font-size: 1.75rem;
-  font-weight: 700;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
   color: var(--text-primary);
   margin: 0 0 var(--spacing-xl) 0;
   letter-spacing: -0.02em;
+  line-height: var(--line-height-tight);
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
@@ -281,21 +282,54 @@
 .recommendations-group-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: var(--spacing-lg);
-  padding-bottom: var(--spacing-sm);
+  padding-bottom: var(--spacing-md);
   border-bottom: 2px solid var(--border-light);
 }
 
+.recommendations-group-title-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
 .recommendations-group-title {
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
   color: var(--text-primary);
   margin: 0;
   letter-spacing: -0.01em;
+  line-height: var(--line-height-tight);
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
+}
+
+.recommendations-group-subtitle {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-normal);
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: var(--line-height-relaxed);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: linear-gradient(135deg, var(--primary-light) 0%, #f0f4ff 100%);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--primary-color);
+}
+
+.recommendations-group-subtitle strong {
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.recommendations-group-subtitle strong:first-of-type {
+  color: var(--text-primary);
+}
+
+.recommendations-group-subtitle strong:last-of-type {
+  color: var(--primary-color);
 }
 
 .scroll-nav-buttons {
@@ -304,11 +338,11 @@
 }
 
 .scroll-nav-btn {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: var(--radius-full);
-  border: 1px solid var(--border-color);
-  background-color: var(--surface);
+  border: 2px solid var(--border-color);
+  background: linear-gradient(135deg, var(--surface) 0%, var(--background) 100%);
   color: var(--text-primary);
   font-size: 1.25rem;
   cursor: pointer;
@@ -316,19 +350,20 @@
   align-items: center;
   justify-content: center;
   transition: all var(--transition-base);
-  box-shadow: var(--shadow-xs);
+  box-shadow: var(--shadow-sm);
+  font-weight: var(--font-weight-bold);
 }
 
 .scroll-nav-btn:hover:not(:disabled) {
-  background-color: var(--primary-color);
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
   color: white;
   border-color: var(--primary-color);
-  transform: scale(1.05);
-  box-shadow: var(--shadow-sm);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--shadow-md);
 }
 
 .scroll-nav-btn:active:not(:disabled) {
-  transform: scale(0.95);
+  transform: translateY(0) scale(0.98);
 }
 
 .scroll-nav-btn:disabled {
@@ -341,7 +376,6 @@
 .recommendations-list {
   display: flex;
   flex-direction: row;
-  align-items: stretch; /* Make all children stretch to same height */
   gap: var(--spacing-lg);
   overflow-x: auto;
   overflow-y: hidden;
@@ -349,6 +383,9 @@
   -ms-overflow-style: none; /* IE and Edge - hide scrollbar */
   -webkit-overflow-scrolling: touch;
   position: relative;
+  scroll-snap-type: x mandatory; /* Enable snap scrolling */
+  scroll-behavior: smooth;
+  padding-bottom: var(--spacing-xs); /* Add small padding for shadow */
 }
 
 .recommendations-list::-webkit-scrollbar {
@@ -357,13 +394,53 @@
 
 .recommendations-list > * {
   flex: 0 0 auto;
-  min-width: 320px;
-  max-width: 380px;
-  width: 320px;
-  height: 100%; /* Force all items to match tallest item */
+  min-width: 350px;
+  max-width: 350px;
+  width: 350px;
+  height: 520px;
   display: flex !important;
   flex-direction: column !important;
-  align-self: stretch !important; /* Ensure each item stretches to container height */
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  position: relative;
+}
+
+.recommendations-list > *::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary-color), var(--primary-hover));
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  opacity: 0;
+  transition: opacity var(--transition-base);
+}
+
+.recommendations-list > *:hover::before {
+  opacity: 1;
+}
+
+.recommendations-disclaimer {
+  margin-top: var(--spacing-xl);
+  padding: var(--spacing-lg);
+  background-color: var(--background);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+  text-align: center;
+}
+
+.recommendations-disclaimer small {
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+  line-height: var(--line-height-normal);
+  display: block;
+}
+
+.recommendations-disclaimer strong {
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-semibold);
 }
 
 @media (max-width: 768px) {
@@ -390,15 +467,11 @@
     margin-top: var(--spacing-xs);
   }
 
-  .recommendations-list {
-    min-width: 280px;
-    max-width: 100%;
-  }
-
   .recommendations-list > * {
-    min-width: 280px;
-    max-width: 320px;
-    width: 280px;
+    min-width: 300px;
+    max-width: 300px;
+    width: 300px;
+    height: 520px; /* Keep fixed height on mobile */
   }
 }
 

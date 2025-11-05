@@ -26,6 +26,9 @@ backend/data/test_database.sqlite
 # Synthetic data (can be regenerated)
 backend/data/synthetic/
 
+# Evaluation reports (can be regenerated)
+backend/data/evaluation/
+
 # IDE
 .vscode/
 .idea/

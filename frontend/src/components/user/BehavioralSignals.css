@@ -12,10 +12,11 @@
 }
 
 .behavioral-signals-title {
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
   color: var(--text-primary);
   margin: 0;
+  line-height: var(--line-height-normal);
 }
 
 .time-window-selector {
@@ -32,11 +33,12 @@
   border: none;
   background-color: transparent;
   color: var(--text-secondary);
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: all var(--transition-base);
+  line-height: var(--line-height-normal);
 }
 
 .time-window-btn:hover:not(:disabled) {
@@ -61,7 +63,7 @@
 }
 
 .signal-card {
-  padding: var(--spacing-md);
+  padding: var(--spacing-lg);
   background-color: var(--background);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
@@ -70,16 +72,17 @@
 
 .signal-card:hover {
   border-color: var(--primary-color);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
 }
 
 .signal-card-title {
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
   color: var(--text-primary);
-  margin: 0 0 var(--spacing-md) 0;
-  padding-bottom: var(--spacing-sm);
+  margin: 0 0 var(--spacing-lg) 0;
+  padding-bottom: var(--spacing-md);
   border-bottom: 1px solid var(--border-color);
+  line-height: var(--line-height-normal);
 }
 
 .signal-card-content {
@@ -97,15 +100,17 @@
 
 .signal-metric-label {
   color: var(--text-secondary);
-  font-size: 0.875rem;
+  font-size: var(--font-size-sm);
   flex: 1;
+  line-height: var(--line-height-normal);
 }
 
 .signal-metric-value {
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--text-primary);
-  font-size: 0.875rem;
+  font-size: var(--font-size-sm);
   text-align: right;
+  line-height: var(--line-height-normal);
 }
 
 .signal-metric-value.positive {

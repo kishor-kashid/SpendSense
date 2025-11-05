@@ -54,6 +54,7 @@ Analysis performed on two windows:
 - **Request Validation:** All inputs validated via middleware
 - **Consent Enforcement:** 
   - Profile and recommendations require consent (403 if not granted)
+  - Uses `hasConsent()` which checks consent table first (authoritative source)
   - Transactions and insights do NOT require consent (users can view their own data)
 - **Error Handling:** Consistent error format across all endpoints
 - **Response Format:**
@@ -64,8 +65,8 @@ Analysis performed on two windows:
   - Authentication: `/auth/login` (POST - username, password, role)
   - User: `/users`, `/users/:id`
   - Consent: `/consent`, `/consent/:user_id`
-  - Profile: `/profile/:user_id` (requires consent)
-  - Recommendations: `/recommendations/:user_id` (requires consent, returns approved only)
+  - Profile: `/profile/:user_id` (requires consent - checks consent table)
+  - Recommendations: `/recommendations/:user_id` (requires consent - checks consent table, returns approved only, empty arrays if pending)
   - Transactions: `/transactions/:user_id`, `/transactions/:user_id/insights` (no consent required)
   - Feedback: `/feedback`
   - Operator: `/operator/review`, `/operator/approve`, `/operator/override`, `/operator/users`
@@ -81,15 +82,21 @@ Analysis performed on two windows:
 - **Audit Trail:** Operator notes, reviewed_by, and timestamps recorded
 
 ### 8. Consent Management Pattern
-- **Consent Toggle:** Always visible toggle switch for users to grant/revoke consent
+- **Consent Toggle:** Always visible toggle switch for users to grant/revoke consent (in profile menu)
+- **Consent Checking:** Uses `hasConsent()` which checks consent table first (authoritative source)
 - **Conditional Display:**
   - With Consent: Behavioral profile, recommendations visible
   - Without Consent: Only transactions and insights visible (no profile, no recommendations)
-- **Real-time Updates:** UI updates immediately when consent status changes
+- **Real-time Updates:** Event-driven updates via CustomEvent for consent changes
+  - `consent-changed` event dispatched when consent toggled
+  - Both user and operator dashboards listen for consent changes
+  - Recommendations cleared when consent revoked
+  - Data reloaded when consent granted
 - **Data Access:**
   - Transactions/insights: Always available (no consent required)
   - Profile/recommendations: Only available with consent
 - **API Behavior:** Profile and recommendations endpoints return 403 if consent not granted
+- **Cache Invalidation:** User cache cleared when consent changes to prevent stale data
 
 ### 9. Spending Insights Pattern
 - **Transaction Viewing:** Users can view all their transactions with search, filter, and sort
@@ -112,12 +119,13 @@ Analysis performed on two windows:
 - **Frontend:** Login component with username/password input fields for both roles
 
 ### 11. UI Design Pattern
-- **Modern Design System:** CSS variables for colors, spacing, shadows, transitions
+- **Modern Design System:** CSS variables for colors, spacing, shadows, transitions, typography
+- **Typography Scale:** Comprehensive font size, weight, and line-height variables
 - **Gradient Backgrounds:** Linear gradients for headers, buttons, and accent elements
 - **Pill-Style Components:** Rounded tabs, badges, and buttons
-- **Card Components:** Enhanced with hover effects, accent bars, and smooth transitions
+- **Card Components:** Enhanced with hover effects, accent bars, smooth transitions, fixed heights
 - **Navigation:** Backdrop blur effect, gradient text, hover animations, profile menu with dropdown
-- **Scrollable Content:** Flex-based layouts with proper overflow handling
+- **Scrollable Content:** Flex-based layouts with proper overflow handling, CSS scroll-snap
 - **Custom Scrollbars:** Styled scrollbars for better visual consistency (hidden for recommendations)
 - **Responsive Design:** Media queries for mobile and tablet breakpoints
 - **Component Structure:** Component-specific CSS files with global CSS variables
@@ -126,28 +134,36 @@ Analysis performed on two windows:
 - **Simplified Displays:** Clean user lists, collapsed review queues, minimal headers
 - **Recommendation Layout:** Horizontal scrollable rows with navigation buttons
   - Single row layout (no wrapping)
-  - Consistent card heights using flexbox stretch
+  - Fixed card heights (520px) for consistency
+  - CSS scroll-snap for full card visibility
   - Left/right navigation buttons instead of scrollbar
   - Smooth scrolling behavior
   - Button state management based on scroll position
+- **Disclaimer Placement:** Section-level disclaimers below headers (not in individual cards)
+- **Content Filtering:** Regex filtering to remove hardcoded profile-based messages from backend data
+- **Consistent Spacing:** Standardized spacing using CSS variables across all components
 
 ### 12. Recommendation Approval Pattern
 - **Generation:** Recommendations generated and stored as 'pending' in review queue
-- **User View:** Users see "Pending Approval" message (no content) until approved
-- **Operator Review:** Operators see full recommendation content for review
+- **User View:** Users see empty arrays (education_items: [], partner_offers: []) with "Pending Approval" message until approved
+- **Operator Review:** Operators see full recommendation content in review queue
 - **Approval:** Once approved, recommendations become visible to users
 - **Duplicate Prevention:** Only one pending review per user (updated if regenerated)
+- **Consent Check First:** Consent is checked before checking for pending/approved reviews
+- **Empty Arrays:** When pending, API returns empty arrays instead of recommendation content
 
 ### 13. Evaluation Pattern
 - **Metrics Calculation:** Four key metrics calculated for system evaluation
-  - Coverage: % users with persona + ≥3 behaviors
+  - Coverage: % users with persona + ≥3 behaviors (supports both `short_term` and `analysis_30d` structures)
   - Explainability: % recommendations with rationales
-  - Latency: Average recommendation generation time
+  - Latency: Average recommendation generation time (bypasses cache for accurate measurement)
   - Auditability: % recommendations with decision traces
 - **Report Generation:** Multiple output formats (JSON, CSV, Markdown)
 - **Decision Trace Export:** Per-user decision traces exported for audit
 - **Service:** `backend/src/services/eval/metricsCalculator.js`, `backend/src/services/eval/reportGenerator.js`
+- **Evaluation Script:** `backend/scripts/runEvaluation.js` for full evaluation harness
 - **Targets:** 100% coverage, 100% explainability, <5s latency, 100% auditability
+- **Backward Compatibility:** `countDetectedBehaviors` supports both `short_term` and `analysis_30d` structures
 
 ## Data Models & Relationships
 
@@ -552,6 +568,33 @@ backend/tests/
 - Prohibited phrases for tone validation (`backend/data/content/prohibited_phrases.json`)
 - Prohibited product types in constants (`PROHIBITED_PRODUCT_TYPES`)
 - Eligibility rules in constants (`ELIGIBILITY_RULES`)
+- **Performance Configuration:**
+  - Cache TTL settings (default: 5 minutes)
+  - Database indexes on frequently queried columns
+  - Query optimization with `ANALYZE` command
+  - Performance logging threshold (1000ms)
+
+## Performance Optimization Patterns ✅
+
+### Caching Pattern
+- **In-Memory Cache:** TTL-based cache for user data, accounts, persona assignment, and recommendations
+- **Cache Service:** `backend/src/utils/cache.js` with TTL expiration
+- **Cache Keys:** Generated using prefixes (user, account, persona, recommendations)
+- **Cache Invalidation:** Explicit cache clearing when consent changes or data updates
+- **Performance Monitoring:** Logging for operations >1000ms
+- **Cache Stats:** Track hits, misses, size for monitoring
+
+### Database Optimization Pattern
+- **Composite Indexes:** Created on frequently queried column combinations
+- **Query Optimization:** `ANALYZE` command run on database initialization
+- **Index Strategy:** Indexes on user_id, account_id, date, merchant_name, status columns
+- **Serial Test Execution:** Tests run serially (maxWorkers: 1) to prevent database conflicts
+
+### Frontend Performance Pattern
+- **React Optimization:** React.memo, useMemo, useCallback for component optimization
+- **Memoized Lists:** Recommendation lists memoized to prevent unnecessary re-renders
+- **Event-Driven Updates:** CustomEvent for cross-component communication
+- **Lazy Loading:** Components loaded on demand
 
 ## Guardrail Patterns ✅
 

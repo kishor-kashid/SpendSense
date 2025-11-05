@@ -124,7 +124,7 @@ const TransactionList = ({ transactions, loading }) => {
                   {isSpending ? '-' : '+'}{formatCurrency(amount)}
                 </div>
               </div>
-              {transaction.pending && (
+              {transaction.pending === true && (
                 <div className="transaction-pending-badge">Pending</div>
               )}
             </div>

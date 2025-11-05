@@ -12,6 +12,7 @@ const {
   revokeConsent,
   getConsentStatus
 } = require('../services/guardrails/consentChecker');
+const { clearUserCache } = require('../services/recommend/recommendationEngine');
 const User = require('../models/User');
 
 /**
@@ -49,6 +50,9 @@ router.post('/', validateRequiredFields(['user_id']), (req, res, next) => {
     
     // Grant consent
     const result = grantConsent(userId);
+    
+    // Clear cache when consent changes (old recommendations are invalid)
+    clearUserCache(userId);
     
     res.status(201).json({
       success: true,
@@ -151,6 +155,9 @@ router.delete('/:user_id', (req, res, next) => {
     
     // Revoke consent
     const result = revokeConsent(userId);
+    
+    // Clear cache when consent is revoked (recommendations should no longer be accessible)
+    clearUserCache(userId);
     
     res.json({
       success: true,

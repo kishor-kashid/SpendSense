@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import UserList from './UserList';
 import SignalViewer from './SignalViewer';
 import RecommendationReview from './RecommendationReview';
@@ -19,7 +19,7 @@ const OperatorDashboard = () => {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('reviews'); // Default to reviews tab
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -72,7 +72,7 @@ const OperatorDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const loadUserProfile = async (userId) => {
     try {
@@ -128,7 +128,20 @@ const OperatorDashboard = () => {
     return () => {
       window.removeEventListener('refreshOperatorData', handleRefreshEvent);
     };
-  }, []);
+  }, [loadData]);
+
+  // Listen for consent changes to refresh user data
+  useEffect(() => {
+    const handleConsentChange = () => {
+      // Reload data when consent changes to update user consent status
+      loadData();
+    };
+
+    window.addEventListener('consent-changed', handleConsentChange);
+    return () => {
+      window.removeEventListener('consent-changed', handleConsentChange);
+    };
+  }, [loadData]);
 
   // Get persona assignments for selected user from users list
   const selectedUser = users.find(u => u.user_id === selectedUserId);

@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { memo } from 'react';
 import Card from '../common/Card';
 import { formatCurrency } from '../../utils/formatters';
 import EducationItem from './EducationItem';
 import PartnerOffer from './PartnerOffer';
 import './RecommendationCard.css';
 
-const RecommendationCard = ({ recommendation, type }) => {
+const RecommendationCard = memo(({ recommendation, type }) => {
   if (type === 'education') {
     return <EducationItem item={recommendation} />;
   }
@@ -15,7 +15,9 @@ const RecommendationCard = ({ recommendation, type }) => {
   }
 
   return null;
-};
+});
+
+RecommendationCard.displayName = 'RecommendationCard';
 
 export default RecommendationCard;
 
