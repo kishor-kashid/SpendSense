@@ -264,19 +264,29 @@ function loadAllData(data, options = {}) {
   }
 
   // Create user ID mapping (old user_id -> new database user_id)
-  // FIX: Map by username instead of index to handle existing users and errors
-  const userMapping = {};
+  // Optimized: Use Map for O(1) lookups instead of O(n) find()
   const { getDatabase } = require('../../config/database');
   const db = getDatabase();
   
+  // Build username to user_id map from loaded results for O(1) lookup
+  const usernameToUserId = new Map();
+  userResults.loaded.forEach(u => {
+    if (u.username) {
+      usernameToUserId.set(u.username, u.user_id);
+    }
+  });
+  
+  const userMapping = {};
+  const getUserStmt = db.prepare('SELECT user_id FROM users WHERE username = ?');
+  
   data.users.forEach((user) => {
-    // Find the user in the loaded results by username
-    const loadedUser = userResults.loaded.find(u => u.username === user.username);
-    if (loadedUser) {
-      userMapping[user.user_id] = loadedUser.user_id;
+    // First check loaded results (O(1) lookup)
+    const userId = usernameToUserId.get(user.username);
+    if (userId) {
+      userMapping[user.user_id] = userId;
     } else {
       // If not found in loaded, check database directly (might be existing user)
-      const existingUser = db.prepare('SELECT user_id FROM users WHERE username = ?').get(user.username);
+      const existingUser = getUserStmt.get(user.username);
       if (existingUser) {
         userMapping[user.user_id] = existingUser.user_id;
       }

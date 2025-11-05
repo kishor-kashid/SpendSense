@@ -48,16 +48,11 @@ export const UserProvider = ({ children }) => {
         setProfile(profile);
       } catch (profileErr) {
         // 403 Forbidden is expected when consent is not granted
-        // Only log other errors (not 403)
-        if (profileErr.status !== 403 && profileErr.status !== 401) {
-          console.error('Error loading profile:', profileErr);
-        }
         // Set profile to null if consent not granted (this is expected, not an error)
         setProfile(null);
       }
     } catch (err) {
       setError(err.message);
-      console.error('Error loading user data:', err);
     } finally {
       setLoading(false);
     }
@@ -72,10 +67,7 @@ export const UserProvider = ({ children }) => {
       const profile = profileData?.profile || profileData?.data?.profile || profileData?.data || profileData;
       setProfile(profile);
     } catch (err) {
-      // 403 Forbidden is expected when consent is not granted - don't log as error
-      if (err.status !== 403 && err.status !== 401) {
-        console.error('Error refreshing profile:', err);
-      }
+      // 403 Forbidden is expected when consent is not granted
       // Set profile to null if consent not granted
       setProfile(null);
     }

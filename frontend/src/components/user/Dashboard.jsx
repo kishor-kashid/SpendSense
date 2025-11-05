@@ -65,8 +65,8 @@ const Dashboard = () => {
     if (hasConsent && userId) {
       // Small delay to ensure profile is loaded first
       const timer = setTimeout(() => {
-        loadRecommendations().catch(err => {
-          console.error('Error loading recommendations after consent:', err);
+        loadRecommendations().catch(() => {
+          // Silently handle errors - they're already handled in the hook
         });
       }, 100);
       return () => clearTimeout(timer);
@@ -96,8 +96,7 @@ const Dashboard = () => {
       setTransactions(transactionsArray);
       setInsights(insightsObj);
     } catch (error) {
-      console.error('Error loading transactions/insights:', error);
-      // Don't set error state - just log it
+      // Silently handle errors - don't set error state
     } finally {
       setLoadingTransactions(false);
       setLoadingInsights(false);
@@ -138,7 +137,7 @@ const Dashboard = () => {
           }
           await loadTransactionsAndInsights();
         } catch (error) {
-          console.error('Error refreshing data:', error);
+          // Silently handle errors
         } finally {
           setLoadingRecommendations(false);
         }

@@ -14,7 +14,6 @@ export const useConsent = (userId) => {
 
     try {
       const response = await getConsent(userId);
-      console.log('useConsent - getConsent response:', response);
       
       // Backend returns { success: true, consent: { has_consent: true/false, status: 'granted'/'revoked' } }
       // API interceptor returns response.data, so response is already the data object
@@ -22,11 +21,9 @@ export const useConsent = (userId) => {
       const hasConsent = consent.has_consent === true || consent.status === 'granted' || consent.opted_in === 1;
       
       const status = hasConsent ? 'granted' : 'revoked';
-      console.log('useConsent - extracted consent status:', status);
       setConsentStatus(status);
       return status;
     } catch (err) {
-      console.error('useConsent - Error loading consent:', err);
       setError(err.message);
       // If consent record doesn't exist, treat as not granted
       setConsentStatus('revoked');
@@ -43,12 +40,10 @@ export const useConsent = (userId) => {
     setError(null);
 
     try {
-      const response = await grantConsent(userId);
-      console.log('Consent granted successfully:', response);
+      await grantConsent(userId);
       setConsentStatus('granted');
       return true;
     } catch (err) {
-      console.error('Error granting consent:', err);
       setError(err.message);
       return false;
     } finally {

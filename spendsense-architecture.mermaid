@@ -1,0 +1,329 @@
+graph TB
+    subgraph "Frontend - React Application (Port 3000)"
+        A[User Browser]
+        
+        subgraph "Pages"
+            B[Login Page]
+            C[User Portal]
+            D[Operator Portal]
+        end
+        
+        subgraph "Contexts"
+            E[AuthContext]
+            F[UserContext]
+        end
+        
+        subgraph "Components - User"
+            G[ConsentPrompt]
+            H[BehavioralProfile]
+            I[RecommendationCard]
+            J[EducationItem]
+            K[PartnerOffer]
+        end
+        
+        subgraph "Components - Operator"
+            L[UserList]
+            M[SignalViewer]
+            N[RecommendationReview]
+            O[DecisionTrace]
+            P[MetricsPanel]
+        end
+        
+        subgraph "Common Components"
+            Q[Button/Card/Modal]
+            R[ProtectedRoute]
+            S[DemoBanner]
+        end
+        
+        T[API Service]
+        U[Custom Hooks<br/>useAuth/useConsent/useRecommendations]
+        V[Utils<br/>Formatters/Validators]
+        W[localStorage]
+    end
+    
+    subgraph "Backend - Node.js/Express API (Port 3001)"
+        subgraph "API Routes"
+            X["GET /users"]
+            Y["POST /consent"]
+            Z["GET /profile/:user_id"]
+            AA["GET /recommendations/:user_id"]
+            AB["POST /feedback"]
+            AC["GET /operator/review"]
+        end
+        
+        subgraph "Middleware"
+            AD[Error Handler]
+            AE[Validator]
+        end
+        
+        subgraph "Services - Ingest"
+            AF[Data Generator]
+            AG[Data Validator]
+            AH[Data Loader]
+        end
+        
+        subgraph "Services - Features"
+            AI[Subscription Detector]
+            AJ[Savings Analyzer]
+            AK[Credit Analyzer]
+            AL[Income Analyzer]
+        end
+        
+        subgraph "Services - Personas"
+            AM[Persona Definitions]
+            AN[Persona Assigner]
+            AO[Persona Prioritizer]
+        end
+        
+        subgraph "Services - Recommendations"
+            AP[Recommendation Engine]
+            AQ[Education Catalog]
+            AR[Partner Offers]
+            AS[Rationale Generator]
+        end
+        
+        subgraph "Services - Guardrails"
+            AT[Consent Checker]
+            AU[Eligibility Filter]
+            AV[Tone Validator]
+        end
+        
+        subgraph "Services - Evaluation"
+            AW[Metrics Calculator]
+            AX[Report Generator]
+        end
+        
+        AY[Utils/Logger/Helpers]
+    end
+    
+    subgraph "Data Layer"
+        subgraph "Database - SQLite"
+            AZ[Users Table]
+            BA[Accounts Table]
+            BB[Transactions Table]
+            BC[Liabilities Table]
+            BD[Consent Table]
+        end
+        
+        subgraph "Data Files"
+            BE[users.json]
+            BF[accounts.json]
+            BG[transactions.json]
+            BH[liabilities.json]
+            BI[education_items.json]
+            BJ[partner_offers.json]
+            BK[prohibited_phrases.json]
+        end
+        
+        subgraph "Models"
+            BL[User Model]
+            BM[Account Model]
+            BN[Transaction Model]
+            BO[Liability Model]
+            BP[Consent Model]
+        end
+    end
+    
+    subgraph "Configuration & Docs"
+        BQ[constants.js]
+        BR[database.js]
+        BS[DECISION_LOG.md]
+        BT[API.md]
+        BU[SCHEMA.md]
+        BV[PERSONAS.md]
+        BW[EVALUATION.md]
+    end
+    
+    %% Frontend Flow
+    A -->|Navigate| B
+    B -->|Role Selection| E
+    E -->|Store in| W
+    B -->|Customer: Select User| T
+    T -->|GET /users| X
+    E -->|Navigate| C
+    E -->|Navigate| D
+    
+    C --> G
+    C --> H
+    C --> I
+    C --> J
+    C --> K
+    
+    D --> L
+    D --> M
+    D --> N
+    D --> O
+    D --> P
+    
+    E --> U
+    F --> U
+    U --> T
+    
+    G -->|Grant/Revoke| T
+    H -->|Fetch Profile| T
+    I -->|Fetch Recommendations| T
+    N -->|Approve/Override| T
+    
+    T -->|HTTP Requests| X
+    T -->|HTTP Requests| Y
+    T -->|HTTP Requests| Z
+    T -->|HTTP Requests| AA
+    T -->|HTTP Requests| AB
+    T -->|HTTP Requests| AC
+    
+    %% API Routes to Middleware
+    X --> AD
+    X --> AE
+    Y --> AD
+    Y --> AE
+    Z --> AD
+    Z --> AE
+    AA --> AD
+    AA --> AE
+    AB --> AD
+    AC --> AD
+    
+    %% Routes to Services - User Endpoints
+    X --> BL
+    X --> AZ
+    
+    %% Routes to Services - Consent
+    Y --> AT
+    Y --> BP
+    Y --> BD
+    
+    %% Routes to Services - Profile
+    Z --> AI
+    Z --> AJ
+    Z --> AK
+    Z --> AL
+    Z --> AN
+    
+    %% Routes to Services - Recommendations
+    AA --> AT
+    AT -->|Check Consent| BD
+    AA --> AN
+    AN --> AM
+    AN --> AO
+    AA --> AP
+    AP --> AQ
+    AP --> AR
+    AP --> AS
+    AP --> AU
+    AP --> AV
+    AU -->|Check Eligibility| BQ
+    AV -->|Validate Tone| BK
+    
+    %% Routes to Services - Operator
+    AC --> AZ
+    AC --> AN
+    AC --> AP
+    
+    %% Feature Detection Services
+    AI --> BB
+    AI --> BG
+    AJ --> BA
+    AJ --> BB
+    AK --> BC
+    AK --> BH
+    AL --> BB
+    AL --> BG
+    
+    %% Persona Services
+    AN --> AI
+    AN --> AJ
+    AN --> AK
+    AN --> AL
+    
+    %% Recommendation Services
+    AQ --> BI
+    AR --> BJ
+    
+    %% Data Generation Flow
+    AF --> BE
+    AF --> BF
+    AF --> BG
+    AF --> BH
+    AH --> BE
+    AH --> BF
+    AH --> BG
+    AH --> BH
+    AH --> AZ
+    AH --> BA
+    AH --> BB
+    AH --> BC
+    
+    %% Models to Database
+    BL --> AZ
+    BM --> BA
+    BN --> BB
+    BO --> BC
+    BP --> BD
+    
+    %% Configuration
+    BR --> AZ
+    BR --> BA
+    BR --> BB
+    BR --> BC
+    BR --> BD
+    BQ --> AI
+    BQ --> AJ
+    BQ --> AK
+    BQ --> AL
+    BQ --> AM
+    
+    %% Evaluation
+    AW --> AZ
+    AW --> AN
+    AW --> AP
+    AX --> AW
+    
+    %% Documentation
+    BS -.->|Documents| E
+    BS -.->|Documents| AM
+    BT -.->|Documents| X
+    BT -.->|Documents| Y
+    BT -.->|Documents| Z
+    BT -.->|Documents| AA
+    BU -.->|Documents| BL
+    BU -.->|Documents| BM
+    BU -.->|Documents| BN
+    BV -.->|Documents| AM
+    BW -.->|Documents| AW
+    
+    style A fill:#e1f5ff
+    style W fill:#fff4e6
+    style T fill:#e8f5e9
+    style E fill:#f3e5f5
+    style F fill:#f3e5f5
+    
+    style X fill:#fff3e0
+    style Y fill:#fff3e0
+    style Z fill:#fff3e0
+    style AA fill:#fff3e0
+    style AB fill:#fff3e0
+    style AC fill:#fff3e0
+    
+    style AI fill:#e3f2fd
+    style AJ fill:#e3f2fd
+    style AK fill:#e3f2fd
+    style AL fill:#e3f2fd
+    
+    style AM fill:#f1f8e9
+    style AN fill:#f1f8e9
+    style AO fill:#f1f8e9
+    
+    style AP fill:#fce4ec
+    style AQ fill:#fce4ec
+    style AR fill:#fce4ec
+    style AS fill:#fce4ec
+    
+    style AT fill:#fff9c4
+    style AU fill:#fff9c4
+    style AV fill:#fff9c4
+    
+    style AZ fill:#e0f2f1
+    style BA fill:#e0f2f1
+    style BB fill:#e0f2f1
+    style BC fill:#e0f2f1
+    style BD fill:#e0f2f1

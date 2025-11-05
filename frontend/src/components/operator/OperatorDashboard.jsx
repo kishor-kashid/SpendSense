@@ -19,6 +19,15 @@ const OperatorDashboard = () => {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('reviews'); // Default to reviews tab
 
+  // Helper function to extract array from API response
+  const extractArray = (data, key) => {
+    if (Array.isArray(data)) return data;
+    if (data?.[key] && Array.isArray(data[key])) return data[key];
+    if (data?.data?.[key] && Array.isArray(data.data[key])) return data.data[key];
+    if (data?.data && Array.isArray(data.data)) return data.data;
+    return [];
+  };
+
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
@@ -28,35 +37,10 @@ const OperatorDashboard = () => {
         getReviewQueue(),
       ]);
 
-      console.log('OperatorDashboard - getOperatorUsers response:', usersData);
-      console.log('OperatorDashboard - getReviewQueue response:', reviewsData);
-
       // Backend returns { success: true, users: [...] } and { success: true, reviews: [...] }
       // API interceptor returns response.data, so response is already the data object
-      let usersArray = [];
-      if (Array.isArray(usersData)) {
-        usersArray = usersData;
-      } else if (usersData?.users && Array.isArray(usersData.users)) {
-        usersArray = usersData.users;
-      } else if (usersData?.data?.users && Array.isArray(usersData.data.users)) {
-        usersArray = usersData.data.users;
-      } else if (usersData?.data && Array.isArray(usersData.data)) {
-        usersArray = usersData.data;
-      }
-
-      let reviewsArray = [];
-      if (Array.isArray(reviewsData)) {
-        reviewsArray = reviewsData;
-      } else if (reviewsData?.reviews && Array.isArray(reviewsData.reviews)) {
-        reviewsArray = reviewsData.reviews;
-      } else if (reviewsData?.data?.reviews && Array.isArray(reviewsData.data.reviews)) {
-        reviewsArray = reviewsData.data.reviews;
-      } else if (reviewsData?.data && Array.isArray(reviewsData.data)) {
-        reviewsArray = reviewsData.data;
-      }
-
-      console.log('OperatorDashboard - extracted users:', usersArray.length);
-      console.log('OperatorDashboard - extracted reviews:', reviewsArray.length);
+      const usersArray = extractArray(usersData, 'users');
+      const reviewsArray = extractArray(reviewsData, 'reviews');
 
       setUsers(usersArray);
       setReviews(reviewsArray);
@@ -65,7 +49,6 @@ const OperatorDashboard = () => {
         setError('No users found. Please ensure the database has been populated.');
       }
     } catch (err) {
-      console.error('OperatorDashboard - Error loading data:', err);
       setError(err.message || 'Failed to load data');
       setUsers([]);
       setReviews([]);
@@ -99,7 +82,6 @@ const OperatorDashboard = () => {
       
       setSelectedUserProfile(transformedProfile);
     } catch (err) {
-      console.error('Error loading profile:', err);
       setSelectedUserProfile(null);
     } finally {
       setLoadingProfile(false);
@@ -152,7 +134,6 @@ const OperatorDashboard = () => {
       await approveRecommendation(reviewId, notes);
       await loadData(); // Refresh reviews
     } catch (err) {
-      console.error('Error approving recommendation:', err);
       alert('Failed to approve recommendation: ' + err.message);
     }
   };
@@ -162,7 +143,6 @@ const OperatorDashboard = () => {
       await overrideRecommendation(reviewId, notes);
       await loadData(); // Refresh reviews
     } catch (err) {
-      console.error('Error overriding recommendation:', err);
       alert('Failed to override recommendation: ' + err.message);
     }
   };

@@ -64,7 +64,7 @@ const Navigation = () => {
       // Trigger operator dashboard refresh to update user consent status
       window.dispatchEvent(new CustomEvent('refreshOperatorData'));
     } catch (error) {
-      console.error('Error toggling consent:', error);
+      // Error already handled by consent hook
     } finally {
       setLoadingConsent(false);
     }
