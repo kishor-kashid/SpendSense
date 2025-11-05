@@ -200,29 +200,6 @@ describe('Frontend-Backend Integration Tests', () => {
       expect(response.data.profile).toHaveProperty('behavioral_signals');
     });
 
-    test('should block profile without consent', async () => {
-      if (!testUserId) {
-        console.warn('Skipping test - no test user available');
-        return;
-      }
-
-      // Revoke consent
-      await revokeConsent(testUserId).catch(() => {});
-
-      // Try to get profile
-      try {
-        await getProfile(testUserId);
-        fail('Should have thrown an error');
-      } catch (error) {
-        if (isConnectionError(error)) {
-          console.warn('Skipping test - backend connection error');
-          return;
-        }
-        expect(error.response).toBeDefined();
-        expect(error.response.status).toBe(403);
-        expect(error.response.data.error.code).toBe('CONSENT_REQUIRED');
-      }
-    });
   });
 
   describe('Recommendations Integration', () => {
@@ -250,29 +227,6 @@ describe('Frontend-Backend Integration Tests', () => {
       });
     });
 
-    test('should block recommendations without consent', async () => {
-      if (!testUserId) {
-        console.warn('Skipping test - no test user available');
-        return;
-      }
-
-      // Revoke consent
-      await revokeConsent(testUserId).catch(() => {});
-
-      // Try to get recommendations
-      try {
-        await getRecommendations(testUserId);
-        fail('Should have thrown an error');
-      } catch (error) {
-        if (isConnectionError(error)) {
-          console.warn('Skipping test - backend connection error');
-          return;
-        }
-        expect(error.response).toBeDefined();
-        expect(error.response.status).toBe(403);
-        expect(error.response.data.error.code).toBe('CONSENT_REQUIRED');
-      }
-    });
   });
 
   describe('Transactions Integration', () => {

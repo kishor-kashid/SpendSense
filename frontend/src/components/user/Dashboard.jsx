@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useMemo, memo } from 'react';
 import RecommendationCard from './RecommendationCard';
 import TransactionList from './TransactionList';
 import SpendingBreakdown from './SpendingBreakdown';
@@ -18,7 +18,7 @@ const Dashboard = () => {
   const { userId } = useAuth();
   const { profile, refreshProfile } = useUser();
   const { consentStatus, hasConsent, grant, revoke, loadConsent } = useConsent(userId);
-  const { recommendations, loadRecommendations, loading: recommendationsLoading } = useRecommendations(userId);
+  const { recommendations, loadRecommendations, clearRecommendations, loading: recommendationsLoading } = useRecommendations(userId);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
   
   // Transactions and insights state
@@ -42,6 +42,24 @@ const Dashboard = () => {
     }
   }, [userId, loadConsent]);
 
+  // Listen for consent changes from Navigation component
+  useEffect(() => {
+    const handleConsentChange = async () => {
+      // Reload consent status when it changes
+      const newStatus = await loadConsent();
+      // Also refresh profile and recommendations if consent was granted
+      if (newStatus === 'granted') {
+        await refreshProfile();
+        await loadRecommendations();
+      }
+    };
+
+    window.addEventListener('consent-changed', handleConsentChange);
+    return () => {
+      window.removeEventListener('consent-changed', handleConsentChange);
+    };
+  }, [userId, loadConsent, refreshProfile, loadRecommendations]);
+
   // Load recommendations when consent is granted and user is available
   useEffect(() => {
     if (hasConsent && userId) {
@@ -54,18 +72,12 @@ const Dashboard = () => {
       return () => clearTimeout(timer);
     } else if (!hasConsent && userId) {
       // Clear recommendations when consent is revoked
+      clearRecommendations();
       setLoadingRecommendations(false);
     }
-  }, [hasConsent, userId, loadRecommendations]);
+  }, [hasConsent, userId, loadRecommendations, clearRecommendations]);
 
-  // Load transactions and insights regardless of consent (users can always see their own data)
-  useEffect(() => {
-    if (userId) {
-      loadTransactionsAndInsights();
-    }
-  }, [userId]);
-
-  const loadTransactionsAndInsights = async () => {
+  const loadTransactionsAndInsights = useCallback(async () => {
     if (!userId) return;
 
     setLoadingTransactions(true);
@@ -90,7 +102,29 @@ const Dashboard = () => {
       setLoadingTransactions(false);
       setLoadingInsights(false);
     }
-  };
+  }, [userId]);
+
+  // Load transactions and insights regardless of consent (users can always see their own data)
+  useEffect(() => {
+    if (userId) {
+      loadTransactionsAndInsights();
+    }
+  }, [userId, loadTransactionsAndInsights]);
+
+  // Memoize recommendations data to prevent unnecessary re-renders
+  const memoizedEducationItems = useMemo(() => {
+    if (!recommendations?.education_items) return [];
+    return recommendations.education_items;
+  }, [recommendations?.education_items]);
+
+  const memoizedPartnerOffers = useMemo(() => {
+    if (!recommendations?.partner_offers) return [];
+    // Filter out ineligible offers
+    return recommendations.partner_offers.filter(offer => {
+      const eligibility = offer.eligibility || offer.eligibility_check;
+      return !eligibility || eligibility.eligible === true || eligibility.isEligible === true;
+    });
+  }, [recommendations?.partner_offers]);
 
   // Listen for refresh events from navbar
   useEffect(() => {
@@ -115,8 +149,7 @@ const Dashboard = () => {
     return () => {
       window.removeEventListener('dashboard-refresh', handleRefreshEvent);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, hasConsent, refreshProfile, loadRecommendations]);
+  }, [userId, hasConsent, refreshProfile, loadRecommendations, loadTransactionsAndInsights]);
 
   // Check scroll position for button states
   const checkScrollPosition = useCallback((ref, setScrollState) => {
@@ -132,7 +165,9 @@ const Dashboard = () => {
   // Scroll function for navigation buttons
   const scrollList = useCallback((ref, direction) => {
     if (ref.current) {
-      const scrollAmount = ref.current.clientWidth * 0.8; // Scroll 80% of visible width
+      const cardWidth = 350; // Fixed card width
+      const gap = 16; // var(--spacing-lg) is typically 16px
+      const scrollAmount = cardWidth + gap; // Scroll exactly one card + gap
       ref.current.scrollBy({
         left: direction === 'left' ? -scrollAmount : scrollAmount,
         behavior: 'smooth'
@@ -295,7 +330,14 @@ const Dashboard = () => {
                 {recommendations.education_items && recommendations.education_items.length > 0 && (
                   <div className="recommendations-group">
                     <div className="recommendations-group-header">
-                      <h3 className="recommendations-group-title">📚 Educational Resources</h3>
+                      <div className="recommendations-group-title-wrapper">
+                        <h3 className="recommendations-group-title">📚 Educational Resources</h3>
+                        {profile?.assigned_persona?.name && (
+                          <p className="recommendations-group-subtitle">
+                            <strong>Why this matters:</strong> Based on your <strong>{profile.assigned_persona.name}</strong> profile, these educational resources are tailored to help you achieve your financial goals and improve your financial well-being.
+                          </p>
+                        )}
+                      </div>
                       {recommendations.education_items.length > 1 && (
                         <div className="scroll-nav-buttons">
                           <button
@@ -318,25 +360,34 @@ const Dashboard = () => {
                       )}
                     </div>
                     <div className="recommendations-list" ref={educationListRef}>
-                      {recommendations.education_items.map((item, index) => (
+                      {memoizedEducationItems.map((item, index) => (
                         <RecommendationCard 
-                          key={index} 
+                          key={item.item?.id || index} 
                           recommendation={item} 
                           type="education"
                         />
                       ))}
                     </div>
+                    <div className="recommendations-disclaimer">
+                      <small>
+                        <strong>Disclaimer:</strong> This is educational content, not financial advice. Consult a licensed advisor for personalized guidance.
+                      </small>
+                    </div>
                   </div>
                 )}
 
-                {recommendations.partner_offers && recommendations.partner_offers.length > 0 && (
+                {memoizedPartnerOffers.length > 0 && (
                   <div className="recommendations-group">
                     <div className="recommendations-group-header">
-                      <h3 className="recommendations-group-title">💳 Partner Offers</h3>
-                      {recommendations.partner_offers.filter(offer => {
-                        const eligibility = offer.eligibility || offer.eligibility_check;
-                        return !eligibility || eligibility.eligible === true || eligibility.isEligible === true;
-                      }).length > 1 && (
+                      <div className="recommendations-group-title-wrapper">
+                        <h3 className="recommendations-group-title">💳 Partner Offers</h3>
+                        {profile?.assigned_persona?.name && (
+                          <p className="recommendations-group-subtitle">
+                            <strong>Why this matters:</strong> Based on your <strong>{profile.assigned_persona.name}</strong> profile, these partner offers are curated to match your financial situation and help you save money or improve your financial health.
+                          </p>
+                        )}
+                      </div>
+                      {memoizedPartnerOffers.length > 1 && (
                         <div className="scroll-nav-buttons">
                           <button
                             className="scroll-nav-btn scroll-nav-btn-left"
@@ -358,19 +409,18 @@ const Dashboard = () => {
                       )}
                     </div>
                     <div className="recommendations-list" ref={offersListRef}>
-                      {recommendations.partner_offers
-                        .filter(offer => {
-                          // Safety filter: Only show eligible offers
-                          const eligibility = offer.eligibility || offer.eligibility_check;
-                          return !eligibility || eligibility.eligible === true || eligibility.isEligible === true;
-                        })
-                        .map((offer, index) => (
-                          <RecommendationCard 
-                            key={index} 
-                            recommendation={offer} 
-                            type="offer"
-                          />
-                        ))}
+                      {memoizedPartnerOffers.map((offer, index) => (
+                        <RecommendationCard 
+                          key={offer.item?.id || index} 
+                          recommendation={offer} 
+                          type="offer"
+                        />
+                      ))}
+                    </div>
+                    <div className="recommendations-disclaimer">
+                      <small>
+                        <strong>Disclaimer:</strong> This is educational content, not financial advice. Consult a licensed advisor for personalized guidance.
+                      </small>
                     </div>
                   </div>
                 )}

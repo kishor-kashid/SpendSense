@@ -20,15 +20,15 @@
 }
 
 .operator-dashboard-header h1 {
-  font-size: 2.5rem;
-  font-weight: 800;
+  font-size: var(--font-size-4xl);
+  font-weight: var(--font-weight-extrabold);
   background: linear-gradient(135deg, var(--text-primary), var(--primary-color));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   margin: 0;
   letter-spacing: -0.03em;
-  line-height: 1.2;
+  line-height: var(--line-height-tight);
 }
 
 .refresh-button {
@@ -37,14 +37,15 @@
   color: white;
   border: none;
   border-radius: var(--radius-lg);
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
   transition: all var(--transition-base);
   box-shadow: var(--shadow-sm);
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
+  line-height: var(--line-height-normal);
 }
 
 .refresh-button:hover {
@@ -65,10 +66,12 @@
   color: #991b1b;
   margin-bottom: var(--spacing-xl);
   box-shadow: var(--shadow-sm);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-base);
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
+  line-height: var(--line-height-normal);
 }
 
 .error-banner::before {
@@ -141,11 +144,12 @@
 }
 
 .operator-dashboard-section h2 {
-  font-size: 1.75rem;
-  font-weight: 700;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
   color: var(--text-primary);
   margin: 0 0 var(--spacing-xl) 0;
   letter-spacing: -0.02em;
+  line-height: var(--line-height-tight);
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
@@ -208,18 +212,19 @@
 }
 
 .stat-label {
-  font-size: 0.875rem;
+  font-size: var(--font-size-sm);
   color: var(--text-secondary);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  line-height: var(--line-height-normal);
 }
 
 .stat-value {
-  font-size: 2rem;
-  font-weight: 700;
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
   color: var(--text-primary);
-  line-height: 1;
+  line-height: var(--line-height-tight);
 }
 
 .stat-card.warning .stat-value {
@@ -252,12 +257,13 @@
   border: none;
   border-bottom: 3px solid transparent;
   cursor: pointer;
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
   color: var(--text-secondary);
   transition: all var(--transition-base);
   position: relative;
   margin-bottom: -2px;
+  line-height: var(--line-height-normal);
 }
 
 .tab:hover:not(:disabled) {
@@ -282,12 +288,13 @@
 .tab-badge {
   background: #ef4444;
   color: white;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
   min-width: 20px;
   text-align: center;
+  line-height: var(--line-height-normal);
 }
 
 .tab-indicator {
@@ -334,8 +341,9 @@
   background: #fef3c7;
   color: #92400e;
   border-radius: var(--radius-full);
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-normal);
 }
 
 /* Empty State */
@@ -352,14 +360,17 @@
 }
 
 .empty-state h3 {
-  font-size: 1.5rem;
+  font-size: var(--font-size-xl);
   color: var(--text-primary);
   margin: 0 0 var(--spacing-sm) 0;
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-normal);
 }
 
 .empty-state p {
   margin: 0;
-  font-size: 1rem;
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-relaxed);
 }
 
 @media (max-width: 768px) {
@@ -372,7 +383,7 @@
   }
 
   .operator-dashboard-header h1 {
-    font-size: 1.875rem;
+    font-size: var(--font-size-2xl);
   }
 
   .operator-dashboard-section {
@@ -380,7 +391,7 @@
   }
 
   .operator-dashboard-section h2 {
-    font-size: 1.5rem;
+    font-size: var(--font-size-xl);
   }
 
   .dashboard-stats-bar {
@@ -389,7 +400,7 @@
   }
 
   .stat-value {
-    font-size: 1.5rem;
+    font-size: var(--font-size-xl);
   }
 
   .dashboard-tabs {

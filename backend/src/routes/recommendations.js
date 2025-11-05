@@ -7,6 +7,7 @@ const express = require('express');
 const router = express.Router();
 const { generateRecommendations } = require('../services/recommend/recommendationEngine');
 const { validateContent, requireValidTone } = require('../services/guardrails/toneValidator');
+const { hasConsent } = require('../services/guardrails/consentChecker');
 const RecommendationReview = require('../models/RecommendationReview');
 const User = require('../models/User');
 
@@ -17,6 +18,7 @@ const User = require('../models/User');
  * All guardrails applied: consent, eligibility, tone
  */
 router.get('/:user_id', (req, res, next) => {
+  const startTime = Date.now();
   try {
     // Validate user_id parameter
     const userIdParam = req.params.user_id;
@@ -40,6 +42,20 @@ router.get('/:user_id', (req, res, next) => {
         error: {
           message: `User with ID ${userId} not found`,
           code: 'USER_NOT_FOUND'
+        }
+      });
+    }
+    
+    // IMPORTANT: Check consent FIRST before checking reviews
+    // Consent check is done inside generateRecommendations, but we need to check it early
+    // to avoid returning pending reviews when consent is revoked
+    // Use hasConsent() which checks the consent table (authoritative source)
+    if (!hasConsent(userId)) {
+      return res.status(403).json({
+        success: false,
+        error: {
+          message: 'User consent is required to generate recommendations',
+          code: 'CONSENT_REQUIRED'
         }
       });
     }
@@ -104,7 +120,14 @@ router.get('/:user_id', (req, res, next) => {
     
     // No approved or pending review - generate new recommendations
     // This already checks consent and applies eligibility filter
+    const genStartTime = Date.now();
     const recommendations = generateRecommendations(userId);
+    const genDuration = Date.now() - genStartTime;
+    
+    // Log performance if generation took significant time
+    if (genDuration > 1000) {
+      console.log(`[Performance] Recommendation generation for user ${userId} took ${genDuration}ms`);
+    }
     
     // Apply tone validation to all recommendation content
     const validatedRecommendations = {
@@ -164,15 +187,37 @@ router.get('/:user_id', (req, res, next) => {
         status: 'pending'
       });
       console.log(`✓ Created/updated pending review (ID: ${review.review_id}) for user ${userId}`);
+      
+      // After storing as pending, return empty recommendations to the user
+      // Users should NOT see pending recommendations until approved
+      return res.json({
+        success: true,
+        recommendations: {
+          education_items: [],
+          partner_offers: [],
+          status: 'pending',
+          pending_message: 'Your recommendations are pending operator approval. Please check back later.'
+        }
+      });
     } catch (error) {
       // Log but don't fail the request if review storage fails
+      // In this case, we'll still return the recommendations (edge case)
       console.error(`✗ Failed to store recommendation for review (user ${userId}):`, error);
       console.error('Error details:', error.message, error.stack);
+      
+      // Fall through to return recommendations anyway (review storage failed)
+    }
+    
+    // Log total request time
+    const totalDuration = Date.now() - startTime;
+    if (totalDuration > 1000 || process.env.NODE_ENV === 'development') {
+      console.log(`[Performance] GET /recommendations/${userId} completed in ${totalDuration}ms (generation: ${genDuration}ms)`);
     }
     
     // Transform recommendations structure for frontend compatibility
     // Frontend expects education_items and partner_offers at top level
     // IMPORTANT: Only include eligible partner offers (filter out ineligible ones)
+    // NOTE: This code path is only reached if review storage failed
     const transformedRecommendations = {
       ...validatedRecommendations,
       education_items: validatedRecommendations.recommendations.education.map(rec => ({
@@ -194,7 +239,10 @@ router.get('/:user_id', (req, res, next) => {
             reasons: rec.eligibility_check?.reasons || [],
             disqualifiers: []
           }
-        }))
+        })),
+      // New recommendations are pending approval
+      status: 'pending',
+      pending_message: 'Your recommendations are pending operator approval. Please check back later.'
     };
     
     res.json({

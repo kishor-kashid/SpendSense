@@ -49,13 +49,6 @@ const PartnerOffer = ({ offer }) => {
         </div>
       )}
 
-      {offer.rationale && (
-        <div className="partner-offer-rationale">
-          <strong>Why this offer:</strong>
-          <p>{offer.rationale}</p>
-        </div>
-      )}
-
       {offer.eligibility && !offer.eligibility.eligible && offer.eligibility.disqualifiers && (
         <div className="partner-offer-disqualifiers">
           <strong>Not eligible because:</strong>
@@ -84,12 +77,6 @@ const PartnerOffer = ({ offer }) => {
           </a>
         </div>
       )}
-
-      <div className="partner-offer-disclaimer">
-        <small>
-          <strong>Disclaimer:</strong> This is educational content, not financial advice. Consult a licensed advisor for personalized guidance.
-        </small>
-      </div>
     </Card>
   );
 };

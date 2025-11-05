@@ -24,13 +24,6 @@ const EducationItem = ({ item }) => {
         <p className="education-item-description">{item.description}</p>
       )}
 
-      {item.rationale && (
-        <div className="education-item-rationale">
-          <strong>Why this matters:</strong>
-          <p>{item.rationale}</p>
-        </div>
-      )}
-
       {item.url && (
         <div className="education-item-actions">
           <a 
@@ -39,16 +32,10 @@ const EducationItem = ({ item }) => {
             rel="noopener noreferrer"
             className="education-item-link"
           >
-            View Resource →
+            View Resource
           </a>
         </div>
       )}
-
-      <div className="education-item-disclaimer">
-        <small>
-          <strong>Disclaimer:</strong> This is educational content, not financial advice. Consult a licensed advisor for personalized guidance.
-        </small>
-      </div>
     </Card>
   );
 };

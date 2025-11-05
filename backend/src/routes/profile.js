@@ -6,6 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const { assignPersonaToUser } = require('../services/personas/personaAssigner');
+const { hasConsent } = require('../services/guardrails/consentChecker');
 const User = require('../models/User');
 
 /**
@@ -37,6 +38,19 @@ router.get('/:user_id', (req, res, next) => {
         error: {
           message: `User with ID ${userId} not found`,
           code: 'USER_NOT_FOUND'
+        }
+      });
+    }
+    
+    // IMPORTANT: Check consent FIRST before attempting to generate profile
+    // This ensures we return 403 immediately if consent is not granted
+    // Use hasConsent() which checks the consent table (authoritative source)
+    if (!hasConsent(userId)) {
+      return res.status(403).json({
+        success: false,
+        error: {
+          message: 'User consent is required to access behavioral profile',
+          code: 'CONSENT_REQUIRED'
         }
       });
     }

@@ -1,9 +1,7 @@
-import React, { useState } from 'react';
-import Button from '../common/Button';
+import React from 'react';
 import './DecisionTrace.css';
 
 const DecisionTrace = ({ decisionTrace }) => {
-  const [expanded, setExpanded] = useState(false);
 
   if (!decisionTrace) {
     return (
@@ -208,25 +206,6 @@ const DecisionTrace = ({ decisionTrace }) => {
             </div>
           </div>
         )}
-
-        {expanded && (
-          <div className="decision-trace-section">
-            <h4>Full Trace (JSON)</h4>
-            <pre className="trace-json">
-              {JSON.stringify(decisionTrace, null, 2)}
-            </pre>
-          </div>
-        )}
-      </div>
-
-      <div className="decision-trace-actions">
-        <Button
-          variant="outline"
-          size="small"
-          onClick={() => setExpanded(!expanded)}
-        >
-          {expanded ? 'Hide' : 'Show'} Full Trace
-        </Button>
       </div>
     </div>
   );

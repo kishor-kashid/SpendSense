@@ -147,20 +147,45 @@ function createTables() {
     )
   `);
 
+  // Check if recommendation_reviews table exists and has flagged column
+  const reviewsTableInfo = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='recommendation_reviews'").get();
+  if (reviewsTableInfo) {
+    const reviewsColumns = db.prepare("PRAGMA table_info(recommendation_reviews)").all();
+    const hasFlagged = reviewsColumns.some(col => col.name === 'flagged');
+    const hasFlagReason = reviewsColumns.some(col => col.name === 'flag_reason');
+    
+    if (!hasFlagged) {
+      console.log('Adding flagged column to recommendation_reviews table...');
+      // SQLite doesn't support CHECK constraints in ALTER TABLE, so we add it without the constraint
+      // The constraint will be enforced on new tables
+      db.exec('ALTER TABLE recommendation_reviews ADD COLUMN flagged INTEGER NOT NULL DEFAULT 0');
+    }
+    
+    if (!hasFlagReason) {
+      console.log('Adding flag_reason column to recommendation_reviews table...');
+      db.exec('ALTER TABLE recommendation_reviews ADD COLUMN flag_reason TEXT');
+    }
+  }
+
   // Create indexes for better query performance
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_accounts_user_id ON accounts(user_id);
     CREATE INDEX IF NOT EXISTS idx_accounts_type ON accounts(type);
+    CREATE INDEX IF NOT EXISTS idx_accounts_user_type ON accounts(user_id, type);
     CREATE INDEX IF NOT EXISTS idx_transactions_account_id ON transactions(account_id);
     CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date);
     CREATE INDEX IF NOT EXISTS idx_transactions_merchant ON transactions(merchant_name);
     CREATE INDEX IF NOT EXISTS idx_transactions_pending ON transactions(pending);
+    CREATE INDEX IF NOT EXISTS idx_transactions_account_date ON transactions(account_id, date);
+    CREATE INDEX IF NOT EXISTS idx_transactions_category ON transactions(personal_finance_category_primary);
     CREATE INDEX IF NOT EXISTS idx_liabilities_account_id ON liabilities(account_id);
     CREATE INDEX IF NOT EXISTS idx_liabilities_overdue ON liabilities(is_overdue);
     CREATE INDEX IF NOT EXISTS idx_consent_user_id ON consent(user_id);
     CREATE INDEX IF NOT EXISTS idx_feedback_user_id ON feedback(user_id);
     CREATE INDEX IF NOT EXISTS idx_recommendation_reviews_user_id ON recommendation_reviews(user_id);
     CREATE INDEX IF NOT EXISTS idx_recommendation_reviews_status ON recommendation_reviews(status);
+    CREATE INDEX IF NOT EXISTS idx_recommendation_reviews_user_status ON recommendation_reviews(user_id, status);
+    CREATE INDEX IF NOT EXISTS idx_users_consent_status ON users(consent_status);
   `);
 
   console.log('Database tables created successfully');
