@@ -27,6 +27,14 @@ function initializeDatabase() {
       const { createTables } = require('../migrations/createTables');
       createTables();
       
+      // Analyze database to update statistics for query optimizer
+      try {
+        db.exec('ANALYZE');
+        console.log('Database statistics updated for query optimization');
+      } catch (error) {
+        console.warn('Could not analyze database:', error.message);
+      }
+      
       resolve(db);
     } catch (error) {
       console.error('Database connection error:', error);

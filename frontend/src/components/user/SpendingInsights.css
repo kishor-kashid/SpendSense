@@ -1,0 +1,182 @@
+.spending-insights {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.insights-summary-card,
+.insights-card {
+  padding: var(--spacing-xl);
+}
+
+.insights-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin: 0 0 var(--spacing-lg) 0;
+  line-height: var(--line-height-normal);
+}
+
+.insights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.insight-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-lg);
+  background-color: var(--background);
+  border-radius: var(--radius-md);
+}
+
+.insight-label {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-normal);
+}
+
+.insight-value {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  line-height: var(--line-height-tight);
+}
+
+.insight-value.spending {
+  color: #c33;
+}
+
+.insight-value.income {
+  color: #3c3;
+}
+
+.insight-value.positive {
+  color: #3c3;
+}
+
+.insight-value.negative {
+  color: #c33;
+}
+
+.largest-transaction {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-lg);
+  background-color: var(--background);
+  border-radius: var(--radius-md);
+}
+
+.largest-transaction-merchant {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  line-height: var(--line-height-normal);
+}
+
+.largest-transaction-amount {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: #c33;
+  line-height: var(--line-height-tight);
+}
+
+.largest-transaction-details {
+  display: flex;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  line-height: var(--line-height-normal);
+}
+
+.insights-card h4 {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin: 0 0 var(--spacing-lg) 0;
+  line-height: var(--line-height-normal);
+}
+
+.top-merchants-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.top-merchant-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-lg);
+  background-color: var(--background);
+  border-radius: var(--radius-md);
+}
+
+.merchant-rank {
+  font-weight: var(--font-weight-bold);
+  color: var(--primary-color);
+  font-size: var(--font-size-base);
+  min-width: 30px;
+  line-height: var(--line-height-tight);
+}
+
+.merchant-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.merchant-name {
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
+}
+
+.merchant-count {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  line-height: var(--line-height-normal);
+}
+
+.merchant-amount {
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-tight);
+}
+
+.monthly-trends {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.monthly-trend-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background-color: var(--background);
+  border-radius: var(--radius-md);
+}
+
+.trend-month {
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
+}
+
+.trend-amount {
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-tight);
+}
+

@@ -109,7 +109,23 @@ Per-user JSON files containing:
 
 ## Running Evaluation
 
-### From Command Line
+### Full Evaluation Harness (Recommended)
+
+Run the complete evaluation on all synthetic users:
+
+```bash
+cd backend
+npm run evaluate
+```
+
+This will:
+1. Initialize the database
+2. Load all synthetic data
+3. Generate recommendations for all users
+4. Calculate all metrics (coverage, explainability, latency, auditability)
+5. Generate all reports (JSON, CSV, summary, decision traces)
+
+### From Command Line (Alternative)
 
 ```bash
 # Calculate metrics for all users
@@ -157,6 +173,7 @@ npm test -- --testPathPattern=eval.test.js
 
 - **Metrics Calculator:** `backend/src/services/eval/metricsCalculator.js`
 - **Report Generator:** `backend/src/services/eval/reportGenerator.js`
+- **Evaluation Script:** `backend/scripts/runEvaluation.js`
 - **Tests:** `backend/tests/unit/eval.test.js`
 - **Output Directory:** `backend/data/evaluation/`
 
@@ -166,4 +183,21 @@ npm test -- --testPathPattern=eval.test.js
 - Latency calculation can be sampled for performance (recommended for large user bases)
 - Decision traces are automatically stored when recommendations are generated
 - All reports include timestamps for audit purposes
+
+## Fairness Analysis
+
+### Note on Demographics
+The synthetic user data does not include demographic information (age, gender, race, ethnicity). As a result, fairness analysis based on protected characteristics is not applicable for this evaluation.
+
+### Fairness Considerations
+- **Consent-based:** All users have equal access to features when consent is granted
+- **Behavioral-based:** Persona assignment is based solely on financial behavior, not demographics
+- **Transparent:** All decisions are explainable and auditable
+- **No bias in data:** Synthetic data is generated without demographic bias
+
+If demographic data were available in future versions, fairness analysis would include:
+- Persona assignment rates by demographic group
+- Recommendation quality by demographic group
+- Latency performance by demographic group
+- Access to features by demographic group
 

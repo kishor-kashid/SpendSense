@@ -1,0 +1,294 @@
+.credit-cards-card {
+  margin-bottom: var(--spacing-lg);
+}
+
+.credit-cards-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+
+.credit-cards-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin: 0;
+  line-height: var(--line-height-normal);
+}
+
+.time-window-selector {
+  display: flex;
+  gap: var(--spacing-xs);
+  background-color: var(--background);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-xs);
+}
+
+.time-window-btn {
+  padding: var(--spacing-xs) var(--spacing-md);
+  border: none;
+  background-color: transparent;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  line-height: var(--line-height-normal);
+}
+
+.time-window-btn:hover:not(:disabled) {
+  background-color: var(--surface);
+  color: var(--text-primary);
+}
+
+.time-window-btn.active {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.time-window-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.credit-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.credit-card-item {
+  padding: var(--spacing-lg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background-color: var(--background);
+  transition: all var(--transition-base);
+}
+
+.credit-card-item:hover {
+  border-color: var(--primary-color);
+  box-shadow: var(--shadow-md);
+}
+
+.credit-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-md);
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.credit-card-name {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.credit-card-name strong {
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-normal);
+}
+
+.credit-card-badge {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+  line-height: var(--line-height-normal);
+}
+
+.credit-card-badge.overdue {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #ef4444;
+}
+
+.credit-card-badge.interest {
+  background-color: #fef3c7;
+  color: #92400e;
+  border: 1px solid #f59e0b;
+}
+
+.credit-card-badge.minimum {
+  background-color: #e0e7ff;
+  color: #3730a3;
+  border: 1px solid #6366f1;
+}
+
+.credit-card-utilization {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--spacing-xs);
+}
+
+.utilization-percentage {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+}
+
+.utilization-status {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: var(--line-height-normal);
+}
+
+.credit-card-utilization.utilization-excellent .utilization-percentage,
+.credit-card-utilization.utilization-excellent .utilization-status {
+  color: #10b981;
+}
+
+.credit-card-utilization.utilization-low .utilization-percentage,
+.credit-card-utilization.utilization-low .utilization-status {
+  color: #f59e0b;
+}
+
+.credit-card-utilization.utilization-medium .utilization-percentage,
+.credit-card-utilization.utilization-medium .utilization-status {
+  color: #f97316;
+}
+
+.credit-card-utilization.utilization-high .utilization-percentage,
+.credit-card-utilization.utilization-high .utilization-status {
+  color: #ef4444;
+}
+
+.credit-card-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.credit-card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-xs) 0;
+}
+
+.credit-card-label {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+}
+
+.credit-card-value {
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+}
+
+.credit-card-value.positive {
+  color: #10b981;
+}
+
+.credit-card-value.negative {
+  color: #ef4444;
+}
+
+.credit-card-utilization-bar {
+  width: 100%;
+  height: 8px;
+  background-color: var(--background);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  margin-top: var(--spacing-sm);
+}
+
+.utilization-bar-fill {
+  height: 100%;
+  transition: width var(--transition-base);
+}
+
+.utilization-bar-fill.utilization-excellent {
+  background-color: #10b981;
+}
+
+.utilization-bar-fill.utilization-low {
+  background-color: #f59e0b;
+}
+
+.utilization-bar-fill.utilization-medium {
+  background-color: #f97316;
+}
+
+.utilization-bar-fill.utilization-high {
+  background-color: #ef4444;
+}
+
+.credit-cards-summary {
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--border-color);
+}
+
+.credit-cards-summary h4 {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin: 0 0 var(--spacing-lg) 0;
+  line-height: var(--line-height-normal);
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm);
+  background-color: var(--background);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+}
+
+.summary-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-normal);
+}
+
+.summary-value {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  line-height: var(--line-height-tight);
+}
+
+@media (max-width: 768px) {
+  .credit-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .credit-card-utilization {
+    align-items: flex-start;
+  }
+
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+

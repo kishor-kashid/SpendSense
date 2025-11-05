@@ -1,0 +1,113 @@
+.consent-toggle-card {
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.consent-toggle-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+.consent-toggle-info {
+  flex: 1;
+  min-width: 250px;
+}
+
+.consent-toggle-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 var(--spacing-xs) 0;
+}
+
+.consent-toggle-description {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.consent-toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 80px;
+  height: 40px;
+  cursor: pointer;
+}
+
+.consent-toggle-input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.consent-toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.3s;
+  border-radius: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.consent-toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 32px;
+  width: 32px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.consent-toggle-input:checked + .consent-toggle-slider {
+  background-color: var(--primary-color);
+}
+
+.consent-toggle-input:checked + .consent-toggle-slider:before {
+  transform: translateX(40px);
+}
+
+.consent-toggle-input:disabled + .consent-toggle-slider {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.consent-toggle-label {
+  position: absolute;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: white;
+  z-index: 1;
+  transition: 0.3s;
+}
+
+.consent-toggle-slider:not(.active) .consent-toggle-label {
+  left: 8px;
+}
+
+.consent-toggle-slider.active .consent-toggle-label {
+  right: 8px;
+}
+
+.consent-toggle-loading {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--border-color);
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+

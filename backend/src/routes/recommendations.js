@@ -7,6 +7,7 @@ const express = require('express');
 const router = express.Router();
 const { generateRecommendations } = require('../services/recommend/recommendationEngine');
 const { validateContent, requireValidTone } = require('../services/guardrails/toneValidator');
+const { hasConsent } = require('../services/guardrails/consentChecker');
 const RecommendationReview = require('../models/RecommendationReview');
 const User = require('../models/User');
 
@@ -17,6 +18,7 @@ const User = require('../models/User');
  * All guardrails applied: consent, eligibility, tone
  */
 router.get('/:user_id', (req, res, next) => {
+  const startTime = Date.now();
   try {
     // Validate user_id parameter
     const userIdParam = req.params.user_id;
@@ -44,8 +46,88 @@ router.get('/:user_id', (req, res, next) => {
       });
     }
     
-    // Generate recommendations (this already checks consent and applies eligibility filter)
+    // IMPORTANT: Check consent FIRST before checking reviews
+    // Consent check is done inside generateRecommendations, but we need to check it early
+    // to avoid returning pending reviews when consent is revoked
+    // Use hasConsent() which checks the consent table (authoritative source)
+    if (!hasConsent(userId)) {
+      return res.status(403).json({
+        success: false,
+        error: {
+          message: 'User consent is required to generate recommendations',
+          code: 'CONSENT_REQUIRED'
+        }
+      });
+    }
+    
+    // First check if there's an approved review for this user
+    // Users can ONLY see approved recommendations - pending ones are not visible
+    const approvedReview = RecommendationReview.findApprovedByUserId(userId);
+    if (approvedReview && approvedReview.recommendation_data) {
+      const recData = approvedReview.recommendation_data;
+      
+      // Transform approved recommendations for frontend
+      // IMPORTANT: Only include eligible partner offers (filter out ineligible ones)
+      const allPartnerOffers = recData.recommendations?.partner_offers || recData.partner_offers || [];
+      const eligiblePartnerOffers = allPartnerOffers
+        .filter(rec => {
+          // Check eligibility from either eligibility_check or eligibility field
+          const eligibility = rec.eligibility_check || rec.eligibility;
+          return eligibility && (eligibility.isEligible === true || eligibility.eligible === true);
+        })
+        .map(rec => ({
+          ...rec.item,
+          rationale: rec.rationale,
+          eligibility: {
+            eligible: true,
+            reasons: (rec.eligibility_check || rec.eligibility)?.reasons || [],
+            disqualifiers: []
+          }
+        }));
+      
+      const transformedRecommendations = {
+        ...recData,
+        education_items: recData.recommendations?.education?.map(rec => ({
+          ...rec.item,
+          rationale: rec.rationale
+        })) || recData.education_items || [],
+        partner_offers: eligiblePartnerOffers,
+        status: 'approved',
+        approved_at: approvedReview.reviewed_at
+      };
+      
+      return res.json({
+        success: true,
+        recommendations: transformedRecommendations
+      });
+    }
+    
+    // Check if there's a pending review - if so, return empty recommendations
+    // Users should NOT see pending recommendations until approved
+    const pendingReview = RecommendationReview.findPendingByUserId(userId);
+    if (pendingReview) {
+      // Return empty recommendations with pending status (but don't show the actual recommendations)
+      return res.json({
+        success: true,
+        recommendations: {
+          education_items: [],
+          partner_offers: [],
+          status: 'pending',
+          pending_message: 'Your recommendations are pending operator approval. Please check back later.'
+        }
+      });
+    }
+    
+    // No approved or pending review - generate new recommendations
+    // This already checks consent and applies eligibility filter
+    const genStartTime = Date.now();
     const recommendations = generateRecommendations(userId);
+    const genDuration = Date.now() - genStartTime;
+    
+    // Log performance if generation took significant time
+    if (genDuration > 1000) {
+      console.log(`[Performance] Recommendation generation for user ${userId} took ${genDuration}ms`);
+    }
     
     // Apply tone validation to all recommendation content
     const validatedRecommendations = {
@@ -95,22 +177,77 @@ router.get('/:user_id', (req, res, next) => {
       partner_offers_count: validatedRecommendations.recommendations.partner_offers.length
     };
     
-    // Store recommendation in review queue as pending (for operator oversight)
+    // Store or update recommendation in review queue as pending (for operator oversight)
+    // If a pending review already exists for this user, update it instead of creating a duplicate
     try {
-      RecommendationReview.create({
+      const review = RecommendationReview.createOrUpdatePending({
         user_id: userId,
         recommendation_data: validatedRecommendations,
         decision_trace: recommendations.decision_trace,
         status: 'pending'
       });
+      console.log(`✓ Created/updated pending review (ID: ${review.review_id}) for user ${userId}`);
+      
+      // After storing as pending, return empty recommendations to the user
+      // Users should NOT see pending recommendations until approved
+      return res.json({
+        success: true,
+        recommendations: {
+          education_items: [],
+          partner_offers: [],
+          status: 'pending',
+          pending_message: 'Your recommendations are pending operator approval. Please check back later.'
+        }
+      });
     } catch (error) {
       // Log but don't fail the request if review storage fails
-      console.error('Failed to store recommendation for review:', error);
+      // In this case, we'll still return the recommendations (edge case)
+      console.error(`✗ Failed to store recommendation for review (user ${userId}):`, error);
+      console.error('Error details:', error.message, error.stack);
+      
+      // Fall through to return recommendations anyway (review storage failed)
     }
+    
+    // Log total request time
+    const totalDuration = Date.now() - startTime;
+    if (totalDuration > 1000 || process.env.NODE_ENV === 'development') {
+      console.log(`[Performance] GET /recommendations/${userId} completed in ${totalDuration}ms (generation: ${genDuration}ms)`);
+    }
+    
+    // Transform recommendations structure for frontend compatibility
+    // Frontend expects education_items and partner_offers at top level
+    // IMPORTANT: Only include eligible partner offers (filter out ineligible ones)
+    // NOTE: This code path is only reached if review storage failed
+    const transformedRecommendations = {
+      ...validatedRecommendations,
+      education_items: validatedRecommendations.recommendations.education.map(rec => ({
+        ...rec.item,
+        rationale: rec.rationale
+      })),
+      partner_offers: validatedRecommendations.recommendations.partner_offers
+        .filter(rec => {
+          // Only include offers that are eligible
+          // Double-check eligibility even though filterEligibleOffers should have filtered them
+          const eligibility = rec.eligibility_check;
+          return eligibility && eligibility.isEligible === true;
+        })
+        .map(rec => ({
+          ...rec.item,
+          rationale: rec.rationale,
+          eligibility: {
+            eligible: true,
+            reasons: rec.eligibility_check?.reasons || [],
+            disqualifiers: []
+          }
+        })),
+      // New recommendations are pending approval
+      status: 'pending',
+      pending_message: 'Your recommendations are pending operator approval. Please check back later.'
+    };
     
     res.json({
       success: true,
-      recommendations: validatedRecommendations
+      recommendations: transformedRecommendations
     });
   } catch (error) {
     // Handle consent errors specifically

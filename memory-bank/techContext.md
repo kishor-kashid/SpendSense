@@ -73,18 +73,27 @@ spendsense/
 - **75 users generated:** Diverse financial profiles (configurable 50-100)
 - **120 days history:** Transaction history per user (configurable 90-180)
 - **Plaid-style structure:** Match Plaid API format
+- **User fields:** Generates first_name, last_name, username (first_name + last_name), password (first_name + last_name + "123")
+- **Username uniqueness:** Handles duplicate usernames by appending counter
 - **Data persistence:** Generated once, stored in SQLite permanently
 - **Regeneration:** Can regenerate with `npm run generate-data` if needed
 - **Git strategy:** Synthetic JSON files excluded from version control
 
 ### Performance Requirements
-- **Latency:** <5 seconds per user for recommendation generation
+- **Latency:** <5 seconds per user for recommendation generation (target met)
 - **Local execution:** Should run on laptop without external dependencies
-- **Optimization:** Database indexes, query optimization, caching where needed
+- **Optimization:** 
+  - Database indexes on frequently queried columns
+  - Query optimization with `ANALYZE` command
+  - In-memory caching with TTL (5 minutes default)
+  - Frontend rendering optimizations (React.memo, useMemo, useCallback)
+  - Performance monitoring and logging
 
 ### API Constraints
 - **REST API:** Simple REST endpoints
-- **No authentication:** Demo mode (no JWT, passwords, etc.)
+- **Authentication:** Username/password system (simple, no encryption for demo mode)
+- **User Credentials:** Username = first_name + last_name, Password = first_name + last_name + "123"
+- **Operator Credentials:** Username "operator", Password "operator123"
 - **CORS:** Enabled for frontend-backend communication
 - **Ports:** Backend on 3001, Frontend on 3000 (typical)
 
@@ -105,20 +114,20 @@ spendsense/
 
 ### Testing Requirements
 - **≥10 tests:** Unit and integration tests combined
-- **Current:** 153 unit tests passing ✅
-  - Feature detection: 74 tests (subscriptions: 19, savings: 6, credit: 8, income: 8, plus 33 additional)
-  - Persona system: 13 tests
-  - Education catalog: 13 tests
-  - Partner offers: 30 tests
-  - Recommendation engine: 13 tests
-  - Consent management: 26 tests
+- **Current:** 420 tests passing ✅
+  - Backend unit: 322 tests (feature detection, personas, catalogs, recommendations, guardrails, evaluation)
+  - Backend integration: 80 tests (workflow, API endpoints)
+  - Frontend integration: 18 tests (authentication, consent, API integration)
 - **Coverage:** Aim for >80% test coverage
-- **Test Framework:** Jest with separate test database
+- **Test Framework:** Jest (backend) and Vitest (frontend)
 - **Test Database:** `backend/data/test_database.sqlite` (auto-created, excluded from git)
 - **Test Isolation:** Unique IDs used in tests to prevent UNIQUE constraint violations
+- **Test Configuration:** Serial execution (maxWorkers: 1) for database stability, 30s timeout
 - **Deterministic:** Use seeds for randomness
-- **Fast execution:** Tests should run quickly (~2-6 seconds for full suite)
-- **Test Command:** `npm test` (runs all tests)
+- **Fast execution:** Tests should run quickly (~10-15 seconds for full backend suite)
+- **Test Commands:** 
+  - Backend: `npm test` (runs all Jest tests)
+  - Frontend: `npm test` (runs Vitest tests)
 
 ## Build & Deployment
 
@@ -170,10 +179,11 @@ spendsense/
 - No payment processing
 
 ### Demo Mode
-- No production-ready authentication
-- No user registration
-- Simplified role-based access
+- Username/password authentication (simple, no encryption)
+- No user registration (users pre-generated)
+- Role-based access (customer/operator)
 - Synthetic users only
+- Operator credentials: "operator" / "operator123"
 
 ### Scalability
 - Designed for 50-100 users

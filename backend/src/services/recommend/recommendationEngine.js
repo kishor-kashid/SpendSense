@@ -12,6 +12,29 @@ const { requireConsent } = require('../guardrails/consentChecker');
 const { RECOMMENDATION_LIMITS } = require('../../config/constants');
 const Account = require('../../models/Account');
 const User = require('../../models/User');
+const cache = require('../../utils/cache');
+
+/**
+ * Performance monitoring wrapper
+ * @param {string} operation - Operation name
+ * @param {Function} fn - Function to measure
+ * @returns {any} Function result
+ */
+function measurePerformance(operation, fn) {
+  const startTime = Date.now();
+  try {
+    const result = fn();
+    const duration = Date.now() - startTime;
+    if (process.env.NODE_ENV !== 'test' && duration > 1000) {
+      console.log(`[Performance] ${operation} took ${duration}ms`);
+    }
+    return result;
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    console.error(`[Performance] ${operation} failed after ${duration}ms:`, error.message);
+    throw error;
+  }
+}
 
 /**
  * Generate recommendations for a user
@@ -23,6 +46,7 @@ const User = require('../../models/User');
  * @param {number} options.maxEducationItems - Maximum education items (default: 5)
  * @param {number} options.minPartnerOffers - Minimum partner offers (default: 1)
  * @param {number} options.maxPartnerOffers - Maximum partner offers (default: 3)
+ * @param {boolean} options.forceRefresh - Force refresh (skip cache) (default: false)
  * @returns {Object} Recommendations with education items, partner offers, and rationales
  */
 function generateRecommendations(userId, options = {}) {
@@ -30,23 +54,54 @@ function generateRecommendations(userId, options = {}) {
     minEducationItems = RECOMMENDATION_LIMITS.MIN_EDUCATION_ITEMS,
     maxEducationItems = RECOMMENDATION_LIMITS.MAX_EDUCATION_ITEMS,
     minPartnerOffers = RECOMMENDATION_LIMITS.MIN_PARTNER_OFFERS,
-    maxPartnerOffers = RECOMMENDATION_LIMITS.MAX_PARTNER_OFFERS
+    maxPartnerOffers = RECOMMENDATION_LIMITS.MAX_PARTNER_OFFERS,
+    forceRefresh = false
   } = options;
+
+  // Check cache first (unless force refresh)
+  const cacheKey = cache.generateKey('recommendations', userId, minEducationItems, maxEducationItems, minPartnerOffers, maxPartnerOffers);
+  if (!forceRefresh) {
+    const cached = cache.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+  }
 
   // Check consent before processing
   requireConsent(userId);
 
-  // Get user data
-  const user = User.findById(userId);
+  // Get user data (cached)
+  const userCacheKey = cache.generateKey('user', userId);
+  let user = cache.get(userCacheKey);
+  if (!user) {
+    user = measurePerformance(`getUser(${userId})`, () => User.findById(userId));
+    if (user) {
+      cache.set(userCacheKey, user, 300000); // Cache for 5 minutes
+    }
+  }
   if (!user) {
     throw new Error(`User ${userId} not found`);
   }
 
-  // Get accounts for eligibility checking
-  const accounts = Account.findByUserId(userId);
+  // Get accounts for eligibility checking (cached)
+  const accountsCacheKey = cache.generateKey('accounts', userId);
+  let accounts = cache.get(accountsCacheKey);
+  if (!accounts) {
+    accounts = measurePerformance(`getAccounts(${userId})`, () => Account.findByUserId(userId));
+    if (accounts) {
+      cache.set(accountsCacheKey, accounts, 300000); // Cache for 5 minutes
+    }
+  }
 
-  // Assign persona (this runs all feature analyses)
-  const personaAssignment = assignPersonaToUser(userId);
+  // Assign persona (this runs all feature analyses) - cached
+  const personaCacheKey = cache.generateKey('persona', userId);
+  let personaAssignment = cache.get(personaCacheKey);
+  if (!personaAssignment) {
+    personaAssignment = measurePerformance(`assignPersona(${userId})`, () => assignPersonaToUser(userId));
+    if (personaAssignment) {
+      cache.set(personaCacheKey, personaAssignment, 300000); // Cache for 5 minutes
+    }
+  }
   const persona = personaAssignment.assigned_persona;
   const behavioralSignals = personaAssignment.behavioral_signals;
 
@@ -132,7 +187,7 @@ function generateRecommendations(userId, options = {}) {
   }));
 
   // Build comprehensive recommendations object
-  return {
+  const recommendations = {
     user_id: userId,
     user_name: user.name,
     assigned_persona: persona,
@@ -151,6 +206,11 @@ function generateRecommendations(userId, options = {}) {
     timestamp: new Date().toISOString(),
     disclaimer: "This is educational content, not financial advice. Please consult with a qualified financial advisor for personalized advice."
   };
+
+  // Cache the result (10 minutes TTL for recommendations)
+  cache.set(cacheKey, recommendations, 600000);
+
+  return recommendations;
 }
 
 /**
@@ -249,11 +309,38 @@ function extractMaxUtilization(creditAnalysis) {
   return Math.max(...cards.map(card => card.utilization || 0));
 }
 
+/**
+ * Clear cache for a user (called when user data changes)
+ * @param {number} userId - User ID
+ */
+function clearUserCache(userId) {
+  // Clear all cache entries for this user by prefix
+  // This handles variations like recommendations:userId:3:5:1:3
+  const prefixes = [
+    `recommendations:${userId}`,
+    `user:${userId}`,
+    `accounts:${userId}`,
+    `persona:${userId}`
+  ];
+  
+  let totalCleared = 0;
+  prefixes.forEach(prefix => {
+    const cleared = cache.deleteByPrefix(prefix);
+    totalCleared += cleared;
+  });
+  
+  if (totalCleared > 0 && process.env.NODE_ENV !== 'test') {
+    console.log(`[Cache] Cleared ${totalCleared} cache entries for user ${userId}`);
+  }
+}
+
 module.exports = {
   generateRecommendations,
   extractCreditScore,
   extractAnnualIncome,
   extractMonthlyIncome,
-  extractMaxUtilization
+  extractMaxUtilization,
+  clearUserCache,
+  measurePerformance
 };
 

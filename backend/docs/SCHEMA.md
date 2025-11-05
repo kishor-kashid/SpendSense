@@ -17,22 +17,34 @@ users (1) ──→ (1) consent
 
 ### 1. users
 
-Stores user information and consent status.
+Stores user information, authentication credentials, and consent status.
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | `user_id` | INTEGER | PRIMARY KEY, AUTOINCREMENT | Unique user identifier |
-| `name` | TEXT | NOT NULL | User's name |
-| `consent_status` | TEXT | NOT NULL, DEFAULT 'pending', CHECK | Consent status: 'pending', 'granted', 'revoked' |
+| `first_name` | TEXT | NOT NULL | User's first name |
+| `last_name` | TEXT | NOT NULL | User's last name |
+| `name` | TEXT | NOT NULL | User's full name |
+| `username` | TEXT | NOT NULL, UNIQUE | Username for authentication |
+| `password` | TEXT | NOT NULL | Password for authentication (plain text in demo) |
+| `consent_status` | TEXT | NOT NULL, DEFAULT 'revoked', CHECK | Consent status: 'granted', 'revoked' |
 | `created_at` | TEXT | NOT NULL, DEFAULT (datetime('now')) | Account creation timestamp |
 | `updated_at` | TEXT | NOT NULL, DEFAULT (datetime('now')) | Last update timestamp |
 
 **Indexes:**
 - Primary key on `user_id`
+- Unique index on `username`
 
 **Relationships:**
 - One-to-many with `accounts` (ON DELETE CASCADE)
 - One-to-one with `consent` (ON DELETE CASCADE)
+- One-to-many with `feedback` (ON DELETE CASCADE)
+- One-to-many with `recommendation_reviews` (ON DELETE CASCADE)
+
+**Notes:**
+- Username format: `first_name + last_name` (e.g., "JohnDoe")
+- Password format: `first_name + last_name + "123"` (e.g., "JohnDoe123")
+- Passwords are stored in plain text (acceptable for demo/prototype only)
 
 ---
 
@@ -166,6 +178,67 @@ Tracks user consent for data processing.
 
 ---
 
+### 6. feedback
+
+Stores user feedback on recommendations.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `feedback_id` | INTEGER | PRIMARY KEY, AUTOINCREMENT | Unique feedback identifier |
+| `user_id` | INTEGER | NOT NULL, FOREIGN KEY | Reference to users.user_id |
+| `recommendation_id` | TEXT | | Recommendation ID (optional) |
+| `recommendation_type` | TEXT | CHECK | Type: 'education' or 'offer' |
+| `rating` | INTEGER | CHECK | Rating 1-5 (optional) |
+| `comment` | TEXT | | Text feedback (optional) |
+| `helpful` | INTEGER | CHECK | Helpful flag: 0 (false) or 1 (true) |
+| `created_at` | TEXT | NOT NULL, DEFAULT (datetime('now')) | Feedback creation timestamp |
+
+**Indexes:**
+- Primary key on `feedback_id`
+- Index on `user_id` (idx_feedback_user_id)
+
+**Relationships:**
+- Many-to-one with `users` (ON DELETE CASCADE)
+
+**Notes:**
+- All feedback fields except `user_id` are optional
+- Feedback can be general (no recommendation_id) or specific to a recommendation
+
+---
+
+### 7. recommendation_reviews
+
+Stores recommendations pending operator review and approval history.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `review_id` | INTEGER | PRIMARY KEY, AUTOINCREMENT | Unique review identifier |
+| `user_id` | INTEGER | NOT NULL, FOREIGN KEY | Reference to users.user_id |
+| `recommendation_data` | TEXT | NOT NULL | JSON string of recommendation data (education items + partner offers) |
+| `status` | TEXT | NOT NULL, DEFAULT 'pending', CHECK | Status: 'pending', 'approved', 'overridden' |
+| `operator_notes` | TEXT | | Notes from operator review (optional) |
+| `decision_trace` | TEXT | | JSON string of decision trace for auditability |
+| `created_at` | TEXT | NOT NULL, DEFAULT (datetime('now')) | Review creation timestamp |
+| `reviewed_at` | TEXT | | Timestamp when reviewed (null if pending) |
+| `reviewed_by` | TEXT | | Username of operator who reviewed (null if pending) |
+
+**Indexes:**
+- Primary key on `review_id`
+- Index on `user_id` (idx_recommendation_reviews_user_id)
+- Index on `status` (idx_recommendation_reviews_status)
+
+**Relationships:**
+- Many-to-one with `users` (ON DELETE CASCADE)
+
+**Notes:**
+- New recommendations are automatically added with `status: 'pending'`
+- Users can only see recommendations after operator approval (`status: 'approved'`)
+- Operators can override recommendations (`status: 'overridden'`)
+- `recommendation_data` and `decision_trace` are stored as JSON strings
+- Only one pending review per user (new recommendations update existing pending review)
+
+---
+
 ## Foreign Key Relationships
 
 All foreign key relationships use `ON DELETE CASCADE`:
@@ -226,9 +299,26 @@ const transactions = Transaction.findByAccountId('acc_123', {
 });
 ```
 
+## Additional Tables
+
+### Summary of All Tables
+
+1. **users** - User accounts and authentication
+2. **accounts** - Financial accounts (checking, savings, credit cards, loans)
+3. **transactions** - Individual financial transactions
+4. **liabilities** - Credit card and loan liability details
+5. **consent** - User consent records for data processing
+6. **feedback** - User feedback on recommendations
+7. **recommendation_reviews** - Operator review queue for recommendations
+
 ## Schema Version
 
-Current schema version: **1.0.0**
+Current schema version: **2.0.0**
 
-Last updated: Initial schema creation for PR #2
+Last updated: PR #28 - Added username/password fields, feedback table, and recommendation_reviews table
+
+### Migration History
+
+- **v1.0.0** (PR #2): Initial schema with users, accounts, transactions, liabilities, consent
+- **v2.0.0** (PR #28): Added username/password fields, feedback table, recommendation_reviews table
 

@@ -307,8 +307,13 @@ describe('Recommendation Engine', () => {
     await initializeDatabase();
     
     // Create test user
+    const uniqueId = Date.now();
     const user = User.create({
       name: 'Recommendation Test User',
+      first_name: 'Recommendation',
+      last_name: 'Test',
+      username: `recommendtest${uniqueId}`,
+      password: 'recommendtest123',
       consent_status: 'granted'
     });
     testUserId = user.user_id;

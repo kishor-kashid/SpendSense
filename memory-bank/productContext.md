@@ -28,20 +28,22 @@ SpendSense analyzes transaction patterns to:
 ## Key User Flows
 
 ### Customer Flow
-1. Select user role and user from dropdown (demo mode)
-2. View consent prompt
-3. Opt-in to data processing
-4. View behavioral profile (detected signals)
-5. View personalized recommendations (education + offers)
+1. Enter username and password (username = first_name + last_name, password = first_name + last_name + "123")
+2. View dashboard with tabs (Overview, Transactions, Insights)
+3. Access profile menu (profile icon in navbar) to toggle consent
+4. With consent: View personalized recommendations (education + offers)
+5. Without consent: View only transactions and spending insights
 6. Provide feedback on recommendations
 
 ### Operator Flow
-1. Select operator role
-2. View all users with assigned personas
+1. Enter operator credentials (username: "operator", password: "operator123")
+2. View all users with assigned personas (scrollable list, persona badges only)
 3. Filter/search by persona type
-4. Review specific user's signals and recommendations
-5. Approve, override, or flag recommendations
-6. View decision traces and metrics
+4. Click on user in review queue to expand and see recommendations
+5. Review recommendations (simplified view: title + link only)
+6. Approve or override recommendations
+7. Click on user in sidebar to view detailed signals and decision traces
+8. Use refresh button in navbar to reload data
 
 ## Persona System Goals
 
@@ -80,4 +82,13 @@ SpendSense analyzes transaction patterns to:
 - Users can see their behavioral patterns clearly
 - Users feel supported, not judged
 - Operators can effectively oversee and review recommendations
+
+## UI/UX Improvements Completed
+- Consistent typography and spacing across all components
+- Fixed card heights for recommendation carousels
+- Section-level disclaimers (not in individual cards)
+- Improved visual design with gradients, hover effects, and animations
+- Profile-based messaging consolidated in section headers
+- Removed repetitive rationale labels from individual cards
+- Enhanced navigation and interaction elements
 
