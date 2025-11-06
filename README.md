@@ -139,8 +139,26 @@ Five personas based on behavioral patterns:
 - 3-5 personalized education items per user
 - 1-3 partner offers with eligibility checks
 - Plain-language rationales citing specific data points
+- AI-powered personalized rationales (optional, requires AI consent)
 - Mandatory disclaimers on all recommendations
 - Operator review queue for oversight
+
+### AI-Powered Features
+SpendSense includes AI-powered features that provide enhanced personalization and insights. All AI features require separate AI consent (independent of data processing consent) and are opt-in.
+
+**AI Features:**
+- **Dynamic Rationale Generation:** AI-generated personalized recommendation rationales using GPT-4
+- **Predictive Financial Insights:** Forecast future spending, income, and cash flow for 7, 30, and 90-day horizons
+- **Budget & Goal Generation:** AI-powered personalized budgets and savings goals based on spending patterns
+- **Subscription Cancellation Suggestions:** Smart analysis of subscription usage to suggest candidates for cancellation
+
+**AI Consent:**
+- AI features require separate AI consent (toggle in navigation menu)
+- AI features work independently of data processing consent
+- Users can enable/disable AI features at any time
+- When AI consent is revoked, features fall back to template-based systems
+
+For detailed AI features documentation, see [`backend/docs/AI_FEATURES.md`](./backend/docs/AI_FEATURES.md).
 
 ### Guardrails
 - **Consent Management:** Opt-in/opt-out at any time
@@ -197,6 +215,15 @@ Comprehensive API documentation is available in [`backend/docs/API.md`](./backen
 - `POST /consent` - Grant consent
 - `GET /consent/:user_id` - Get consent status
 - `DELETE /consent/:user_id` - Revoke consent
+- `POST /ai-consent` - Grant AI consent
+- `GET /ai-consent/:user_id` - Get AI consent status
+- `DELETE /ai-consent/:user_id` - Revoke AI consent
+- `GET /ai/predictions/:user_id` - Get predictive insights
+- `GET /ai/predictions/:user_id/all` - Get all horizon predictions
+- `GET /ai/budgets/:user_id/generate` - Generate AI budget
+- `GET /ai/goals/:user_id/generate` - Generate AI savings goals
+- `GET /ai/subscriptions/:user_id/analyze` - Analyze subscriptions
+- `GET /ai/subscriptions/:user_id/suggestions` - Get cancellation suggestions
 - `GET /profile/:user_id` - Get behavioral profile
 - `GET /recommendations/:user_id` - Get recommendations
 - `GET /transactions/:user_id` - Get transactions

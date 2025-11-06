@@ -7,6 +7,8 @@ process.env.DB_PATH = './data/test_database.sqlite';
 
 const { initializeDatabase, closeDatabase } = require('../../src/config/database');
 const { User } = require('../../src/models');
+const Transaction = require('../../src/models/Transaction');
+const Account = require('../../src/models/Account');
 const AIConsent = require('../../src/models/AIConsent');
 const {
   generatePredictiveInsights,
@@ -59,8 +61,32 @@ jest.mock('../../src/utils/cache', () => {
   };
 });
 
+// Mock AI utils
+jest.mock('../../src/services/ai/utils', () => {
+  const originalModule = jest.requireActual('../../src/services/ai/utils');
+  return {
+    ...originalModule,
+    getCachedOrGenerate: jest.fn(async (key, fn) => await fn()),
+    sanitizeDataForAI: jest.fn((data) => data),
+    handleAIError: jest.fn((error) => ({ code: 'ERROR', message: error.message })),
+    clearAICache: jest.fn()
+  };
+});
+
 describe('Predictive Financial Insights', () => {
   let testUserId;
+
+  const mockTransactions = [
+    { amount: -100, date: '2024-01-01', personal_finance_category_primary: 'FOOD_AND_DRINK' },
+    { amount: -50, date: '2024-01-02', personal_finance_category_primary: 'TRANSPORTATION' },
+    { amount: 2000, date: '2024-01-15', personal_finance_category_primary: 'INCOME' },
+    { amount: -200, date: '2024-01-20', personal_finance_category_primary: 'SHOPPING' }
+  ];
+
+  const mockAccounts = [
+    { account_id: 'acc1', current_balance: 5000 },
+    { account_id: 'acc2', current_balance: 1000 }
+  ];
 
   beforeAll(async () => {
     await initializeDatabase();
@@ -170,28 +196,25 @@ describe('Predictive Financial Insights', () => {
     });
 
     test('should handle partial failures gracefully', async () => {
-      // Mock OpenAI to fail for one horizon
-      const openaiClient = require('../../src/services/ai/openaiClient');
-      const originalGet = openaiClient.getOpenAIClient;
-      let callCount = 0;
-      
-      openaiClient.getOpenAIClient = jest.fn(() => {
-        callCount++;
-        if (callCount === 2) {
-          // Fail on second call (30 days)
-          throw new Error('API Error');
+      // Mock getCachedOrGenerate to throw error for 30-day horizon
+      const { getCachedOrGenerate } = require('../../src/services/ai/utils');
+      getCachedOrGenerate.mockImplementation(async (key, fn) => {
+        // For horizon 30, throw error
+        if (key.includes('predictions:') && key.includes(':30')) {
+          throw new Error('API Error for 30 days');
         }
-        return originalGet();
+        // Otherwise execute the function
+        return await fn();
       });
+
+      Transaction.findByUserId = jest.fn().mockReturnValue(mockTransactions);
+      Account.findByUserId = jest.fn().mockReturnValue(mockAccounts);
 
       const predictions = await generateMultiHorizonPredictions(testUserId, [7, 30, 90]);
       
       expect(predictions.predictions['7_days']).toBeDefined();
       expect(predictions.predictions['30_days']).toHaveProperty('error');
       expect(predictions.predictions['90_days']).toBeDefined();
-
-      // Restore
-      openaiClient.getOpenAIClient = originalGet;
     });
   });
 });

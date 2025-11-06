@@ -90,5 +90,7 @@ export const getPredictions = (userId, horizon = 30) => api.get(`/ai/predictions
 export const getAllPredictions = (userId) => api.get(`/ai/predictions/${userId}/all`);
 export const generateBudget = (userId) => api.get(`/ai/budgets/${userId}/generate`);
 export const generateGoals = (userId) => api.get(`/ai/goals/${userId}/generate`);
+export const analyzeSubscriptions = (userId) => api.get(`/ai/subscriptions/${userId}/analyze`);
+export const getSubscriptionSuggestions = (userId) => api.get(`/ai/subscriptions/${userId}/suggestions`);
 
 export default api;

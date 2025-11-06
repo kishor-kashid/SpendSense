@@ -156,14 +156,6 @@ const RecommendationsSection = () => {
 
   return (
     <div className="recommendations-section">
-      <div className="recommendations-header">
-        <h2 className="section-title">Personalized Recommendations</h2>
-        {recommendations?.status === 'approved' && (
-          <span className="recommendations-status-badge approved">
-            ✓ Approved
-          </span>
-        )}
-      </div>
     
       {recommendationsLoading && (
         <Loading message="Loading recommendations..." />

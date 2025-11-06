@@ -327,13 +327,96 @@ function getReportPrompt(params) {
 /**
  * Get subscription analysis prompt template
  * @param {Object} params - Prompt parameters
- * @returns {Object} Prompt object
+ * @param {number} params.userId - User ID
+ * @param {Object} params.analysis - Subscription analysis results
+ * @param {Object} params.userData - Sanitized user data
+ * @returns {Object} Prompt object with system and user messages
  */
 function getSubscriptionAnalysisPrompt(params) {
-  // Placeholder - will be implemented in PR #36
+  const { userId, analysis, userData } = params;
+  
+  const systemMessage = BASE_SYSTEM_PROMPT + `
+Your task: Analyze user subscriptions and suggest which ones might be good candidates for cancellation.
+Suggestions should be based on usage patterns, cost, value, and the user's financial situation.
+DO NOT use shaming, judgmental, or negative language.
+DO provide specific, actionable recommendations with clear rationale.
+DO consider the user's financial context when making suggestions.
+DO prioritize suggestions by potential savings impact.`;
+
+  // Build subscription list for prompt
+  const subscriptionList = analysis.subscriptions.map(sub => {
+    const daysSinceLast = sub.daysSinceLastTransaction !== null 
+      ? `${sub.daysSinceLastTransaction} days ago` 
+      : 'unknown';
+    
+    return `  - ${sub.merchant_name}:
+    * Monthly Cost: $${sub.monthlySpend.toFixed(2)}
+    * Usage: ${sub.transaction_count} transactions in last 30 days
+    * Usage Frequency: ${sub.usageFrequency.toFixed(1)} times/month
+    * Cost per Use: $${sub.costPerUse.toFixed(2)}
+    * Last Used: ${daysSinceLast}
+    * Value Score: ${(sub.valueScore * 100).toFixed(0)}% (lower = better candidate for cancellation)
+    * Underutilized: ${sub.isUnderutilized ? 'Yes' : 'No'}
+    * Cadence: ${sub.cadence || 'irregular'}`;
+  }).join('\n');
+
+  const userMessage = `Analyze subscriptions for this user and suggest which ones might be good candidates for cancellation.
+
+FINANCIAL CONTEXT:
+- Total Balance: $${analysis.financial_context.total_balance.toFixed(2)}
+- Average Monthly Income: $${analysis.financial_context.avg_monthly_income.toFixed(2)}
+- Total Monthly Subscription Spend: $${analysis.financial_context.total_monthly_recurring_spend.toFixed(2)}
+- Subscription Share of Income: ${analysis.summary.subscription_share_of_income.toFixed(1)}%
+
+SUBSCRIPTION ANALYSIS:
+Total Subscriptions: ${analysis.summary.total_subscriptions}
+Underutilized Subscriptions: ${analysis.summary.underutilized_count}
+Average Value Score: ${(analysis.summary.avg_value_score * 100).toFixed(0)}%
+
+SUBSCRIPTION DETAILS:
+${subscriptionList || '  - No subscriptions found'}
+
+ANALYSIS REQUIREMENTS:
+1. Identify subscriptions that are underutilized (high cost, low usage)
+2. Consider subscriptions not used recently (days since last transaction)
+3. Identify duplicate or overlapping services if applicable
+4. Consider the user's financial situation (subscription share of income)
+5. Prioritize suggestions by potential savings impact
+
+SUGGESTION REQUIREMENTS:
+1. Suggest 1-5 subscriptions to consider canceling (if any are good candidates)
+2. Focus on subscriptions with high monthly cost and low usage frequency
+3. Provide clear rationale for each suggestion (explain why it's a good candidate)
+4. Calculate potential monthly/yearly savings
+5. Consider alternatives if applicable (e.g., "consider switching to a cheaper plan")
+6. Use supportive, empowering language - NO shaming or judgment
+7. If all subscriptions are high-value and actively used, suggest reviewing periodically instead
+
+Please provide your suggestions in JSON format:
+{
+  "suggestions": [
+    {
+      "merchant_name": "Subscription name",
+      "monthly_cost": <number>,
+      "rationale": "Why this subscription is a good candidate for cancellation",
+      "potential_alternatives": "Optional alternative suggestions",
+      "priority": "high|medium|low"
+    }
+  ],
+  "rationale": "Overall rationale for the subscription cancellation suggestions"
+}
+
+If no subscriptions are good candidates for cancellation, return:
+{
+  "suggestions": [],
+  "rationale": "All subscriptions appear to be actively used and provide value. Consider reviewing periodically to ensure they still meet your needs."
+}
+
+Generate the suggestions:`;
+
   return {
-    system: BASE_SYSTEM_PROMPT,
-    user: 'Subscription analysis prompt template'
+    system: systemMessage,
+    user: userMessage
   };
 }
 

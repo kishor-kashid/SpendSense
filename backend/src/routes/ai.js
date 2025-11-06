@@ -9,6 +9,7 @@ const router = express.Router();
 const { hasAIConsent } = require('../services/guardrails/aiConsentChecker');
 const { generatePredictiveInsights, generateMultiHorizonPredictions } = require('../services/ai/predictiveInsights');
 const { generateBudget, generateGoals } = require('../services/ai/budgetGenerator');
+const { analyzeSubscriptions, generateCancellationSuggestions } = require('../services/ai/subscriptionAnalyzer');
 const User = require('../models/User');
 
 /**
@@ -36,8 +37,9 @@ const checkAIFeatureConsent = (req, res, next) => {
  * Query params: horizon (optional, default: 30, options: 7, 30, 90)
  * Returns: Predictive insights for specified horizon
  */
-router.get('/predictions/:user_id', checkAIFeatureConsent, async (req, res, next) => {
+router.get('/predictions/:user_id', async (req, res, next) => {
   try {
+    // Validate user_id FIRST (before checking consent)
     const userIdParam = req.params.user_id;
     if (!userIdParam || isNaN(parseInt(userIdParam, 10)) || parseInt(userIdParam, 10) <= 0) {
       return res.status(400).json({
@@ -59,6 +61,17 @@ router.get('/predictions/:user_id', checkAIFeatureConsent, async (req, res, next
         error: {
           message: `User with ID ${userId} not found`,
           code: 'USER_NOT_FOUND'
+        }
+      });
+    }
+    
+    // Check AI consent AFTER validation
+    if (!hasAIConsent(userId)) {
+      return res.status(403).json({
+        success: false,
+        error: {
+          message: 'AI consent is required for AI-powered features',
+          code: 'AI_CONSENT_REQUIRED'
         }
       });
     }
@@ -94,8 +107,9 @@ router.get('/predictions/:user_id', checkAIFeatureConsent, async (req, res, next
  * Get predictive insights for all horizons (7, 30, 90 days)
  * Returns: Predictions for all time horizons
  */
-router.get('/predictions/:user_id/all', checkAIFeatureConsent, async (req, res, next) => {
+router.get('/predictions/:user_id/all', async (req, res, next) => {
   try {
+    // Validate user_id FIRST (before checking consent)
     const userIdParam = req.params.user_id;
     if (!userIdParam || isNaN(parseInt(userIdParam, 10)) || parseInt(userIdParam, 10) <= 0) {
       return res.status(400).json({
@@ -117,6 +131,17 @@ router.get('/predictions/:user_id/all', checkAIFeatureConsent, async (req, res, 
         error: {
           message: `User with ID ${userId} not found`,
           code: 'USER_NOT_FOUND'
+        }
+      });
+    }
+    
+    // Check AI consent AFTER validation
+    if (!hasAIConsent(userId)) {
+      return res.status(403).json({
+        success: false,
+        error: {
+          message: 'AI consent is required for AI-powered features',
+          code: 'AI_CONSENT_REQUIRED'
         }
       });
     }
@@ -138,8 +163,9 @@ router.get('/predictions/:user_id/all', checkAIFeatureConsent, async (req, res, 
  * Generate AI-powered budget recommendations
  * Returns: Budget with category limits and rationale
  */
-router.get('/budgets/:user_id/generate', checkAIFeatureConsent, async (req, res, next) => {
+router.get('/budgets/:user_id/generate', async (req, res, next) => {
   try {
+    // Validate user_id FIRST (before checking consent)
     const userIdParam = req.params.user_id;
     if (!userIdParam || isNaN(parseInt(userIdParam, 10)) || parseInt(userIdParam, 10) <= 0) {
       return res.status(400).json({
@@ -161,6 +187,17 @@ router.get('/budgets/:user_id/generate', checkAIFeatureConsent, async (req, res,
         error: {
           message: `User with ID ${userId} not found`,
           code: 'USER_NOT_FOUND'
+        }
+      });
+    }
+    
+    // Check AI consent AFTER validation
+    if (!hasAIConsent(userId)) {
+      return res.status(403).json({
+        success: false,
+        error: {
+          message: 'AI consent is required for AI-powered features',
+          code: 'AI_CONSENT_REQUIRED'
         }
       });
     }
@@ -194,8 +231,9 @@ router.get('/budgets/:user_id/generate', checkAIFeatureConsent, async (req, res,
  * Generate AI-powered savings goals
  * Returns: Personalized savings goals with rationale
  */
-router.get('/goals/:user_id/generate', checkAIFeatureConsent, async (req, res, next) => {
+router.get('/goals/:user_id/generate', async (req, res, next) => {
   try {
+    // Validate user_id FIRST (before checking consent)
     const userIdParam = req.params.user_id;
     if (!userIdParam || isNaN(parseInt(userIdParam, 10)) || parseInt(userIdParam, 10) <= 0) {
       return res.status(400).json({
@@ -221,6 +259,17 @@ router.get('/goals/:user_id/generate', checkAIFeatureConsent, async (req, res, n
       });
     }
     
+    // Check AI consent AFTER validation
+    if (!hasAIConsent(userId)) {
+      return res.status(403).json({
+        success: false,
+        error: {
+          message: 'AI consent is required for AI-powered features',
+          code: 'AI_CONSENT_REQUIRED'
+        }
+      });
+    }
+    
     // Generate goals
     const goals = await generateGoals(userId);
     
@@ -239,6 +288,118 @@ router.get('/goals/:user_id/generate', checkAIFeatureConsent, async (req, res, n
     res.json({
       success: true,
       goals
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * GET /ai/subscriptions/:user_id/analyze
+ * Analyze user subscriptions with value metrics
+ * Returns: Subscription analysis with usage patterns and value scores
+ */
+router.get('/subscriptions/:user_id/analyze', async (req, res, next) => {
+  try {
+    // Validate user_id FIRST (before checking consent)
+    const userIdParam = req.params.user_id;
+    if (!userIdParam || isNaN(parseInt(userIdParam, 10)) || parseInt(userIdParam, 10) <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          message: `Invalid user_id: ${userIdParam}. Must be a positive integer.`,
+          code: 'INVALID_USER_ID'
+        }
+      });
+    }
+    
+    const userId = parseInt(userIdParam, 10);
+    
+    // Check if user exists
+    const user = User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          message: `User with ID ${userId} not found`,
+          code: 'USER_NOT_FOUND'
+        }
+      });
+    }
+    
+    // Check AI consent AFTER validation
+    if (!hasAIConsent(userId)) {
+      return res.status(403).json({
+        success: false,
+        error: {
+          message: 'AI consent is required for AI-powered features',
+          code: 'AI_CONSENT_REQUIRED'
+        }
+      });
+    }
+    
+    // Analyze subscriptions
+    const analysis = analyzeSubscriptions(userId);
+    
+    res.json({
+      success: true,
+      analysis
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * GET /ai/subscriptions/:user_id/suggestions
+ * Generate AI-powered subscription cancellation suggestions
+ * Returns: Cancellation suggestions with rationale and potential savings
+ */
+router.get('/subscriptions/:user_id/suggestions', async (req, res, next) => {
+  try {
+    // Validate user_id FIRST (before checking consent)
+    const userIdParam = req.params.user_id;
+    if (!userIdParam || isNaN(parseInt(userIdParam, 10)) || parseInt(userIdParam, 10) <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          message: `Invalid user_id: ${userIdParam}. Must be a positive integer.`,
+          code: 'INVALID_USER_ID'
+        }
+      });
+    }
+    
+    const userId = parseInt(userIdParam, 10);
+    
+    // Check if user exists
+    const user = User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          message: `User with ID ${userId} not found`,
+          code: 'USER_NOT_FOUND'
+        }
+      });
+    }
+    
+    // Check AI consent AFTER validation
+    if (!hasAIConsent(userId)) {
+      return res.status(403).json({
+        success: false,
+        error: {
+          message: 'AI consent is required for AI-powered features',
+          code: 'AI_CONSENT_REQUIRED'
+        }
+      });
+    }
+    
+    // Generate cancellation suggestions
+    const suggestions = await generateCancellationSuggestions(userId);
+    
+    res.json({
+      success: true,
+      suggestions
     });
   } catch (error) {
     next(error);

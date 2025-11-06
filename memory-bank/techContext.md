@@ -126,6 +126,12 @@ spendsense/
 - **Test Database:** `backend/data/test_database.sqlite` (auto-created, excluded from git)
 - **Test Isolation:** Unique IDs used in tests to prevent UNIQUE constraint violations
 - **Test Configuration:** Serial execution (maxWorkers: 1) for database stability, 30s timeout
+- **Test Patterns:**
+  - Async tests must use async/await for all async function calls
+  - Mock setup uses factory functions in jest.mock() for proper initialization
+  - Test isolation: Clear cache, reset mocks, clean database state in beforeEach
+  - Mock restoration: Use jest.spyOn() with mockRestore() for function mocking
+  - Error testing: Mock failures using mockRejectedValue for async errors
 - **Deterministic:** Use seeds for randomness
 - **Fast execution:** Tests should run quickly (~10-15 seconds for full backend suite)
 - **Test Commands:** 

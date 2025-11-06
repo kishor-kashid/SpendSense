@@ -655,6 +655,121 @@ Generate AI-powered personalized savings goals based on the user's financial sit
 - Goals are personalized based on current financial situation
 - All goals require AI consent only (independent of data processing consent)
 
+### GET /ai/subscriptions/:user_id/analyze
+
+Analyze user subscriptions with value metrics (usage patterns, cost per use, value scores).
+
+**Parameters:**
+- `user_id` (path) - User ID (integer)
+
+**Response:**
+```json
+{
+  "success": true,
+  "analysis": {
+    "user_id": 1,
+    "subscriptions": [
+      {
+        "merchant_name": "Netflix",
+        "monthly_recurring_spend": 15.99,
+        "cadence": "monthly",
+        "transaction_count": 3,
+        "total_spend": 47.97,
+        "monthlySpend": 15.99,
+        "usageFrequency": 3.0,
+        "costPerUse": 5.33,
+        "daysSinceLastTransaction": 5,
+        "valueScore": 0.75,
+        "isUnderutilized": false
+      }
+    ],
+    "summary": {
+      "total_subscriptions": 3,
+      "total_monthly_recurring_spend": 45.99,
+      "subscription_share_of_income": 2.5,
+      "underutilized_count": 1,
+      "avg_value_score": 0.65
+    },
+    "financial_context": {
+      "total_balance": 5000,
+      "avg_monthly_income": 5000,
+      "total_monthly_recurring_spend": 45.99
+    }
+  }
+}
+```
+
+**Error Responses:**
+- `403 Forbidden` - AI consent not granted
+- `404 Not Found` - User not found
+- `400 Bad Request` - Invalid user_id
+
+**Notes:**
+- Analysis includes value metrics calculated from actual transaction data
+- Subscriptions are analyzed for the last 30 days
+- Value score indicates subscription value (lower = better candidate for cancellation)
+- Underutilized flag indicates high cost, low usage subscriptions
+
+### GET /ai/subscriptions/:user_id/suggestions
+
+Generate AI-powered subscription cancellation suggestions with rationale and potential savings.
+
+**Parameters:**
+- `user_id` (path) - User ID (integer)
+
+**Response:**
+```json
+{
+  "success": true,
+  "suggestions": {
+    "user_id": 1,
+    "suggestions": [
+      {
+        "merchant_name": "Unused Service",
+        "monthly_cost": 29.99,
+        "rationale": "This subscription has been used only once in the last 30 days, costing $29.99 per use. Consider canceling if you're not actively using this service.",
+        "potential_alternatives": "Consider switching to a free tier or alternative service",
+        "priority": "high",
+        "analysis": {
+          "usageFrequency": 0.5,
+          "costPerUse": 29.99,
+          "valueScore": 0.15,
+          "isUnderutilized": true
+        },
+        "potential_savings": {
+          "monthly": 29.99,
+          "yearly": 359.88
+        }
+      }
+    ],
+    "summary": {
+      "total_suggestions": 1,
+      "potential_monthly_savings": 29.99,
+      "potential_yearly_savings": 359.88,
+      "message": "Subscription cancellation suggestions based on usage patterns"
+    },
+    "analysis": {
+      "subscriptions": [...],
+      "summary": {...}
+    },
+    "ai_rationale": "Based on your subscription analysis, we identified one subscription that appears to be underutilized..."
+  }
+}
+```
+
+**Error Responses:**
+- `403 Forbidden` - AI consent not granted
+- `404 Not Found` - User not found
+- `400 Bad Request` - Invalid user_id
+
+**Notes:**
+- Suggestions are ranked by potential savings impact
+- Only suggests cancellations if good candidates exist
+- If all subscriptions are high-value, suggests periodic review instead
+- Suggestions include alternatives when applicable
+- Cached for 5 minutes to allow for quick updates
+- All suggestions require AI consent only (independent of data processing consent)
+
 ---
 
 ## Transaction Endpoints

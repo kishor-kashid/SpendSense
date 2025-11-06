@@ -64,13 +64,20 @@ async function getCachedOrGenerate(cacheKey, generateFn, ttl = 300000) {
     return cached;
   }
   
-  // Generate new response
-  const result = await generateFn();
-  
-  // Cache the result
-  cache.set(cacheKey, result, ttl);
-  
-  return result;
+  try {
+    // Generate new response
+    const result = await generateFn();
+    
+    // Only cache successful results (not null, not errors)
+    if (result !== null && result !== undefined) {
+      cache.set(cacheKey, result, ttl);
+    }
+    
+    return result;
+  } catch (error) {
+    // Don't cache errors - let them propagate
+    throw error;
+  }
 }
 
 /**
@@ -171,6 +178,33 @@ function clearAICache(userId) {
   ];
   
   keysToClear.forEach(key => cache.delete(key));
+  
+  // Clear all rationale cache entries (pattern: ai_rationale:userId:*)
+  // The cache is a Cache instance, check if it has a Map or keys method
+  if (cache.cache && cache.cache instanceof Map) {
+    // Cache instance with internal Map
+    const keysToDelete = [];
+    for (const key of cache.cache.keys()) {
+      if (typeof key === 'string' && key.startsWith(`ai_rationale:${userId}:`)) {
+        keysToDelete.push(key);
+      }
+    }
+    keysToDelete.forEach(key => cache.delete(key));
+  } else if (cache instanceof Map) {
+    // Direct Map instance
+    const keysToDelete = [];
+    for (const key of cache.keys()) {
+      if (typeof key === 'string' && key.startsWith(`ai_rationale:${userId}:`)) {
+        keysToDelete.push(key);
+      }
+    }
+    keysToDelete.forEach(key => cache.delete(key));
+  } else if (cache && typeof cache.delete === 'function') {
+    // Try to use deleteByPrefix if available
+    if (typeof cache.deleteByPrefix === 'function') {
+      cache.deleteByPrefix(`ai_rationale:${userId}:`);
+    }
+  }
 }
 
 module.exports = {

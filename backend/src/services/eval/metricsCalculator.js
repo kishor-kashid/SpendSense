@@ -292,9 +292,9 @@ async function calculateLatency(userIds = null, sampleSize = null) {
 /**
  * Calculate auditability metric: % of recommendations with decision traces
  * @param {Array<number>} userIds - Array of user IDs to evaluate (optional, defaults to all users)
- * @returns {Object} Auditability metric results
+ * @returns {Promise<Object>} Auditability metric results
  */
-function calculateAuditability(userIds = null) {
+async function calculateAuditability(userIds = null) {
   // Check recommendation reviews for decision traces
   const allReviews = RecommendationReview.findAll();
   const reviewsToEvaluate = userIds
@@ -400,7 +400,7 @@ async function calculateAllMetrics(options = {}) {
   const coverage = calculateCoverage(userIds);
   const explainability = await calculateExplainability(userIds);
   const latency = await calculateLatency(userIds, latencySampleSize);
-  const auditability = calculateAuditability(userIds);
+  const auditability = await calculateAuditability(userIds);
   
   const endTime = Date.now();
   const calculationTime = endTime - startTime;

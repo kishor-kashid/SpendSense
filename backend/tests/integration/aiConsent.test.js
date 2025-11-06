@@ -35,8 +35,9 @@ describe('AI Consent API Integration Tests', () => {
   });
 
   beforeEach(() => {
-    // Clear AI consent before each test
-    AIConsent.revoke(testUserId);
+    // Delete AI consent record before each test (to ensure no record exists)
+    const db = require('../../src/config/database').getDatabase();
+    db.prepare('DELETE FROM ai_consent WHERE user_id = ?').run(testUserId);
   });
 
   describe('POST /ai-consent', () => {
@@ -199,6 +200,10 @@ describe('AI Consent API Integration Tests', () => {
 
   describe('AI Consent Workflow', () => {
     test('should handle complete AI consent lifecycle', async () => {
+      // Ensure no consent record exists
+      const db = require('../../src/config/database').getDatabase();
+      db.prepare('DELETE FROM ai_consent WHERE user_id = ?').run(testUserId);
+      
       // 1. Check initial status (no consent)
       let response = await request(app)
         .get(`/ai-consent/${testUserId}`)

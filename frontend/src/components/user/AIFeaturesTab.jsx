@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useAIConsent } from '../../hooks/useAIConsent';
 import PredictiveInsights from './PredictiveInsights';
 import BudgetGenerator from './BudgetGenerator';
+import SubscriptionAnalyzer from './SubscriptionAnalyzer';
 import './AIFeaturesTab.css';
 
 const AIFeaturesTab = () => {
@@ -117,6 +118,10 @@ const AIFeaturesTab = () => {
 
         <section className="ai-features-section">
           <BudgetGenerator />
+        </section>
+
+        <section className="ai-features-section">
+          <SubscriptionAnalyzer />
         </section>
       </div>
     </div>

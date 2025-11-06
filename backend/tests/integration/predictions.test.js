@@ -144,8 +144,7 @@ describe('Predictive Insights API Integration Tests', () => {
     });
 
     test('should return 404 for non-existent user', async () => {
-      grantAIConsent(99999);
-
+      // Don't grant consent for non-existent user - just test the route
       const response = await request(app)
         .get('/ai/predictions/99999')
         .expect(404);

@@ -57,6 +57,7 @@ Analysis performed on two windows:
   - `rationaleGenerator.js` - AI-powered rationale generation (GPT-4)
   - `predictiveInsights.js` - Transaction pattern analysis and predictions (GPT-4)
   - `budgetGenerator.js` - Budget and goal generation (GPT-4)
+  - `subscriptionAnalyzer.js` - Subscription analysis and cancellation suggestions (GPT-4)
   - `promptTemplates.js` - Reusable prompt templates for all AI features
 - **AI Integration:**
   - GPT-4 model used for all AI features
@@ -69,6 +70,8 @@ Analysis performed on two windows:
   - `BudgetGenerator.jsx` - Budget and goals container
   - `BudgetDisplay.jsx` - Budget recommendations display
   - `GoalsDisplay.jsx` - Savings goals display
+  - `SubscriptionAnalyzer.jsx` - Subscription analysis display
+  - `SubscriptionSuggestions.jsx` - Cancellation suggestions display
 - **API Endpoints:**
   - `POST /ai-consent` - Grant AI consent
   - `GET /ai-consent/:user_id` - Get AI consent status
@@ -77,6 +80,14 @@ Analysis performed on two windows:
   - `GET /ai/predictions/:user_id/all` - Get all-horizon predictions
   - `GET /ai/budgets/:user_id/generate` - Generate budget
   - `GET /ai/goals/:user_id/generate` - Generate goals
+  - `GET /ai/subscriptions/:user_id/analyze` - Analyze subscriptions
+  - `GET /ai/subscriptions/:user_id/suggestions` - Get cancellation suggestions
+- **Documentation:**
+  - `backend/docs/AI_FEATURES.md` - Complete AI features guide
+  - `backend/docs/AI_PROMPTS.md` - Prompt engineering documentation
+  - `backend/docs/AI_COST_OPTIMIZATION.md` - Cost optimization strategies
+  - `backend/docs/AI_FEATURES_TROUBLESHOOTING.md` - Troubleshooting guide
+  - `backend/docs/AI_OPERATOR_GUIDE.md` - Operator guide
 
 ### 7. API Request/Response Pattern
 - **Request Validation:** All inputs validated via middleware
@@ -204,15 +215,26 @@ Analysis performed on two windows:
 ### 14. Evaluation Pattern
 - **Metrics Calculation:** Four key metrics calculated for system evaluation
   - Coverage: % users with persona + ≥3 behaviors (supports both `short_term` and `analysis_30d` structures)
-  - Explainability: % recommendations with rationales
-  - Latency: Average recommendation generation time (bypasses cache for accurate measurement)
-  - Auditability: % recommendations with decision traces
-- **Report Generation:** Multiple output formats (JSON, CSV, Markdown)
+  - Explainability: % recommendations with rationales (async function, requires await)
+  - Latency: Average recommendation generation time (bypasses cache for accurate measurement, async function)
+  - Auditability: % recommendations with decision traces (async function, requires await)
+- **Async Operations:** All metric calculation functions are async and require await in tests
+  - `calculateExplainability()` - async, requires await
+  - `calculateLatency()` - async, requires await
+  - `calculateAuditability()` - async, requires await
+  - `calculateAllMetrics()` - async, requires await and awaits all metric functions
+- **Report Generation:** Multiple output formats (JSON, CSV, Markdown), all async functions
+  - `generateJSONReport()` - async
+  - `generateCSVReport()` - async
+  - `generateSummaryReport()` - async
+  - `exportDecisionTraces()` - async
+  - `generateAllReports()` - async, awaits all report generation functions
 - **Decision Trace Export:** Per-user decision traces exported for audit
 - **Service:** `backend/src/services/eval/metricsCalculator.js`, `backend/src/services/eval/reportGenerator.js`
 - **Evaluation Script:** `backend/scripts/runEvaluation.js` for full evaluation harness
 - **Targets:** 100% coverage, 100% explainability, <5s latency, 100% auditability
 - **Backward Compatibility:** `countDetectedBehaviors` supports both `short_term` and `analysis_30d` structures
+- **Test Patterns:** All evaluation tests must be async and await async metric/report functions
 
 ## Data Models & Relationships
 
@@ -598,11 +620,27 @@ backend/tests/
 │   ├── features.test.js
 │   ├── personas.test.js
 │   ├── recommendations.test.js
-│   └── guardrails.test.js
+│   ├── guardrails.test.js
+│   ├── eval.test.js
+│   ├── aiRationale.test.js
+│   ├── aiConsent.test.js
+│   ├── predictiveInsights.test.js
+│   └── budgetGenerator.test.js
 └── integration/
     ├── api.test.js
-    └── workflow.test.js
+    ├── workflow.test.js
+    ├── aiConsent.test.js
+    ├── predictions.test.js
+    └── budgets.test.js
 ```
+
+### Test Patterns
+- **Mock Setup:** Use factory functions in jest.mock() for proper initialization (e.g., mockCacheMap)
+- **Async Tests:** All tests calling async functions must be async and use await
+- **Test Isolation:** Clear cache, reset mocks, and clean database state in beforeEach hooks
+- **Mock Restoration:** Use jest.spyOn() with mockRestore() for function mocking (e.g., predictiveInsights tests)
+- **Error Testing:** Test error handling by mocking failures (mockRejectedValue for async errors)
+- **Validation Order:** Test that validation errors (400/404) occur before consent errors (403)
 
 ## Configuration Management
 - Environment variables for database paths, ports

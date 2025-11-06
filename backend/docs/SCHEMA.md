@@ -201,7 +201,9 @@ Tracks user consent for AI-powered features. Separate from data processing conse
 - Each user can have only one AI consent record (latest consent status)
 - Timestamp tracks when AI consent was last updated
 - AI consent is independent of data processing consent
-- AI features require both data processing consent AND AI consent to function
+- AI features require AI consent only (independent of data processing consent)
+- Data processing consent is required for behavioral analysis and recommendations
+- AI features can work independently when AI consent is granted
 - For audit trail, consider creating a separate `ai_consent_history` table in the future
 
 ---

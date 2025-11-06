@@ -2,9 +2,12 @@
  * Integration tests for AI Budget and Goals API endpoints
  */
 
+// Use test database for tests
+process.env.DB_PATH = './data/test_database.sqlite';
+
 const request = require('supertest');
 const app = require('../../src/server');
-const { initializeDatabase, closeDatabase } = require('../setup');
+const { initializeDatabase, closeDatabase } = require('../../src/config/database');
 const User = require('../../src/models/User');
 const AIConsent = require('../../src/models/AIConsent');
 const { grantConsent } = require('../../src/services/guardrails/consentChecker');
@@ -49,8 +52,7 @@ describe('Budget and Goals API Endpoints', () => {
     });
 
     test('should return 404 for non-existent user', async () => {
-      grantAIConsent(99999);
-
+      // Don't grant consent for non-existent user - just test the route
       const response = await request(app)
         .get('/ai/budgets/99999/generate')
         .expect(404);
@@ -95,8 +97,7 @@ describe('Budget and Goals API Endpoints', () => {
     });
 
     test('should return 404 for non-existent user', async () => {
-      grantAIConsent(99999);
-
+      // Don't grant consent for non-existent user - just test the route
       const response = await request(app)
         .get('/ai/goals/99999/generate')
         .expect(404);

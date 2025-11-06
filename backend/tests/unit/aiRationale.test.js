@@ -15,8 +15,9 @@ const {
 } = require('../../src/services/ai/rationaleGenerator');
 const { grantAIConsent } = require('../../src/services/guardrails/aiConsentChecker');
 
-// Mock OpenAI client
-jest.mock('../../src/services/ai/openaiClient', () => {
+// Mock OpenAI client - create mock functions that can be controlled in tests
+const mockIsConfigured = jest.fn(() => true);
+const mockGetOpenAIClient = jest.fn(() => {
   const mockResponse = {
     choices: [{
       message: {
@@ -26,27 +27,32 @@ jest.mock('../../src/services/ai/openaiClient', () => {
   };
 
   return {
-    getOpenAIClient: jest.fn(() => ({
-      chat: {
-        completions: {
-          create: jest.fn().mockResolvedValue(mockResponse)
-        }
+    chat: {
+      completions: {
+        create: jest.fn().mockResolvedValue(mockResponse)
       }
-    })),
-    isConfigured: jest.fn(() => true)
+    }
   };
 });
 
-// Mock cache
+jest.mock('../../src/services/ai/openaiClient', () => ({
+  getOpenAIClient: (...args) => mockGetOpenAIClient(...args),
+  isConfigured: (...args) => mockIsConfigured(...args),
+  resetClient: jest.fn()
+}));
+
+// Mock cache - use a factory function to avoid TDZ issues
 jest.mock('../../src/utils/cache', () => {
-  const cache = new Map();
+  const mockCacheMap = new Map();
   return {
-    get: jest.fn((key) => cache.get(key) || null),
+    get: jest.fn((key) => mockCacheMap.get(key) || null),
     set: jest.fn((key, value, ttl) => {
-      cache.set(key, value);
+      mockCacheMap.set(key, value);
       return value;
     }),
-    delete: jest.fn((key) => cache.delete(key))
+    delete: jest.fn((key) => mockCacheMap.delete(key)),
+    cache: mockCacheMap, // Expose the Map for clearing
+    clear: jest.fn(() => mockCacheMap.clear())
   };
 });
 
@@ -80,6 +86,32 @@ describe('AI Rationale Generation', () => {
   beforeEach(() => {
     // Reset AI consent
     AIConsent.revoke(testUserId);
+    
+    // Clear cache using the mocked cache module
+    const cache = require('../../src/utils/cache');
+    if (cache.cache && cache.cache.clear) {
+      cache.cache.clear();
+    }
+    
+    // Clear cache using utility function
+    const { clearAICache } = require('../../src/services/ai/utils');
+    clearAICache(testUserId);
+    
+    // Reset mocks
+    mockIsConfigured.mockReturnValue(true);
+    mockGetOpenAIClient.mockReturnValue({
+      chat: {
+        completions: {
+          create: jest.fn().mockResolvedValue({
+            choices: [{
+              message: {
+                content: 'Based on your Subscription-Heavy profile, you have 5 subscriptions costing $75/month. This guide will help you optimize your subscription spending and potentially save money.'
+              }
+            }]
+          })
+        }
+      }
+    });
 
     // Mock recommendation item
     mockItem = {
@@ -202,10 +234,12 @@ describe('AI Rationale Generation', () => {
       // Grant AI consent
       grantAIConsent(testUserId);
 
+      // Clear cache to ensure no cached values
+      const { clearAICache } = require('../../src/services/ai/utils');
+      clearAICache(testUserId);
+
       // Mock isConfigured to return false
-      const { resetClient } = require('../../src/services/ai/openaiClient');
-      const openaiClient = require('../../src/services/ai/openaiClient');
-      openaiClient.isConfigured = jest.fn(() => false);
+      mockIsConfigured.mockReturnValueOnce(false);
 
       const rationale = await generateAIRationale({
         item: mockItem,
@@ -219,7 +253,7 @@ describe('AI Rationale Generation', () => {
       expect(rationale).toBeNull();
 
       // Restore
-      openaiClient.isConfigured = jest.fn(() => true);
+      mockIsConfigured.mockReturnValue(true);
     });
   });
 
@@ -260,6 +294,10 @@ describe('AI Rationale Generation', () => {
       // Grant AI consent
       grantAIConsent(testUserId);
 
+      // Clear cache to ensure no cached values
+      const { clearAICache } = require('../../src/services/ai/utils');
+      clearAICache(testUserId);
+
       const recommendations = [
         {
           type: 'education',
@@ -271,11 +309,14 @@ describe('AI Rationale Generation', () => {
         }
       ];
 
-      // Mock OpenAI to throw error
-      const openaiClient = require('../../src/services/ai/openaiClient');
-      const originalGet = openaiClient.getOpenAIClient;
-      openaiClient.getOpenAIClient = jest.fn(() => {
-        throw new Error('API Error');
+      // Mock OpenAI chat.completions.create to throw error
+      const mockCreate = jest.fn().mockRejectedValue(new Error('API Error'));
+      mockGetOpenAIClient.mockReturnValueOnce({
+        chat: {
+          completions: {
+            create: mockCreate
+          }
+        }
       });
 
       const result = await generateAIRationalesForRecommendations(recommendations, testUserId);
@@ -284,8 +325,7 @@ describe('AI Rationale Generation', () => {
       expect(result[0].ai_rationale).toBeNull(); // Should gracefully handle failure
       expect(result[0].rationale).toBe('Template rationale'); // Template rationale preserved
 
-      // Restore
-      openaiClient.getOpenAIClient = originalGet;
+      // Restore - mock will be reset in beforeEach
     });
   });
 });

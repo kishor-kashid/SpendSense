@@ -278,17 +278,6 @@ const Dashboard = () => {
       {activeTab === 'ai-features' && (
         <AIFeaturesTab />
       )}
-
-      {/* Show message when consent is revoked */}
-      {!hasConsent && (
-        <Card className="no-consent-message">
-          <p>
-            <strong>Consent Required for Personalized Features</strong><br />
-            Enable data processing consent above to view your behavioral profile and receive personalized recommendations.
-            You can still view your transactions and spending insights without consent.
-          </p>
-        </Card>
-      )}
     </div>
   );
 };

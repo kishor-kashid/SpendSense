@@ -23,12 +23,23 @@ describe('Budget Generation Service', () => {
     { amount: -100, date: '2024-01-01', personal_finance_category_primary: 'FOOD_AND_DRINK' },
     { amount: -50, date: '2024-01-02', personal_finance_category_primary: 'TRANSPORTATION' },
     { amount: 2000, date: '2024-01-15', personal_finance_category_primary: 'INCOME' },
-    { amount: -200, date: '2024-01-20', personal_finance_category_primary: 'FOOD_AND_DRINK' }
+    { amount: -200, date: '2024-01-20', personal_finance_category_primary: 'FOOD_AND_DRINK' },
+    { amount: -75, date: '2024-01-22', personal_finance_category_primary: 'UTILITIES' },
+    { amount: -120, date: '2024-01-25', personal_finance_category_primary: 'ENTERTAINMENT' },
+    { amount: -30, date: '2024-01-28', personal_finance_category_primary: 'FOOD_AND_DRINK' },
+    { amount: -150, date: '2024-02-01', personal_finance_category_primary: 'SHOPPING' },
+    { amount: -80, date: '2024-02-05', personal_finance_category_primary: 'TRANSPORTATION' },
+    { amount: -40, date: '2024-02-10', personal_finance_category_primary: 'FOOD_AND_DRINK' },
+    { amount: 2000, date: '2024-02-15', personal_finance_category_primary: 'INCOME' }
   ];
 
   beforeEach(() => {
     jest.clearAllMocks();
     grantAIConsent(testUserId);
+    
+    // Mock openaiClient.isConfigured to return true by default
+    const { isConfigured } = require('../../src/services/ai/openaiClient');
+    isConfigured.mockReturnValue(true);
   });
 
   describe('analyzeSpendingByCategory', () => {
@@ -67,6 +78,8 @@ describe('Budget Generation Service', () => {
 
   describe('generateBudget', () => {
     test('should require AI consent', async () => {
+      const { isConfigured } = require('../../src/services/ai/openaiClient');
+      isConfigured.mockReturnValue(true); // Make sure OpenAI is "configured"
       hasAIConsent.mockReturnValue(false);
       Transaction.findByUserId = jest.fn().mockReturnValue(mockTransactions);
 
@@ -134,6 +147,8 @@ describe('Budget Generation Service', () => {
 
   describe('generateGoals', () => {
     test('should require AI consent', async () => {
+      const { isConfigured } = require('../../src/services/ai/openaiClient');
+      isConfigured.mockReturnValue(true); // Make sure OpenAI is "configured"
       hasAIConsent.mockReturnValue(false);
       Transaction.findByUserId = jest.fn().mockReturnValue(mockTransactions);
 
