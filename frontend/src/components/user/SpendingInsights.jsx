@@ -3,7 +3,7 @@ import Card from '../common/Card';
 import { formatCurrency } from '../../utils/formatters';
 import './SpendingInsights.css';
 
-const SpendingInsights = ({ insights, loading }) => {
+const SpendingInsights = ({ insights, loading, insightsFilter }) => {
   if (loading) {
     return (
       <Card>
@@ -20,14 +20,36 @@ const SpendingInsights = ({ insights, loading }) => {
     );
   }
 
-  const { summary, topMerchants, trends } = insights;
+  const { summary, topMerchants, trends, period } = insights;
 
   // Calculate insights
   const savingsRate = summary.totalIncome > 0
     ? ((summary.netFlow / summary.totalIncome) * 100).toFixed(1)
     : '0.0';
 
-  const avgDailySpending = summary.totalSpending / 30; // Assuming 30-day period
+  // Calculate average daily spending based on actual period
+  let avgDailySpending = 0;
+  if (period && period.startDate && period.endDate) {
+    const startDate = new Date(period.startDate);
+    const endDate = new Date(period.endDate);
+    const daysDiff = Math.max(1, Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)));
+    avgDailySpending = summary.totalSpending / daysDiff;
+  } else if (period && !period.startDate && period.endDate) {
+    // For "all time", calculate based on endDate and first transaction date
+    // For simplicity, use a reasonable default (30 days) or calculate from transaction count
+    // This is a fallback - ideally we'd get the first transaction date
+    const endDate = new Date(period.endDate);
+    const daysDiff = Math.max(30, summary.transactionCount); // Use transaction count as proxy for days
+    avgDailySpending = summary.totalSpending / daysDiff;
+  } else if (insightsFilter === '30') {
+    avgDailySpending = summary.totalSpending / 30;
+  } else if (insightsFilter === '180') {
+    avgDailySpending = summary.totalSpending / 180;
+  } else {
+    // Fallback: use transaction count as proxy for days
+    const daysDiff = Math.max(30, summary.transactionCount);
+    avgDailySpending = summary.totalSpending / daysDiff;
+  }
 
   return (
     <div className="spending-insights">

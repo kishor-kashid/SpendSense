@@ -27,6 +27,10 @@ function initializeDatabase() {
       const { createTables } = require('../migrations/createTables');
       createTables();
       
+      // Run additional migrations (for existing databases)
+      const { addAIConsentTable } = require('../migrations/addAIConsentTable');
+      addAIConsentTable();
+      
       // Analyze database to update statistics for query optimizer
       try {
         db.exec('ANALYZE');

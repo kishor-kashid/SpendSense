@@ -45,6 +45,15 @@ app.use('/operator', operatorRoutes);
 const transactionsRoutes = require('./routes/transactions');
 app.use('/transactions', transactionsRoutes);
 
+const accountsRoutes = require('./routes/accounts');
+app.use('/accounts', accountsRoutes);
+
+const aiConsentRoutes = require('./routes/ai-consent');
+app.use('/ai-consent', aiConsentRoutes);
+
+const aiRoutes = require('./routes/ai');
+app.use('/ai', aiRoutes);
+
 // Initialize database (only if not in test mode)
 if (process.env.NODE_ENV !== 'test') {
   initializeDatabase()

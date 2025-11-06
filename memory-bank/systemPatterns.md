@@ -50,7 +50,46 @@ Analysis performed on two windows:
 - **180-day window:** Long-term patterns
 - Both windows inform persona assignment and recommendations
 
-### 6. API Request/Response Pattern
+### 6. AI Features Pattern
+- **AI Consent:** Separate consent mechanism independent of data processing consent
+- **AI Services:**
+  - `openaiClient.js` - OpenAI SDK initialization
+  - `rationaleGenerator.js` - AI-powered rationale generation (GPT-4)
+  - `predictiveInsights.js` - Transaction pattern analysis and predictions (GPT-4)
+  - `budgetGenerator.js` - Budget and goal generation (GPT-4)
+  - `subscriptionAnalyzer.js` - Subscription analysis and cancellation suggestions (GPT-4)
+  - `promptTemplates.js` - Reusable prompt templates for all AI features
+- **AI Integration:**
+  - GPT-4 model used for all AI features
+  - Rate limiting and caching implemented
+  - Graceful fallback if AI generation fails
+  - AI rationales are additive (complement template rationales, don't replace)
+- **Frontend Components:**
+  - `AIFeaturesTab.jsx` - Main AI features container
+  - `PredictiveInsights.jsx` - Multi-horizon predictions display
+  - `BudgetGenerator.jsx` - Budget and goals container
+  - `BudgetDisplay.jsx` - Budget recommendations display
+  - `GoalsDisplay.jsx` - Savings goals display
+  - `SubscriptionAnalyzer.jsx` - Subscription analysis display
+  - `SubscriptionSuggestions.jsx` - Cancellation suggestions display
+- **API Endpoints:**
+  - `POST /ai-consent` - Grant AI consent
+  - `GET /ai-consent/:user_id` - Get AI consent status
+  - `DELETE /ai-consent/:user_id` - Revoke AI consent
+  - `GET /ai/predictions/:user_id` - Get single-horizon predictions
+  - `GET /ai/predictions/:user_id/all` - Get all-horizon predictions
+  - `GET /ai/budgets/:user_id/generate` - Generate budget
+  - `GET /ai/goals/:user_id/generate` - Generate goals
+  - `GET /ai/subscriptions/:user_id/analyze` - Analyze subscriptions
+  - `GET /ai/subscriptions/:user_id/suggestions` - Get cancellation suggestions
+- **Documentation:**
+  - `backend/docs/AI_FEATURES.md` - Complete AI features guide
+  - `backend/docs/AI_PROMPTS.md` - Prompt engineering documentation
+  - `backend/docs/AI_COST_OPTIMIZATION.md` - Cost optimization strategies
+  - `backend/docs/AI_FEATURES_TROUBLESHOOTING.md` - Troubleshooting guide
+  - `backend/docs/AI_OPERATOR_GUIDE.md` - Operator guide
+
+### 7. API Request/Response Pattern
 - **Request Validation:** All inputs validated via middleware
 - **Consent Enforcement:** 
   - Profile and recommendations require consent (403 if not granted)
@@ -71,7 +110,7 @@ Analysis performed on two windows:
   - Feedback: `/feedback`
   - Operator: `/operator/review`, `/operator/approve`, `/operator/override`, `/operator/users`
 
-### 7. Operator Review Pattern
+### 8. Operator Review Pattern
 - **Automatic Storage:** Recommendations automatically stored in review queue when generated
 - **Single Review Per User:** `createOrUpdatePending` ensures only one pending review per user
 - **Review Queue:** Pending recommendations stored in `recommendation_reviews` table
@@ -81,7 +120,7 @@ Analysis performed on two windows:
 - **Content Display:** Operators see full recommendation content (education items, partner offers) in review
 - **Audit Trail:** Operator notes, reviewed_by, and timestamps recorded
 
-### 8. Consent Management Pattern
+### 9. Consent Management Pattern
 - **Consent Toggle:** Always visible toggle switch for users to grant/revoke consent (in profile menu)
 - **Consent Checking:** Uses `hasConsent()` which checks consent table first (authoritative source)
 - **Conditional Display:**
@@ -98,16 +137,18 @@ Analysis performed on two windows:
 - **API Behavior:** Profile and recommendations endpoints return 403 if consent not granted
 - **Cache Invalidation:** User cache cleared when consent changes to prevent stale data
 
-### 9. Spending Insights Pattern
+### 10. Spending Insights Pattern
 - **Transaction Viewing:** Users can view all their transactions with search, filter, and sort
 - **Category Breakdown:** Visual breakdown of spending by category with percentages
 - **Spending Analytics:** Summary cards (total spending, income, net flow, savings rate)
 - **Trends:** Daily and monthly spending trends
 - **Top Merchants:** Lists top merchants by spending amount
+- **Timeframe Filters:** 30 days, 180 days, all time filters
 - **No Consent Required:** Transactions and insights available without consent
 - **Components:** TransactionList, SpendingBreakdown, SpendingInsights
+- **Backend:** `/transactions/:user_id/insights` accepts optional `startDate` query parameter (null for "all time")
 
-### 10. Authentication Pattern
+### 11. Authentication Pattern
 - **Username/Password System:** Simple authentication without encryption (demo mode)
 - **User Credentials:** Username = first_name + last_name (lowercase, no spaces), Password = first_name + last_name + "123"
 - **Operator Credentials:** Username "operator", Password "operator123"
@@ -118,7 +159,25 @@ Analysis performed on two windows:
 - **Data Generation:** Usernames and passwords generated during synthetic data creation
 - **Frontend:** Login component with username/password input fields for both roles
 
-### 11. UI Design Pattern
+### 15. Account Management Pattern
+- **Current Balance Display:**
+  - Total current and available balance
+  - Individual depository accounts (checking, savings, etc.)
+  - Component: `CurrentBalance.jsx`
+- **Credit Cards Display:**
+  - Summary: Total balance, limit, available credit, utilization
+  - Individual cards: Balance, limit, available credit, utilization rate
+  - Color-coded utilization (low/medium/high)
+  - Component: `CreditCards.jsx`
+- **Backend API:**
+  - `GET /accounts/:user_id` - Returns account data with calculated totals
+  - Credit card balances stored as negative (standard accounting), converted to positive for display
+  - Calculations: `available_credit = limit - Math.abs(balance)`, `utilization_rate = (Math.abs(balance) / limit) * 100`
+- **Data Generation:**
+  - Credit card balances correctly stored as negative in `dataGenerator.js`
+  - Backend converts negative to positive for all calculations and display
+
+### 12. UI Design Pattern
 - **Modern Design System:** CSS variables for colors, spacing, shadows, transitions, typography
 - **Typography Scale:** Comprehensive font size, weight, and line-height variables
 - **Gradient Backgrounds:** Linear gradients for headers, buttons, and accent elements
@@ -139,11 +198,12 @@ Analysis performed on two windows:
   - Left/right navigation buttons instead of scrollbar
   - Smooth scrolling behavior
   - Button state management based on scroll position
+- **Dashboard Tabs:** Transactions, Insights, Recommendations, AI Features (Overview removed)
 - **Disclaimer Placement:** Section-level disclaimers below headers (not in individual cards)
 - **Content Filtering:** Regex filtering to remove hardcoded profile-based messages from backend data
 - **Consistent Spacing:** Standardized spacing using CSS variables across all components
 
-### 12. Recommendation Approval Pattern
+### 13. Recommendation Approval Pattern
 - **Generation:** Recommendations generated and stored as 'pending' in review queue
 - **User View:** Users see empty arrays (education_items: [], partner_offers: []) with "Pending Approval" message until approved
 - **Operator Review:** Operators see full recommendation content in review queue
@@ -152,18 +212,29 @@ Analysis performed on two windows:
 - **Consent Check First:** Consent is checked before checking for pending/approved reviews
 - **Empty Arrays:** When pending, API returns empty arrays instead of recommendation content
 
-### 13. Evaluation Pattern
+### 14. Evaluation Pattern
 - **Metrics Calculation:** Four key metrics calculated for system evaluation
   - Coverage: % users with persona + ≥3 behaviors (supports both `short_term` and `analysis_30d` structures)
-  - Explainability: % recommendations with rationales
-  - Latency: Average recommendation generation time (bypasses cache for accurate measurement)
-  - Auditability: % recommendations with decision traces
-- **Report Generation:** Multiple output formats (JSON, CSV, Markdown)
+  - Explainability: % recommendations with rationales (async function, requires await)
+  - Latency: Average recommendation generation time (bypasses cache for accurate measurement, async function)
+  - Auditability: % recommendations with decision traces (async function, requires await)
+- **Async Operations:** All metric calculation functions are async and require await in tests
+  - `calculateExplainability()` - async, requires await
+  - `calculateLatency()` - async, requires await
+  - `calculateAuditability()` - async, requires await
+  - `calculateAllMetrics()` - async, requires await and awaits all metric functions
+- **Report Generation:** Multiple output formats (JSON, CSV, Markdown), all async functions
+  - `generateJSONReport()` - async
+  - `generateCSVReport()` - async
+  - `generateSummaryReport()` - async
+  - `exportDecisionTraces()` - async
+  - `generateAllReports()` - async, awaits all report generation functions
 - **Decision Trace Export:** Per-user decision traces exported for audit
 - **Service:** `backend/src/services/eval/metricsCalculator.js`, `backend/src/services/eval/reportGenerator.js`
 - **Evaluation Script:** `backend/scripts/runEvaluation.js` for full evaluation harness
 - **Targets:** 100% coverage, 100% explainability, <5s latency, 100% auditability
 - **Backward Compatibility:** `countDetectedBehaviors` supports both `short_term` and `analysis_30d` structures
+- **Test Patterns:** All evaluation tests must be async and await async metric/report functions
 
 ## Data Models & Relationships
 
@@ -189,10 +260,11 @@ User (1) → (N) RecommendationReview
 ### Database Schema
 - **Storage:** SQLite database (`backend/data/database.sqlite`)
 - **Migrations:** Automatic table creation on database initialization (`backend/src/migrations/createTables.js`)
-- **Tables:** users, accounts, transactions, liabilities, consent, feedback, recommendation_reviews
+- **Tables:** users, accounts, transactions, liabilities, consent, feedback, recommendation_reviews, ai_consent
 - **Foreign Keys:** All relationships use ON DELETE CASCADE
 - **Indexes:** Created on frequently queried columns (user_id, account_id, date, merchant_name, status, etc.)
 - **Consent Status:** Simplified to only 'granted' or 'revoked' (removed 'pending' status)
+- **AI Consent:** Separate table (ai_consent) with independent consent tracking for AI features
 
 ## Data Ingestion Patterns
 
@@ -548,11 +620,27 @@ backend/tests/
 │   ├── features.test.js
 │   ├── personas.test.js
 │   ├── recommendations.test.js
-│   └── guardrails.test.js
+│   ├── guardrails.test.js
+│   ├── eval.test.js
+│   ├── aiRationale.test.js
+│   ├── aiConsent.test.js
+│   ├── predictiveInsights.test.js
+│   └── budgetGenerator.test.js
 └── integration/
     ├── api.test.js
-    └── workflow.test.js
+    ├── workflow.test.js
+    ├── aiConsent.test.js
+    ├── predictions.test.js
+    └── budgets.test.js
 ```
+
+### Test Patterns
+- **Mock Setup:** Use factory functions in jest.mock() for proper initialization (e.g., mockCacheMap)
+- **Async Tests:** All tests calling async functions must be async and use await
+- **Test Isolation:** Clear cache, reset mocks, and clean database state in beforeEach hooks
+- **Mock Restoration:** Use jest.spyOn() with mockRestore() for function mocking (e.g., predictiveInsights tests)
+- **Error Testing:** Test error handling by mocking failures (mockRejectedValue for async errors)
+- **Validation Order:** Test that validation errors (400/404) occur before consent errors (403)
 
 ## Configuration Management
 - Environment variables for database paths, ports

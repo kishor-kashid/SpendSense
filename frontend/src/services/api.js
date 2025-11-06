@@ -56,6 +56,11 @@ export const getConsent = (userId) => api.get(`/consent/${userId}`);
 export const grantConsent = (userId) => api.post('/consent', { user_id: userId });
 export const revokeConsent = (userId) => api.delete(`/consent/${userId}`);
 
+// AI Consent endpoints
+export const getAIConsent = (userId) => api.get(`/ai-consent/${userId}`);
+export const grantAIConsent = (userId) => api.post('/ai-consent', { user_id: userId });
+export const revokeAIConsent = (userId) => api.delete(`/ai-consent/${userId}`);
+
 // Profile endpoints
 export const getProfile = (userId) => api.get(`/profile/${userId}`);
 
@@ -65,6 +70,9 @@ export const getRecommendations = (userId) => api.get(`/recommendations/${userId
 // Transactions endpoints
 export const getTransactions = (userId, params = {}) => api.get(`/transactions/${userId}`, { params });
 export const getSpendingInsights = (userId, params = {}) => api.get(`/transactions/${userId}/insights`, { params });
+
+// Accounts endpoints
+export const getAccounts = (userId) => api.get(`/accounts/${userId}`);
 
 // Feedback endpoints
 export const submitFeedback = (feedbackData) => api.post('/feedback', feedbackData);
@@ -76,5 +84,13 @@ export const overrideRecommendation = (reviewId, notes) => api.post('/operator/o
 export const flagReview = (reviewId, flagReason) => api.post('/operator/flag', { review_id: reviewId, flag_reason: flagReason });
 export const unflagReview = (reviewId) => api.post('/operator/unflag', { review_id: reviewId });
 export const getOperatorUsers = () => api.get('/operator/users');
+
+// AI Features endpoints
+export const getPredictions = (userId, horizon = 30) => api.get(`/ai/predictions/${userId}`, { params: { horizon } });
+export const getAllPredictions = (userId) => api.get(`/ai/predictions/${userId}/all`);
+export const generateBudget = (userId) => api.get(`/ai/budgets/${userId}/generate`);
+export const generateGoals = (userId) => api.get(`/ai/goals/${userId}/generate`);
+export const analyzeSubscriptions = (userId) => api.get(`/ai/subscriptions/${userId}/analyze`);
+export const getSubscriptionSuggestions = (userId) => api.get(`/ai/subscriptions/${userId}/suggestions`);
 
 export default api;

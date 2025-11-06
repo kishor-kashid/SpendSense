@@ -103,10 +103,21 @@ function createTables() {
     )
   `);
 
-  // Create consent table
+  // Create consent table (data processing consent)
   db.exec(`
     CREATE TABLE IF NOT EXISTS consent (
       consent_id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL UNIQUE,
+      opted_in INTEGER NOT NULL DEFAULT 0 CHECK(opted_in IN (0, 1)),
+      timestamp TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+    )
+  `);
+
+  // Create AI consent table (separate from data processing consent)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS ai_consent (
+      ai_consent_id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER NOT NULL UNIQUE,
       opted_in INTEGER NOT NULL DEFAULT 0 CHECK(opted_in IN (0, 1)),
       timestamp TEXT NOT NULL DEFAULT (datetime('now')),
@@ -181,6 +192,7 @@ function createTables() {
     CREATE INDEX IF NOT EXISTS idx_liabilities_account_id ON liabilities(account_id);
     CREATE INDEX IF NOT EXISTS idx_liabilities_overdue ON liabilities(is_overdue);
     CREATE INDEX IF NOT EXISTS idx_consent_user_id ON consent(user_id);
+    CREATE INDEX IF NOT EXISTS idx_ai_consent_user_id ON ai_consent(user_id);
     CREATE INDEX IF NOT EXISTS idx_feedback_user_id ON feedback(user_id);
     CREATE INDEX IF NOT EXISTS idx_recommendation_reviews_user_id ON recommendation_reviews(user_id);
     CREATE INDEX IF NOT EXISTS idx_recommendation_reviews_status ON recommendation_reviews(status);
