@@ -17,7 +17,7 @@ const User = require('../models/User');
  * Returns: 3-5 education items + 1-3 partner offers with rationales
  * All guardrails applied: consent, eligibility, tone
  */
-router.get('/:user_id', (req, res, next) => {
+router.get('/:user_id', async (req, res, next) => {
   const startTime = Date.now();
   try {
     // Validate user_id parameter
@@ -121,17 +121,39 @@ router.get('/:user_id', (req, res, next) => {
     // No approved or pending review - generate new recommendations
     // This already checks consent and applies eligibility filter
     // Performance is logged by recommendationEngine's measurePerformance function
-    const recommendations = generateRecommendations(userId);
+    const recommendations = await generateRecommendations(userId);
     
     // Helper function to validate tone for a recommendation
     const validateRecommendationTone = (rec) => {
+      // Validate template rationale (always present)
       const content = {
         title: rec.item.title,
         description: rec.item.description,
         rationale: rec.rationale
       };
       const toneValidation = validateContent(content);
-      return toneValidation.isValid ? rec : null;
+      if (!toneValidation.isValid) {
+        return null;
+      }
+      
+      // If AI rationale exists, validate it too
+      if (rec.ai_rationale) {
+        const aiContent = {
+          title: rec.item.title,
+          description: rec.item.description,
+          rationale: rec.ai_rationale
+        };
+        const aiToneValidation = validateContent(aiContent);
+        if (!aiToneValidation.isValid) {
+          // Remove AI rationale if it fails tone validation, but keep recommendation
+          return {
+            ...rec,
+            ai_rationale: null
+          };
+        }
+      }
+      
+      return rec;
     };
 
     // Apply tone validation to all recommendation content

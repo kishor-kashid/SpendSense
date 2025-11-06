@@ -146,7 +146,7 @@ function calculateCoverage(userIds = null) {
  * @param {Array<number>} userIds - Array of user IDs to evaluate (optional, defaults to all users)
  * @returns {Object} Explainability metric results
  */
-function calculateExplainability(userIds = null) {
+async function calculateExplainability(userIds = null) {
   const allUsers = User.findAll();
   const usersToEvaluate = userIds 
     ? allUsers.filter(u => userIds.includes(u.user_id))
@@ -158,7 +158,7 @@ function calculateExplainability(userIds = null) {
   
   for (const user of usersToEvaluate) {
     try {
-      const recommendations = generateRecommendations(user.user_id);
+      const recommendations = await generateRecommendations(user.user_id);
       
       // Check education recommendations
       if (recommendations.recommendations.education) {
@@ -219,7 +219,7 @@ function calculateExplainability(userIds = null) {
  * @param {number} sampleSize - Number of users to sample (optional, for performance)
  * @returns {Object} Latency metric results
  */
-function calculateLatency(userIds = null, sampleSize = null) {
+async function calculateLatency(userIds = null, sampleSize = null) {
   const allUsers = User.findAll();
   let usersToEvaluate = userIds 
     ? allUsers.filter(u => userIds.includes(u.user_id))
@@ -237,7 +237,7 @@ function calculateLatency(userIds = null, sampleSize = null) {
     try {
       const startTime = Date.now();
       // Force refresh to measure actual generation time, not cache retrieval
-      generateRecommendations(user.user_id, { forceRefresh: true });
+      await generateRecommendations(user.user_id, { forceRefresh: true });
       const endTime = Date.now();
       
       const latency = endTime - startTime;
@@ -354,7 +354,7 @@ function calculateAuditability(userIds = null) {
     
     for (const user of usersToEvaluate) {
       try {
-        const recommendations = generateRecommendations(user.user_id);
+        const recommendations = await generateRecommendations(user.user_id);
         totalRecommendations += recommendations.recommendations.education.length;
         totalRecommendations += recommendations.recommendations.partner_offers.length;
         
@@ -390,16 +390,16 @@ function calculateAuditability(userIds = null) {
  * @param {Object} options - Options for metrics calculation
  * @param {Array<number>} options.userIds - Array of user IDs to evaluate (optional)
  * @param {number} options.latencySampleSize - Sample size for latency calculation (optional)
- * @returns {Object} All metrics results
+ * @returns {Promise<Object>} All metrics results
  */
-function calculateAllMetrics(options = {}) {
+async function calculateAllMetrics(options = {}) {
   const { userIds = null, latencySampleSize = null } = options;
   
   const startTime = Date.now();
   
   const coverage = calculateCoverage(userIds);
-  const explainability = calculateExplainability(userIds);
-  const latency = calculateLatency(userIds, latencySampleSize);
+  const explainability = await calculateExplainability(userIds);
+  const latency = await calculateLatency(userIds, latencySampleSize);
   const auditability = calculateAuditability(userIds);
   
   const endTime = Date.now();

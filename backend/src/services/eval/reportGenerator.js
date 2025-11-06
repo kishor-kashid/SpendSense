@@ -228,9 +228,9 @@ The system is performing well across all metrics. Continue monitoring to maintai
 /**
  * Export decision traces for all users
  * @param {string} outputDir - Output directory path (optional)
- * @returns {string} Path to output directory
+ * @returns {Promise<string>} Path to output directory
  */
-function exportDecisionTraces(outputDir = null) {
+async function exportDecisionTraces(outputDir = null) {
   if (!outputDir) {
     outputDir = path.join(__dirname, '../../../data/evaluation/decision_traces');
   }
@@ -249,7 +249,7 @@ function exportDecisionTraces(outputDir = null) {
     
     try {
       const { generateRecommendations } = require('../recommend/recommendationEngine');
-      const recommendations = generateRecommendations(user.user_id);
+      const recommendations = await generateRecommendations(user.user_id);
       
       if (recommendations.decision_trace) {
         const traceData = {
@@ -290,19 +290,19 @@ function exportDecisionTraces(outputDir = null) {
  * @param {string} options.outputDir - Output directory (optional)
  * @returns {Object} Report generation results
  */
-function generateAllReports(options = {}) {
+async function generateAllReports(options = {}) {
   const { userIds = null, latencySampleSize = null, outputDir = null } = options;
   
   const baseOutputDir = outputDir || path.join(__dirname, '../../../data/evaluation');
   
   // Calculate all metrics
-  const metrics = calculateAllMetrics({ userIds, latencySampleSize });
+  const metrics = await calculateAllMetrics({ userIds, latencySampleSize });
   
   // Generate reports
   const jsonPath = generateJSONReport(metrics, path.join(baseOutputDir, 'metrics.json'));
   const csvPath = generateCSVReport(metrics, path.join(baseOutputDir, 'metrics.csv'));
   const summaryPath = generateSummaryReport(metrics, path.join(baseOutputDir, 'summary_report.md'));
-  const tracesResult = exportDecisionTraces(path.join(baseOutputDir, 'decision_traces'));
+  const tracesResult = await exportDecisionTraces(path.join(baseOutputDir, 'decision_traces'));
   
   return {
     success: true,

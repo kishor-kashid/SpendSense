@@ -162,6 +162,41 @@ Get consent status for a user.
 
 Revoke consent (opt-out) for a user.
 
+---
+
+## AI Consent Endpoints
+
+AI consent is separate from data processing consent. Users must grant both consents to use AI-powered features. AI features will fall back to template-based systems when AI consent is not granted.
+
+### POST /ai-consent
+
+Grant AI consent (opt-in) for AI-powered features.
+
+**Request Body:**
+```json
+{
+  "user_id": 1
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "AI consent granted successfully",
+  "ai_consent": {
+    "user_id": 1,
+    "has_consent": true,
+    "status": "granted",
+    "timestamp": "2024-01-01 00:00:00"
+  }
+}
+```
+
+### GET /ai-consent/:user_id
+
+Get AI consent status for a user.
+
 **Parameters:**
 - `user_id` (path) - User ID (integer)
 
@@ -169,8 +204,43 @@ Revoke consent (opt-out) for a user.
 ```json
 {
   "success": true,
-  "message": "Consent revoked successfully",
-  "consent": {
+  "ai_consent": {
+    "user_id": 1,
+    "has_consent": true,
+    "status": "granted",
+    "message": "User has granted consent for AI-powered features.",
+    "timestamp": "2024-01-01 00:00:00"
+  }
+}
+```
+
+**Response (No Consent):**
+```json
+{
+  "success": true,
+  "ai_consent": {
+    "user_id": 1,
+    "has_consent": false,
+    "status": "no_consent",
+    "message": "No AI consent record found. User has not opted in to AI features.",
+    "timestamp": null
+  }
+}
+```
+
+### DELETE /ai-consent/:user_id
+
+Revoke AI consent (opt-out) for a user.
+
+**Parameters:**
+- `user_id` (path) - User ID (integer)
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "AI consent revoked successfully",
+  "ai_consent": {
     "user_id": 1,
     "has_consent": false,
     "status": "revoked",
@@ -178,6 +248,12 @@ Revoke consent (opt-out) for a user.
   }
 }
 ```
+
+**Notes:**
+- AI consent is independent of data processing consent
+- Both consents must be granted for AI features to work
+- When AI consent is revoked, AI features fall back to template-based systems
+- AI consent can be granted/revoked independently of data processing consent
 
 ---
 
@@ -294,7 +370,8 @@ Get personalized recommendations for a user (requires consent).
         "description": "Learn how to identify and cancel unused subscriptions...",
         "url": "https://example.com/subscription-audit",
         "type": "article",
-        "rationale": "We noticed you have 5 recurring subscriptions, you're spending $75.00/month on subscriptions, subscriptions make up 12% of your spending."
+        "rationale": "We noticed you have 5 recurring subscriptions, you're spending $75.00/month on subscriptions, subscriptions make up 12% of your spending.",
+        "ai_rationale": "Based on your Subscription-Heavy profile, you have 5 subscriptions costing $75/month. This guide will help you optimize your subscription spending and potentially save money by identifying unused services."
       }
     ],
     "partner_offers": [
@@ -305,6 +382,7 @@ Get personalized recommendations for a user (requires consent).
         "url": "https://example.com/subscription-tool",
         "provider": "SubscriptionCo",
         "rationale": "Based on your subscription spending patterns, this tool can help you manage your recurring payments.",
+        "ai_rationale": "Given your 5 active subscriptions totaling $75/month, this subscription management tool can help you track usage, identify unused services, and optimize your recurring expenses.",
         "eligibility": {
           "income_qualified": true,
           "credit_qualified": true,
@@ -341,13 +419,241 @@ Get personalized recommendations for a user (requires consent).
     "summary": {
       "total_recommendations": 5,
       "education_count": 3,
-      "partner_offers_count": 2
+      "partner_offers_count": 2,
+      "ai_rationales_available": true
     }
   }
 }
 ```
 
 **Note:** New recommendations are automatically added to the operator review queue with `status: "pending"`. Users can only see recommendations after operator approval.
+
+**AI Rationale Field:**
+- The `ai_rationale` field is an **optional** addition to recommendations
+- It is only included when:
+  1. User has granted **AI consent** (independent of data processing consent)
+  2. AI rationale generation succeeds (graceful fallback if it fails)
+- Template-based `rationale` field is **always** provided and remains unchanged
+- If AI rationale is not available, `ai_rationale` will be `null`
+- AI rationale provides personalized, context-aware explanations citing specific user data
+
+---
+
+## AI Features Endpoints
+
+All AI features require **AI consent** only. AI features are independent of data processing consent and are opt-in. They can be disabled at any time.
+
+### GET /ai/predictions/:user_id
+
+Get predictive financial insights for a user. Predicts future cash flow, income, and expenses based on transaction patterns.
+
+**Parameters:**
+- `user_id` (path) - User ID (integer)
+- `horizon` (query, optional) - Prediction horizon in days. Must be one of: 7, 30, 90 (default: 30)
+
+**Response:**
+```json
+{
+  "success": true,
+  "predictions": {
+    "horizon_days": 30,
+    "generated_at": "2024-01-01T00:00:00.000Z",
+    "current_state": {
+      "current_balance": 5000.00,
+      "avg_daily_income": 166.67,
+      "avg_daily_expenses": 120.00,
+      "avg_daily_net_flow": 46.67
+    },
+    "predictions": {
+      "predicted_income": 5000.00,
+      "predicted_expenses": 3600.00,
+      "predicted_net_flow": 1400.00,
+      "predicted_end_balance": 6400.00,
+      "confidence_level": "high"
+    },
+    "ai_summary": "Based on your spending patterns, you are projected to have positive cash flow over the next 30 days.",
+    "stress_points": [],
+    "recommendations": [
+      "Continue current spending patterns",
+      "Consider increasing savings"
+    ],
+    "pattern_analysis": {
+      "top_categories": [
+        { "category": "FOOD_AND_DRINK", "amount": 1200.00 },
+        { "category": "TRANSPORTATION", "amount": 800.00 }
+      ],
+      "income_frequency": "biweekly",
+      "transaction_count": 45
+    }
+  }
+}
+```
+
+**Response (No AI Consent):**
+```json
+{
+  "success": false,
+  "error": {
+    "message": "AI consent is required for AI-powered features",
+    "code": "AI_CONSENT_REQUIRED"
+  }
+}
+```
+
+### GET /ai/predictions/:user_id/all
+
+Get predictive insights for all horizons (7, 30, and 90 days).
+
+**Parameters:**
+- `user_id` (path) - User ID (integer)
+
+**Response:**
+```json
+{
+  "success": true,
+  "predictions": {
+    "user_id": 1,
+    "generated_at": "2024-01-01T00:00:00.000Z",
+    "horizons": [7, 30, 90],
+    "predictions": {
+      "7_days": { ... },
+      "30_days": { ... },
+      "90_days": { ... }
+    }
+  }
+}
+```
+
+**Notes:**
+- Predictions are cached for 24 hours to reduce API calls
+- Confidence level is based on transaction history quality (low/medium/high)
+- Stress points identify potential financial issues (negative cash flow, low balance)
+- Recommendations are AI-generated actionable suggestions
+- All predictions require AI consent only (independent of data processing consent)
+
+---
+
+### GET /ai/budgets/:user_id/generate
+
+Generate AI-powered budget recommendations based on the user's spending history.
+
+**Parameters:**
+- `user_id` (path) - User ID (integer)
+
+**Response (Success):**
+```json
+{
+  "success": true,
+  "budget": {
+    "success": true,
+    "monthly_income": 5000.00,
+    "monthly_expenses_avg": 3500.00,
+    "categories": [
+      {
+        "category": "FOOD_AND_DRINK",
+        "monthly_limit": 600.00,
+        "current_avg": 550.00,
+        "rationale": "Your current spending is reasonable. This limit allows for occasional dining out."
+      },
+      {
+        "category": "TRANSPORTATION",
+        "monthly_limit": 400.00,
+        "current_avg": 380.00,
+        "rationale": "Based on your commuting patterns, this limit should cover your transportation needs."
+      }
+    ],
+    "monthly_savings_target": 500.00,
+    "emergency_fund_goal": 10500.00,
+    "rationale": "Based on your spending patterns, we recommend saving 10% of your monthly income to build a 3-month emergency fund.",
+    "generated_at": "2024-01-15T10:30:00.000Z",
+    "lookback_days": 90
+  }
+}
+```
+
+**Response (Insufficient Data):**
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Not enough transaction history to generate a budget. Please add more transactions.",
+    "code": "INSUFFICIENT_DATA",
+    "recommendations": [
+      "Track your spending for at least 2-3 weeks",
+      "Ensure transactions are properly categorized",
+      "Try again once you have more financial data"
+    ]
+  }
+}
+```
+
+**Notes:**
+- Budgets are cached for 7 days to reduce API calls
+- Requires at least 10 transactions for meaningful analysis
+- Budget recommendations are based on 90-day spending history
+- Category limits are set based on actual spending patterns
+- All budgets require AI consent only (independent of data processing consent)
+
+---
+
+### GET /ai/goals/:user_id/generate
+
+Generate AI-powered personalized savings goals based on the user's financial situation.
+
+**Parameters:**
+- `user_id` (path) - User ID (integer)
+
+**Response (Success):**
+```json
+{
+  "success": true,
+  "goals": {
+    "success": true,
+    "goals": [
+      {
+        "name": "Emergency Fund",
+        "target_amount": 10500.00,
+        "current_progress": 2000.00,
+        "target_date": "2024-12-31",
+        "timeframe": "medium_term",
+        "rationale": "Build a 3-month emergency fund to cover unexpected expenses. Based on your monthly expenses of $3,500, aim to save $10,500."
+      },
+      {
+        "name": "Vacation Fund",
+        "target_amount": 3000.00,
+        "current_progress": 500.00,
+        "target_date": "2024-06-30",
+        "timeframe": "short_term",
+        "rationale": "Save for your vacation by setting aside $500/month. This goal is achievable given your current cash flow."
+      }
+    ],
+    "rationale": "Based on your financial situation, we recommend focusing on building an emergency fund first, followed by other savings goals.",
+    "generated_at": "2024-01-15T10:30:00.000Z"
+  }
+}
+```
+
+**Response (Insufficient Data):**
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Not enough transaction history to generate goals. Please add more transactions.",
+    "code": "INSUFFICIENT_DATA",
+    "recommendations": [
+      "Track your spending for at least 2-3 weeks",
+      "Try again once you have more financial data"
+    ]
+  }
+}
+```
+
+**Notes:**
+- Goals are cached for 7 days to reduce API calls
+- Goals are SMART (Specific, Measurable, Achievable, Relevant, Time-bound)
+- Includes mix of short-term (1-3 months) and medium-term (3-12 months) goals
+- Goals are personalized based on current financial situation
+- All goals require AI consent only (independent of data processing consent)
 
 ---
 

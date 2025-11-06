@@ -9,6 +9,8 @@ const { selectItemsForPersona } = require('./educationCatalog');
 const { selectOffersForPersona } = require('./partnerOffers');
 const { generateRationale } = require('./rationaleGenerator');
 const { requireConsent } = require('../guardrails/consentChecker');
+const { hasAIConsent } = require('../guardrails/aiConsentChecker');
+const { generateAIRationalesForRecommendations } = require('../ai/rationaleGenerator');
 const { RECOMMENDATION_LIMITS } = require('../../config/constants');
 const Account = require('../../models/Account');
 const User = require('../../models/User');
@@ -47,9 +49,9 @@ function measurePerformance(operation, fn) {
  * @param {number} options.minPartnerOffers - Minimum partner offers (default: 1)
  * @param {number} options.maxPartnerOffers - Maximum partner offers (default: 3)
  * @param {boolean} options.forceRefresh - Force refresh (skip cache) (default: false)
- * @returns {Object} Recommendations with education items, partner offers, and rationales
+ * @returns {Promise<Object>} Recommendations with education items, partner offers, and rationales
  */
-function generateRecommendations(userId, options = {}) {
+async function generateRecommendations(userId, options = {}) {
   const {
     minEducationItems = RECOMMENDATION_LIMITS.MIN_EDUCATION_ITEMS,
     maxEducationItems = RECOMMENDATION_LIMITS.MAX_EDUCATION_ITEMS,
@@ -139,7 +141,7 @@ function generateRecommendations(userId, options = {}) {
     }
   );
 
-  // Generate rationales for education items
+  // Generate template-based rationales for education items (ALWAYS generated)
   const educationRecommendations = educationItems.map(item => ({
     type: 'education',
     item: {
@@ -158,10 +160,12 @@ function generateRecommendations(userId, options = {}) {
       persona,
       behavioralSignals,
       { user, accounts }
-    )
+    ),
+    // AI rationale will be added below if AI consent is granted
+    ai_rationale: null
   }));
 
-  // Generate rationales for partner offers
+  // Generate template-based rationales for partner offers (ALWAYS generated)
   const offerRecommendations = partnerOffers.map(offer => ({
     type: 'offer',
     item: {
@@ -183,8 +187,67 @@ function generateRecommendations(userId, options = {}) {
       behavioralSignals,
       { user, accounts }
     ),
-    eligibility_check: offer.eligibility_check || null
+    eligibility_check: offer.eligibility_check || null,
+    // AI rationale will be added below if AI consent is granted
+    ai_rationale: null
   }));
+
+  // Add AI rationales if AI consent is granted (non-blocking, graceful fallback)
+  let finalEducationRecommendations = educationRecommendations;
+  let finalOfferRecommendations = offerRecommendations;
+
+  if (hasAIConsent(userId)) {
+    try {
+      // Prepare recommendations with context for AI rationale generation
+      const allRecommendations = [
+        ...educationRecommendations.map(rec => ({
+          ...rec,
+          persona: persona,
+          behavioralSignals: behavioralSignals,
+          userData: { user, accounts }
+        })),
+        ...offerRecommendations.map(rec => ({
+          ...rec,
+          persona: persona,
+          behavioralSignals: behavioralSignals,
+          userData: { user, accounts }
+        }))
+      ];
+
+      // Generate AI rationales (non-blocking, will fallback to null if fails)
+      const recommendationsWithAI = await generateAIRationalesForRecommendations(
+        allRecommendations,
+        userId
+      );
+
+      // Split back into education and offers
+      finalEducationRecommendations = recommendationsWithAI
+        .filter(rec => rec.type === 'education')
+        .map(rec => ({
+          type: rec.type,
+          item: rec.item,
+          rationale: rec.rationale, // Keep template rationale
+          ai_rationale: rec.ai_rationale // Add AI rationale if available
+        }));
+
+      finalOfferRecommendations = recommendationsWithAI
+        .filter(rec => rec.type === 'offer')
+        .map(rec => ({
+          type: rec.type,
+          item: rec.item,
+          rationale: rec.rationale, // Keep template rationale
+          eligibility_check: rec.eligibility_check,
+          ai_rationale: rec.ai_rationale // Add AI rationale if available
+        }));
+    } catch (error) {
+      // If AI rationale generation fails, continue with template rationales only
+      // This is expected behavior - template rationales are always available
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('AI rationale generation failed, using template rationales only:', error.message);
+      }
+      // finalEducationRecommendations and finalOfferRecommendations already have template rationales
+    }
+  }
 
   // Build comprehensive recommendations object
   const recommendations = {
@@ -194,13 +257,14 @@ function generateRecommendations(userId, options = {}) {
     persona_rationale: personaAssignment.rationale,
     decision_trace: personaAssignment.decision_trace,
     recommendations: {
-      education: educationRecommendations,
-      partner_offers: offerRecommendations
+      education: finalEducationRecommendations,
+      partner_offers: finalOfferRecommendations
     },
     summary: {
-      total_recommendations: educationRecommendations.length + offerRecommendations.length,
-      education_count: educationRecommendations.length,
-      partner_offers_count: offerRecommendations.length
+      total_recommendations: finalEducationRecommendations.length + finalOfferRecommendations.length,
+      education_count: finalEducationRecommendations.length,
+      partner_offers_count: finalOfferRecommendations.length,
+      ai_rationales_available: hasAIConsent(userId) && (finalEducationRecommendations.some(r => r.ai_rationale) || finalOfferRecommendations.some(r => r.ai_rationale))
     },
     behavioral_signals: behavioralSignals,
     timestamp: new Date().toISOString(),

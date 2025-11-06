@@ -106,20 +106,23 @@ router.get('/:user_id/insights', (req, res, next) => {
       });
     }
     
-    // Default to last 30 days if not specified
+    // Handle date range - if startDate is not provided, don't default to 30 days (for "all time" filter)
     const endDate = req.query.endDate || new Date().toISOString().split('T')[0];
-    const startDate = req.query.startDate || (() => {
-      const date = new Date(endDate);
-      date.setDate(date.getDate() - 30);
-      return date.toISOString().split('T')[0];
-    })();
+    const startDate = req.query.startDate !== undefined ? req.query.startDate : null;
     
-    // Get all transactions
-    const transactions = Transaction.findByUserId(userId, {
-      startDate,
+    // If startDate is explicitly null/undefined, don't pass it (allows "all time" queries)
+    const transactionOptions = {
       endDate,
       includePending: false
-    });
+    };
+    
+    // Only add startDate if it was provided
+    if (startDate) {
+      transactionOptions.startDate = startDate;
+    }
+    
+    // Get all transactions
+    const transactions = Transaction.findByUserId(userId, transactionOptions);
     
     // Calculate spending insights
     const spending = transactions.filter(t => t.amount < 0).map(t => ({
@@ -207,8 +210,9 @@ router.get('/:user_id/insights', (req, res, next) => {
       success: true,
       insights: {
         period: {
-          startDate,
-          endDate
+          startDate: startDate || null,
+          endDate,
+          filter: startDate ? 'custom' : 'all_time'
         },
         summary: {
           totalSpending,

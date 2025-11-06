@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useConsent } from '../../hooks/useConsent';
+import { useAIConsent } from '../../hooks/useAIConsent';
 import { UserContext } from '../../context/UserContext';
 import Button from './Button';
 import './Navigation.css';
@@ -9,6 +10,7 @@ import './Navigation.css';
 const Navigation = () => {
   const { isAuthenticated, isCustomer, isOperator, logout, userId } = useAuth();
   const { hasConsent, grant, revoke, loadConsent } = useConsent(userId);
+  const { hasAIConsent: hasAIConsentGranted, grant: grantAI, revoke: revokeAI, loadAIConsent, loading: loadingAIConsent } = useAIConsent(userId);
   // Safely access UserContext - it may not be available if Navigation is outside UserProvider
   const userContext = useContext(UserContext);
   const navigate = useNavigate();
@@ -19,8 +21,9 @@ const Navigation = () => {
   useEffect(() => {
     if (userId && isCustomer()) {
       loadConsent();
+      loadAIConsent();
     }
-  }, [userId, isCustomer, loadConsent]);
+  }, [userId, isCustomer, loadConsent, loadAIConsent]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -67,6 +70,24 @@ const Navigation = () => {
       // Error already handled by consent hook
     } finally {
       setLoadingConsent(false);
+    }
+  };
+
+  const handleAIConsentToggle = async () => {
+    try {
+      if (hasAIConsentGranted) {
+        await revokeAI();
+      } else {
+        await grantAI();
+      }
+      // Notify dashboards about AI consent change
+      window.dispatchEvent(new CustomEvent('ai-consent-changed', { 
+        detail: { hasAIConsent: !hasAIConsentGranted } 
+      }));
+      // Trigger dashboard refresh
+      window.dispatchEvent(new CustomEvent('dashboard-refresh'));
+    } catch (error) {
+      // Error already handled by AI consent hook
     }
   };
 
@@ -191,6 +212,27 @@ const Navigation = () => {
                           </span>
                         </label>
                         {loadingConsent && (
+                          <span className="nav-profile-consent-loading">Updating...</span>
+                        )}
+                      </div>
+                      {/* AI Consent - Only for customers, below data processing consent */}
+                      <div className="nav-profile-dropdown-item nav-profile-consent">
+                        <span className="nav-profile-consent-label">AI Features Consent</span>
+                        <label className="nav-profile-consent-toggle">
+                          <input
+                            type="checkbox"
+                            checked={hasAIConsentGranted}
+                            onChange={handleAIConsentToggle}
+                            disabled={loadingAIConsent}
+                            className="nav-profile-consent-input"
+                          />
+                          <span className={`nav-profile-consent-slider ${hasAIConsentGranted ? 'active' : ''}`}>
+                            <span className="nav-profile-consent-label-text">
+                              {hasAIConsentGranted ? 'ON' : 'OFF'}
+                            </span>
+                          </span>
+                        </label>
+                        {loadingAIConsent && (
                           <span className="nav-profile-consent-loading">Updating...</span>
                         )}
                       </div>

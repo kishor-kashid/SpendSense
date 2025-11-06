@@ -4,13 +4,27 @@
 
 This document outlines the implementation plan for integrating OpenAI-powered AI features into SpendSense. All AI features require explicit user consent (separate from data processing consent) and will only be active when consent is granted.
 
-## AI Features to Implement
+## Implementation Status Summary
 
-1. **Dynamic Rationale Generation** - AI-powered personalized recommendation rationales
-2. **Predictive Financial Insights** - Forecast future spending, income, and cash flow
-3. **Spending Goal and Budget Generation** - AI-generated personalized budgets and savings goals
-4. **Automated Report Generation** - Narrative financial reports and summaries
-5. **Smart Subscription Cancellation Suggestions** - AI analysis of subscription value and cancellation recommendations
+### ✅ Completed Features
+1. **PR #31: AI Infrastructure Setup & Consent Management** - ✅ **COMPLETED**
+2. **PR #32: Dynamic Rationale Generation** - ✅ **COMPLETED**
+3. **PR #33: Predictive Financial Insights** - ✅ **COMPLETED** (simplified - removed chart, recommendations, pattern analysis, current state sections)
+4. **PR #34: Budget and Goal Generation** - ✅ **COMPLETED**
+
+### ❌ Not Implemented (Removed from Scope)
+- **PR #35: Automated Report Generation** - Not implemented
+- **PR #36: Smart Subscription Cancellation Suggestions** - Not implemented
+
+### 📋 Partially Completed
+- **PR #37: AI Features Testing & Integration** - Partially completed (tests exist for implemented features)
+- **PR #38: AI Features Documentation** - Partially completed (API docs updated)
+
+## AI Features Implemented
+
+1. **Dynamic Rationale Generation** - AI-powered personalized recommendation rationales ✅
+2. **Predictive Financial Insights** - Forecast future spending, income, and cash flow ✅
+3. **Spending Goal and Budget Generation** - AI-generated personalized budgets and savings goals ✅
 
 ---
 
@@ -20,26 +34,26 @@ This document outlines the implementation plan for integrating OpenAI-powered AI
 **Branch:** `feature/ai-infrastructure`
 
 #### Tasks:
-- [ ] Install OpenAI SDK (`npm install openai`)
-- [ ] Create OpenAI client configuration module
-- [ ] Set up environment variable for API key (`OPENAI_API_KEY`)
-- [ ] Create AI consent database table (separate from data processing consent)
-- [ ] Create AI consent model (`AIConsent.js`)
-- [ ] Create AI consent checker service (`aiConsentChecker.js`)
-- [ ] Create AI consent routes (`/ai-consent` endpoints)
-- [ ] Update database schema documentation
-- [ ] Create migration script for AI consent table
-- [ ] Add AI consent toggle to frontend (below data processing consent)
-- [ ] Create `useAIConsent` hook for frontend
-- [ ] Update Navigation component to show AI consent toggle
-- [ ] Add AI consent checking middleware/guardrails
-- [ ] Implement fallback mechanisms (when AI consent is revoked, use template-based systems)
-- [ ] Add rate limiting for AI API calls
-- [ ] Implement response caching for AI features
-- [ ] Create AI service utilities (prompt templates, response parsing)
-- [ ] Add error handling for AI API failures
-- [ ] Write unit tests for AI consent management
-- [ ] Write integration tests for AI consent endpoints
+- [x] Install OpenAI SDK (`npm install openai`)
+- [x] Create OpenAI client configuration module
+- [x] Set up environment variable for API key (`OPENAI_API_KEY`)
+- [x] Create AI consent database table (separate from data processing consent)
+- [x] Create AI consent model (`AIConsent.js`)
+- [x] Create AI consent checker service (`aiConsentChecker.js`)
+- [x] Create AI consent routes (`/ai-consent` endpoints)
+- [x] Update database schema documentation
+- [x] Create migration script for AI consent table
+- [x] Add AI consent toggle to frontend (below data processing consent)
+- [x] Create `useAIConsent` hook for frontend
+- [x] Update Navigation component to show AI consent toggle
+- [x] Add AI consent checking middleware/guardrails
+- [x] Implement fallback mechanisms (when AI consent is revoked, use template-based systems)
+- [x] Add rate limiting for AI API calls
+- [x] Implement response caching for AI features
+- [x] Create AI service utilities (prompt templates, response parsing)
+- [x] Add error handling for AI API failures
+- [x] Write unit tests for AI consent management
+- [x] Write integration tests for AI consent endpoints
 
 #### Files Created/Updated:
 ```
@@ -82,49 +96,50 @@ UPDATE: /backend/package.json (add openai dependency)
 **Branch:** `feature/ai-rationale-generation`
 
 #### Overview:
-Replace template-based rationale generation with AI-generated personalized rationales that cite specific user data and provide context-aware explanations.
+Add AI-generated personalized rationales as an **additional** feature alongside existing template-based rationales. The existing template-based rationale generation remains unchanged and continues to work as before. AI rationales are provided as an additional `ai_rationale` field when AI consent is granted.
 
 #### Tasks:
-- [ ] Create AI rationale generator service (`aiRationaleGenerator.js`)
-- [ ] Design prompt templates for education item rationales
-- [ ] Design prompt templates for partner offer rationales
-- [ ] Implement data extraction helper (extract relevant user data for prompts)
-- [ ] Integrate AI rationale generation into recommendation engine
-- [ ] Add fallback to template-based system when AI consent not granted
-- [ ] Add fallback to template-based system when AI API fails
-- [ ] Implement prompt injection prevention
-- [ ] Add rationale caching (cache by user + recommendation + persona)
-- [ ] Update rationale generator to use AI when consent granted
-- [ ] Add rationale validation (ensure tone, length, data citation)
-- [ ] Update recommendation routes to use AI rationales
-- [ ] Write unit tests for AI rationale generation
-- [ ] Write integration tests for AI rationale in recommendations
-- [ ] Test with various personas and recommendation types
-- [ ] Verify tone validation still works with AI-generated rationales
-- [ ] Document prompt engineering approach
-- [ ] Update API documentation
+- [x] Create AI rationale generator service (`aiRationaleGenerator.js`)
+- [x] Design prompt templates for education item rationales
+- [x] Design prompt templates for partner offer rationales
+- [x] Implement data extraction helper (extract relevant user data for prompts)
+- [x] Add AI rationale generation to recommendation engine (as additional field, not replacement)
+- [x] Only generate AI rationales when AI consent is granted (existing template rationales always generated)
+- [x] Add fallback handling when AI API fails (gracefully skip AI rationale, keep template rationale)
+- [x] Implement prompt injection prevention
+- [x] Add rationale caching (cache by user + recommendation + persona)
+- [x] Add rationale validation (ensure tone, length, data citation)
+- [x] Update recommendation response structure to include `ai_rationale` field
+- [x] Ensure existing template rationale generation remains unchanged
+- [x] Write unit tests for AI rationale generation
+- [x] Write integration tests for AI rationale in recommendations
+- [x] Test with various personas and recommendation types
+- [x] Verify tone validation works with AI-generated rationales
+- [x] Document prompt engineering approach
+- [x] Update API documentation
 
 #### Files Created/Updated:
 ```
 CREATE: /backend/src/services/ai/rationaleGenerator.js
-CREATE: /backend/src/services/ai/prompts/rationalePrompts.js
-UPDATE: /backend/src/services/recommend/rationaleGenerator.js (add AI integration)
-UPDATE: /backend/src/services/recommend/recommendationEngine.js (check AI consent)
-UPDATE: /backend/src/routes/recommendations.js (handle AI rationale generation)
+CREATE: /backend/src/services/ai/promptTemplates.js (includes rationale prompts)
+UPDATE: /backend/src/services/recommend/recommendationEngine.js (add AI rationale generation, keep template rationale)
+UPDATE: /backend/src/routes/recommendations.js (handle AI rationale in response)
 CREATE: /backend/tests/unit/aiRationale.test.js
 UPDATE: /backend/tests/integration/recommendations.test.js (test AI rationales)
 UPDATE: /backend/docs/API.md (document AI rationale feature)
 ```
 
 #### Acceptance Criteria:
-- AI generates personalized rationales citing specific user data
+- **Existing template-based rationales continue to work unchanged**
+- AI generates personalized rationales citing specific user data (when AI consent granted)
+- AI rationales are provided as additional `ai_rationale` field alongside existing `rationale` field
 - Rationales maintain supportive, empowering tone
 - Rationales include concrete numbers (amounts, percentages, account numbers)
-- Fallback to templates when AI consent not granted
-- Fallback to templates when AI API fails
+- AI rationale generation skipped when AI consent not granted (template rationale still provided)
+- Graceful fallback when AI API fails (template rationale still provided)
 - Rationales pass existing tone validation
 - Caching reduces API calls for repeated recommendations
-- All existing tests still pass
+- All existing tests still pass (no regressions)
 - AI rationale tests pass
 - Rationales are explainable (can trace why they were generated)
 
@@ -156,49 +171,63 @@ Requirements:
 Use AI to analyze transaction patterns and predict future spending, income, and cash flow to help users plan ahead.
 
 #### Tasks:
-- [ ] Create predictive insights service (`predictiveInsights.js`)
-- [ ] Design prompt templates for cash flow prediction
-- [ ] Design prompt templates for spending pattern prediction
-- [ ] Design prompt templates for income prediction
-- [ ] Implement transaction pattern analysis helper
-- [ ] Create API endpoint `/insights/:user_id/predictions`
-- [ ] Add prediction caching (daily predictions, cached for 24 hours)
-- [ ] Generate predictions for multiple time horizons (7, 30, 90 days)
-- [ ] Identify potential financial stress points
-- [ ] Suggest proactive actions based on predictions
-- [ ] Create frontend component for displaying predictions
-- [ ] Add prediction visualization (charts/graphs)
-- [ ] Handle edge cases (insufficient data, irregular patterns)
-- [ ] Write unit tests for prediction logic
-- [ ] Write integration tests for prediction endpoint
-- [ ] Test with various user profiles
-- [ ] Document prediction methodology
-- [ ] Update API documentation
+- [x] Create predictive insights service (`predictiveInsights.js`)
+- [x] Design prompt templates for cash flow prediction
+- [x] Design prompt templates for spending pattern prediction
+- [x] Design prompt templates for income prediction
+- [x] Implement transaction pattern analysis helper
+- [x] Create API endpoint `/ai/predictions/:user_id`
+- [x] Add prediction caching (daily predictions, cached for 24 hours)
+- [x] Generate predictions for multiple time horizons (7, 30, 90 days)
+- [x] Identify potential financial stress points
+- [x] Create frontend component for displaying predictions
+- [x] Create AI Features tab component (`AIFeaturesTab.jsx`)
+- [x] Add "AI Features" tab to Dashboard (next to Transactions, Insights, Recommendations)
+- [x] Display predictions in AI Features tab
+- [x] Ensure AI Features tab only shows when AI consent is granted (independent of data processing consent)
+- [x] Handle edge cases (insufficient data, irregular patterns)
+- [x] Write unit tests for prediction logic
+- [x] Write integration tests for prediction endpoint
+- [x] Test with various user profiles
+- [x] Document prediction methodology
+- [x] Update API documentation
+
+**Note:** The following features were removed from the implementation:
+- Cash Flow Projection chart/visualization (removed from UI)
+- Proactive Recommendations section (removed from UI)
+- Spending Pattern Analysis section (removed from UI)
+- Current Financial State section (removed from UI)
+
+**Current Implementation Includes:**
+- Horizon Selector (7, 30, 90 days)
+- AI Analysis Summary
+- Financial Forecast (predicted income, expenses, net flow, projected balance, confidence)
+- Stress Points (if any)
 
 #### Files Created/Updated:
 ```
 CREATE: /backend/src/services/ai/predictiveInsights.js
-CREATE: /backend/src/services/ai/prompts/predictionPrompts.js
-CREATE: /backend/src/routes/insights.js (new route file)
-UPDATE: /backend/src/routes/transactions.js (add predictions endpoint)
+CREATE: /backend/src/services/ai/promptTemplates.js (includes prediction prompts)
+CREATE: /backend/src/routes/ai.js (new route file for AI endpoints)
+UPDATE: /frontend/src/components/user/Dashboard.jsx (add AI Features tab)
 CREATE: /frontend/src/components/user/PredictiveInsights.jsx
-CREATE: /frontend/src/components/user/PredictionChart.jsx
-UPDATE: /frontend/src/components/user/Dashboard.jsx (add predictions section)
+CREATE: /frontend/src/components/user/AIFeaturesTab.jsx
+CREATE: /frontend/src/components/user/AIFeaturesTab.css
+CREATE: /frontend/src/components/user/PredictiveInsights.css
 CREATE: /backend/tests/unit/predictiveInsights.test.js
 CREATE: /backend/tests/integration/predictions.test.js
 UPDATE: /backend/docs/API.md (document predictions endpoint)
 ```
 
 #### Acceptance Criteria:
-- AI generates cash flow predictions for 7, 30, and 90 days
-- Predictions identify potential shortfalls or surpluses
-- Predictions include confidence levels
-- Proactive action suggestions are provided
-- Frontend displays predictions in user-friendly format
-- Predictions are cached to reduce API calls
-- Fallback when insufficient transaction data
-- All tests pass
-- Predictions are explainable (user can understand the reasoning)
+- ✅ AI generates cash flow predictions for 7, 30, and 90 days
+- ✅ Predictions identify potential shortfalls or surpluses
+- ✅ Predictions include confidence levels
+- ✅ Frontend displays predictions in user-friendly format
+- ✅ Predictions are cached to reduce API calls
+- ✅ Fallback when insufficient transaction data
+- ✅ All tests pass
+- ✅ Predictions are explainable (user can understand the reasoning)
 
 #### AI Prompt Structure:
 ```
@@ -226,54 +255,49 @@ Historical patterns: [spending patterns]
 Generate personalized budgets and savings goals based on user's spending history and financial situation.
 
 #### Tasks:
-- [ ] Create budget generation service (`budgetGenerator.js`)
-- [ ] Design prompt templates for budget generation
-- [ ] Design prompt templates for goal setting
-- [ ] Analyze historical spending by category
-- [ ] Generate realistic budget recommendations
-- [ ] Create personalized savings goals
-- [ ] Suggest category spending limits
-- [ ] Create API endpoint `/budgets/:user_id/generate`
-- [ ] Create API endpoint `/goals/:user_id/generate`
-- [ ] Create database tables for budgets and goals (optional, for persistence)
-- [ ] Create frontend component for budget display
-- [ ] Create frontend component for goals display
-- [ ] Add budget/goal tracking over time
-- [ ] Generate budget rationale (explain why these limits)
-- [ ] Handle users with limited transaction history
-- [ ] Write unit tests for budget generation
-- [ ] Write integration tests for budget endpoints
-- [ ] Test with various spending patterns
-- [ ] Document budget generation methodology
-- [ ] Update API documentation
+- [x] Create budget generation service (`budgetGenerator.js`)
+- [x] Design prompt templates for budget generation
+- [x] Design prompt templates for goal setting
+- [x] Analyze historical spending by category
+- [x] Generate realistic budget recommendations
+- [x] Create personalized savings goals
+- [x] Suggest category spending limits
+- [x] Create API endpoint `/ai/budgets/:user_id/generate`
+- [x] Create API endpoint `/ai/goals/:user_id/generate`
+- [x] Add budget/goal display to AI Features tab
+- [x] Create frontend component for budget display
+- [x] Create frontend component for goals display
+- [x] Generate budget rationale (explain why these limits)
+- [x] Handle users with limited transaction history
+- [x] Write unit tests for budget generation
+- [x] Write integration tests for budget endpoints
+- [x] Test with various spending patterns
+- [x] Document budget generation methodology
+- [x] Update API documentation
 
 #### Files Created/Updated:
 ```
 CREATE: /backend/src/services/ai/budgetGenerator.js
-CREATE: /backend/src/services/ai/prompts/budgetPrompts.js
-CREATE: /backend/src/routes/budgets.js (new route file)
-CREATE: /backend/src/models/Budget.js (optional, for persistence)
-CREATE: /backend/src/models/Goal.js (optional, for persistence)
+CREATE: /backend/src/services/ai/promptTemplates.js (includes budget/goal prompts)
+UPDATE: /backend/src/routes/ai.js (add budget/goal endpoints)
 CREATE: /frontend/src/components/user/BudgetGenerator.jsx
 CREATE: /frontend/src/components/user/BudgetDisplay.jsx
 CREATE: /frontend/src/components/user/GoalsDisplay.jsx
-UPDATE: /frontend/src/components/user/Dashboard.jsx (add budgets/goals section)
+UPDATE: /frontend/src/components/user/AIFeaturesTab.jsx (add budget/goal sections)
 CREATE: /backend/tests/unit/budgetGenerator.test.js
 CREATE: /backend/tests/integration/budgets.test.js
 UPDATE: /backend/docs/API.md (document budget/goal endpoints)
-UPDATE: /backend/docs/SCHEMA.md (document budget/goal tables if persisted)
 ```
 
 #### Acceptance Criteria:
-- AI generates realistic budgets based on spending history
-- Budgets include category-specific limits
-- Savings goals are personalized and achievable
-- Budgets include rationale explaining recommendations
-- Frontend displays budgets and goals clearly
-- Users can accept/modify generated budgets
-- Budgets adapt to user's financial situation
-- All tests pass
-- Budgets are explainable
+- ✅ AI generates realistic budgets based on spending history
+- ✅ Budgets include category-specific limits
+- ✅ Savings goals are personalized and achievable
+- ✅ Budgets include rationale explaining recommendations
+- ✅ Frontend displays budgets and goals clearly
+- ✅ Budgets adapt to user's financial situation
+- ✅ All tests pass
+- ✅ Budgets are explainable
 
 #### AI Prompt Structure:
 ```
@@ -293,154 +317,13 @@ Create:
 
 ---
 
-## Feature 4: Automated Report Generation
-
-### **PR #35: AI-Powered Automated Report Generation**
-**Branch:** `feature/ai-report-generation`
-
-#### Overview:
-Generate narrative financial reports that summarize user's financial activity in plain language, highlighting key insights and achievements.
-
-#### Tasks:
-- [ ] Create report generation service (`reportGenerator.js`)
-- [ ] Design prompt templates for monthly reports
-- [ ] Design prompt templates for spending summaries
-- [ ] Design prompt templates for achievement highlights
-- [ ] Analyze transaction data for report content
-- [ ] Generate narrative summaries (not just numbers)
-- [ ] Identify key insights and trends
-- [ ] Highlight positive financial behaviors
-- [ ] Create API endpoint `/reports/:user_id/monthly`
-- [ ] Create API endpoint `/reports/:user_id/custom`
-- [ ] Support custom date ranges for reports
-- [ ] Create frontend component for report display
-- [ ] Add report export functionality (PDF/text)
-- [ ] Generate executive summary for operators
-- [ ] Cache reports (generate once, cache for period)
-- [ ] Write unit tests for report generation
-- [ ] Write integration tests for report endpoints
-- [ ] Test with various user profiles
-- [ ] Document report structure
-- [ ] Update API documentation
-
-#### Files Created/Updated:
-```
-CREATE: /backend/src/services/ai/reportGenerator.js
-CREATE: /backend/src/services/ai/prompts/reportPrompts.js
-CREATE: /backend/src/routes/reports.js (new route file)
-CREATE: /frontend/src/components/user/FinancialReport.jsx
-CREATE: /frontend/src/components/user/ReportSummary.jsx
-UPDATE: /frontend/src/components/user/Dashboard.jsx (add reports section)
-CREATE: /backend/tests/unit/reportGenerator.test.js
-CREATE: /backend/tests/integration/reports.test.js
-UPDATE: /backend/docs/API.md (document report endpoints)
-```
-
-#### Acceptance Criteria:
-- AI generates narrative monthly financial reports
-- Reports include key insights and trends
-- Reports highlight positive behaviors
-- Reports are written in plain, supportive language
-- Reports can be generated for custom date ranges
-- Frontend displays reports in readable format
-- Reports can be exported
-- Reports are cached to reduce API calls
-- All tests pass
-- Reports are comprehensive but concise
-
-#### AI Prompt Structure:
-```
-System: You are a financial journalist writing user-friendly financial reports.
-User: Generate a monthly financial report:
-- Period: [start date] to [end date]
-- Total income: [amount]
-- Total spending: [amount]
-- Category breakdown: [categories]
-- Top spending categories: [list]
-- Savings activity: [summary]
-- Notable patterns: [patterns]
-
-Write a narrative report that:
-- Highlights key achievements
-- Identifies areas for improvement
-- Uses supportive, empowering language
-- Includes specific examples
-- Suggests actionable next steps
-```
-
 ---
 
-## Feature 5: Smart Subscription Cancellation Suggestions
+**Note:** The following features were planned but not implemented:
+- **PR #35: Automated Report Generation** - Not implemented
+- **PR #36: Smart Subscription Cancellation Suggestions** - Not implemented
 
-### **PR #36: AI-Powered Subscription Analysis**
-**Branch:** `feature/ai-subscription-analysis`
-
-#### Overview:
-Analyze subscription usage patterns and value to suggest which subscriptions users might consider canceling to save money.
-
-#### Tasks:
-- [ ] Create subscription analysis service (`subscriptionAnalyzer.js`)
-- [ ] Design prompt templates for subscription value analysis
-- [ ] Analyze subscription usage patterns
-- [ ] Calculate cost per usage for subscriptions
-- [ ] Identify unused or low-value subscriptions
-- [ ] Generate cancellation recommendations with savings estimates
-- [ ] Create API endpoint `/subscriptions/:user_id/analyze`
-- [ ] Create API endpoint `/subscriptions/:user_id/suggestions`
-- [ ] Create frontend component for subscription analysis
-- [ ] Display subscription value scores
-- [ ] Show potential savings from cancellations
-- [ ] Provide rationale for each suggestion
-- [ ] Handle edge cases (new subscriptions, one-time charges)
-- [ ] Write unit tests for subscription analysis
-- [ ] Write integration tests for subscription endpoints
-- [ ] Test with various subscription patterns
-- [ ] Document analysis methodology
-- [ ] Update API documentation
-
-#### Files Created/Updated:
-```
-CREATE: /backend/src/services/ai/subscriptionAnalyzer.js
-CREATE: /backend/src/services/ai/prompts/subscriptionPrompts.js
-UPDATE: /backend/src/routes/transactions.js (add subscription analysis endpoints)
-CREATE: /frontend/src/components/user/SubscriptionAnalysis.jsx
-CREATE: /frontend/src/components/user/SubscriptionSuggestion.jsx
-UPDATE: /frontend/src/components/user/Dashboard.jsx (add subscription analysis section)
-CREATE: /backend/tests/unit/subscriptionAnalyzer.test.js
-CREATE: /backend/tests/integration/subscriptions.test.js
-UPDATE: /backend/docs/API.md (document subscription analysis endpoints)
-```
-
-#### Acceptance Criteria:
-- AI analyzes subscription value and usage
-- Identifies unused or low-value subscriptions
-- Provides cancellation suggestions with savings estimates
-- Includes rationale for each suggestion
-- Frontend displays analysis clearly
-- Suggestions are actionable and specific
-- Handles various subscription patterns
-- All tests pass
-- Suggestions are explainable
-
-#### AI Prompt Structure:
-```
-System: You are a subscription management advisor helping users optimize their spending.
-User: Analyze these subscriptions:
-- Subscription: [name], Cost: [amount/month], Transactions: [count], Usage pattern: [pattern]
-- [Repeat for each subscription]
-
-For each subscription:
-- Calculate value score (usage vs. cost)
-- Determine if it's being used effectively
-- Estimate potential savings if canceled
-- Provide cancellation recommendation
-- Explain rationale
-
-Generate suggestions prioritizing:
-1. Unused subscriptions
-2. Low value-to-cost ratio
-3. Highest potential savings
-```
+These features can be implemented in future iterations if needed.
 
 ---
 
@@ -525,18 +408,16 @@ UPDATE: /backend/docs/LIMITATIONS.md (AI limitations)
 ### Phase 1: Foundation (Must complete first)
 1. **PR #31: AI Infrastructure Setup & Consent Management** ⚠️ **REQUIRED FIRST**
 
-### Phase 2: Core AI Features (Can be done in parallel after PR #31)
-2. **PR #32: Dynamic Rationale Generation** (High impact, improves existing feature)
-3. **PR #33: Predictive Financial Insights** (High value, new feature)
+### Phase 2: Core AI Features (Completed)
+2. **PR #32: Dynamic Rationale Generation** ✅ **COMPLETED** (High impact, adds AI rationales alongside existing template rationales)
+3. **PR #33: Predictive Financial Insights** ✅ **COMPLETED** (High value, new feature in AI Features tab)
 
-### Phase 3: Advanced Features (Can be done in parallel)
-4. **PR #34: Budget and Goal Generation** (High value, new feature)
-5. **PR #35: Automated Report Generation** (Medium value, enhances existing)
-6. **PR #36: Subscription Analysis** (Medium value, enhances existing)
+### Phase 3: Advanced Features (Completed)
+4. **PR #34: Budget and Goal Generation** ✅ **COMPLETED** (High value, new feature in AI Features tab)
 
-### Phase 4: Quality & Documentation (After all features)
-7. **PR #37: AI Features Testing & Integration**
-8. **PR #38: AI Features Documentation**
+### Phase 4: Quality & Documentation (Partially Completed)
+- **PR #37: AI Features Testing & Integration** - Partially completed (unit and integration tests exist for implemented features)
+- **PR #38: AI Features Documentation** - Partially completed (API documentation updated, some docs exist)
 
 ---
 
@@ -544,16 +425,18 @@ UPDATE: /backend/docs/LIMITATIONS.md (AI limitations)
 
 ### Consent Management
 - AI consent is **separate** from data processing consent
-- Users can grant data processing consent but not AI consent (falls back to templates)
-- Users can grant AI consent but not data processing consent (AI features still need data)
-- Both consents must be granted for AI features to work
+- AI features require **AI consent only** (independent of data processing consent)
+- Users can grant AI consent without data processing consent to use AI features
+- Users can grant data processing consent without AI consent (AI features disabled, existing features work)
 - AI consent toggle appears below data processing consent in UI
+- **Existing functionality remains unchanged** - template-based rationales, recommendations, etc. all work as before
 
 ### Fallback Mechanisms
-- When AI consent is revoked: fall back to template-based systems
-- When AI API fails: fall back to template-based systems
-- When insufficient data: provide helpful error messages
-- Always ensure core functionality works without AI
+- When AI consent is revoked: AI features are disabled, existing features continue to work
+- When AI API fails: gracefully handle error, show message to user, existing features continue to work
+- When insufficient data: provide helpful error messages, existing features continue to work
+- Always ensure core functionality works without AI (no regressions)
+- AI features are **additive** - they don't replace existing functionality
 
 ### Cost Optimization
 - Cache AI responses aggressively (5-10 minute TTL for most features)
@@ -606,12 +489,15 @@ UPDATE: /backend/docs/LIMITATIONS.md (AI limitations)
 
 ## Notes
 
-- All AI features require **both** data processing consent AND AI consent
+- All AI features require **AI consent only** (independent of data processing consent)
 - AI features are opt-in (users must explicitly enable)
 - AI features can be disabled at any time (revoke consent)
-- Template-based systems remain available as fallback
-- AI features enhance existing functionality, don't replace core logic
+- **Existing functionality remains completely unchanged** - template-based rationales, recommendations, etc. all work as before
+- AI features are **additive** - they add new capabilities without replacing existing ones
+- AI rationale is provided as additional `ai_rationale` field alongside existing `rationale` field
+- AI Features tab is added to Dashboard (Overview, Transactions, Insights, **AI Features**)
 - All AI-generated content must pass existing guardrails (tone validation, etc.)
 - Cost monitoring is critical - set up alerts for API usage
 - Prompt engineering is iterative - expect to refine prompts based on results
+- No regressions - all existing tests must continue to pass
 
