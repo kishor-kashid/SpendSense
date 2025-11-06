@@ -29,11 +29,14 @@ SpendSense analyzes transaction patterns to:
 
 ### Customer Flow
 1. Enter username and password (username = first_name + last_name, password = first_name + last_name + "123")
-2. View dashboard with tabs (Overview, Transactions, Insights)
-3. Access profile menu (profile icon in navbar) to toggle consent
-4. With consent: View personalized recommendations (education + offers)
-5. Without consent: View only transactions and spending insights
-6. Provide feedback on recommendations
+2. View dashboard with tabs (Transactions, Insights, Recommendations, AI Features)
+3. Access profile menu (profile icon in navbar) to toggle consents:
+   - Data Processing Consent (for recommendations)
+   - AI Consent (for AI features)
+4. With data consent: View personalized recommendations (education + offers)
+5. With AI consent: View AI-powered insights, budgets, and goals
+6. Without consents: View only transactions, insights, and account balances
+7. Provide feedback on recommendations
 
 ### Operator Flow
 1. Enter operator credentials (username: "operator", password: "operator123")
@@ -91,4 +94,8 @@ SpendSense analyzes transaction patterns to:
 - Profile-based messaging consolidated in section headers
 - Removed repetitive rationale labels from individual cards
 - Enhanced navigation and interaction elements
+- Dashboard tab restructuring (removed Overview, added dedicated Recommendations tab)
+- Account management sections (Current Balance, Credit Cards) in Transactions tab
+- Insights timeframe filters (30 days, 180 days, all time)
+- AI Features tab with Predictive Insights and Budget Generator
 

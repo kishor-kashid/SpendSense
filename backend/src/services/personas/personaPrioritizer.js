@@ -53,61 +53,48 @@ function findMatchingPersonas(userData, featureAnalyses, accountData) {
   const allPersonas = getAllPersonas();
   const matchingPersonas = [];
 
-  // Check each persona
-  for (const [key, persona] of Object.entries(allPersonas)) {
-    let matches = false;
-    let rationale = null;
-
+  // Helper function to check persona match and get rationale
+  const checkPersonaMatch = (persona, ...args) => {
     try {
-      switch (persona.id) {
-        case 'high_utilization':
-          matches = persona.matches(creditAnalysis);
-          if (matches) {
-            rationale = persona.getRationale(creditAnalysis);
-          }
-          break;
-
-        case 'variable_income':
-          matches = persona.matches(incomeAnalysis);
-          if (matches) {
-            rationale = persona.getRationale(incomeAnalysis);
-          }
-          break;
-
-        case 'subscription_heavy':
-          matches = persona.matches(subscriptionAnalysis);
-          if (matches) {
-            rationale = persona.getRationale(subscriptionAnalysis);
-          }
-          break;
-
-        case 'savings_builder':
-          matches = persona.matches(savingsAnalysis, creditAnalysis);
-          if (matches) {
-            rationale = persona.getRationale(savingsAnalysis, creditAnalysis);
-          }
-          break;
-
-        case 'new_user':
-          matches = persona.matches(userData, creditAnalysis, accountData);
-          if (matches) {
-            rationale = persona.getRationale(userData);
-          }
-          break;
-
-        default:
-          matches = false;
+      const matches = persona.matches(...args);
+      if (matches) {
+        return { matches, rationale: persona.getRationale(...args) };
       }
+      return { matches: false, rationale: null };
     } catch (error) {
       // If persona check fails, skip it
-      console.error(`Error checking persona ${persona.id}:`, error);
-      matches = false;
+      return { matches: false, rationale: null };
+    }
+  };
+
+  // Check each persona
+  for (const [key, persona] of Object.entries(allPersonas)) {
+    let matchResult;
+
+    switch (persona.id) {
+      case 'high_utilization':
+        matchResult = checkPersonaMatch(persona, creditAnalysis);
+        break;
+      case 'variable_income':
+        matchResult = checkPersonaMatch(persona, incomeAnalysis);
+        break;
+      case 'subscription_heavy':
+        matchResult = checkPersonaMatch(persona, subscriptionAnalysis);
+        break;
+      case 'savings_builder':
+        matchResult = checkPersonaMatch(persona, savingsAnalysis, creditAnalysis);
+        break;
+      case 'new_user':
+        matchResult = checkPersonaMatch(persona, userData, creditAnalysis, accountData);
+        break;
+      default:
+        matchResult = { matches: false, rationale: null };
     }
 
-    if (matches) {
+    if (matchResult.matches) {
       matchingPersonas.push({
         persona,
-        rationale,
+        rationale: matchResult.rationale,
         priority: persona.priority
       });
     }

@@ -178,7 +178,37 @@ Tracks user consent for data processing.
 
 ---
 
-### 6. feedback
+### 6. ai_consent
+
+Tracks user consent for AI-powered features. Separate from data processing consent - users can opt into data processing but not AI features, or vice versa.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `ai_consent_id` | INTEGER | PRIMARY KEY, AUTOINCREMENT | Unique AI consent identifier |
+| `user_id` | INTEGER | NOT NULL, UNIQUE, FOREIGN KEY | Reference to users.user_id |
+| `opted_in` | INTEGER | NOT NULL, DEFAULT 0, CHECK | AI consent status: 0 (false/opted-out) or 1 (true/opted-in) |
+| `timestamp` | TEXT | NOT NULL, DEFAULT (datetime('now')) | AI consent timestamp (when consent was granted/revoked) |
+
+**Indexes:**
+- Primary key on `ai_consent_id`
+- Unique constraint on `user_id`
+- Index on `user_id` (idx_ai_consent_user_id)
+
+**Relationships:**
+- One-to-one with `users` (ON DELETE CASCADE)
+
+**Notes:**
+- Each user can have only one AI consent record (latest consent status)
+- Timestamp tracks when AI consent was last updated
+- AI consent is independent of data processing consent
+- AI features require AI consent only (independent of data processing consent)
+- Data processing consent is required for behavioral analysis and recommendations
+- AI features can work independently when AI consent is granted
+- For audit trail, consider creating a separate `ai_consent_history` table in the future
+
+---
+
+### 7. feedback
 
 Stores user feedback on recommendations.
 

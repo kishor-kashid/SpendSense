@@ -17,7 +17,7 @@ const User = require('../models/User');
  * Returns: 3-5 education items + 1-3 partner offers with rationales
  * All guardrails applied: consent, eligibility, tone
  */
-router.get('/:user_id', (req, res, next) => {
+router.get('/:user_id', async (req, res, next) => {
   const startTime = Date.now();
   try {
     // Validate user_id parameter
@@ -120,52 +120,52 @@ router.get('/:user_id', (req, res, next) => {
     
     // No approved or pending review - generate new recommendations
     // This already checks consent and applies eligibility filter
-    const genStartTime = Date.now();
-    const recommendations = generateRecommendations(userId);
-    const genDuration = Date.now() - genStartTime;
+    // Performance is logged by recommendationEngine's measurePerformance function
+    const recommendations = await generateRecommendations(userId);
     
-    // Log performance if generation took significant time
-    if (genDuration > 1000) {
-      console.log(`[Performance] Recommendation generation for user ${userId} took ${genDuration}ms`);
-    }
-    
+    // Helper function to validate tone for a recommendation
+    const validateRecommendationTone = (rec) => {
+      // Validate template rationale (always present)
+      const content = {
+        title: rec.item.title,
+        description: rec.item.description,
+        rationale: rec.rationale
+      };
+      const toneValidation = validateContent(content);
+      if (!toneValidation.isValid) {
+        return null;
+      }
+      
+      // If AI rationale exists, validate it too
+      if (rec.ai_rationale) {
+        const aiContent = {
+          title: rec.item.title,
+          description: rec.item.description,
+          rationale: rec.ai_rationale
+        };
+        const aiToneValidation = validateContent(aiContent);
+        if (!aiToneValidation.isValid) {
+          // Remove AI rationale if it fails tone validation, but keep recommendation
+          return {
+            ...rec,
+            ai_rationale: null
+          };
+        }
+      }
+      
+      return rec;
+    };
+
     // Apply tone validation to all recommendation content
     const validatedRecommendations = {
       ...recommendations,
       recommendations: {
-        education: recommendations.recommendations.education.map(rec => {
-          // Validate tone for education item
-          const content = {
-            title: rec.item.title,
-            description: rec.item.description,
-            rationale: rec.rationale
-          };
-          
-          const toneValidation = validateContent(content);
-          if (!toneValidation.isValid) {
-            // Filter out items with tone violations
-            return null;
-          }
-          
-          return rec;
-        }).filter(rec => rec !== null), // Remove null items (tone violations)
-        
-        partner_offers: recommendations.recommendations.partner_offers.map(rec => {
-          // Validate tone for partner offer
-          const content = {
-            title: rec.item.title,
-            description: rec.item.description,
-            rationale: rec.rationale
-          };
-          
-          const toneValidation = validateContent(content);
-          if (!toneValidation.isValid) {
-            // Filter out offers with tone violations
-            return null;
-          }
-          
-          return rec;
-        }).filter(rec => rec !== null) // Remove null items (tone violations)
+        education: recommendations.recommendations.education
+          .map(validateRecommendationTone)
+          .filter(rec => rec !== null),
+        partner_offers: recommendations.recommendations.partner_offers
+          .map(validateRecommendationTone)
+          .filter(rec => rec !== null)
       }
     };
     
@@ -180,13 +180,12 @@ router.get('/:user_id', (req, res, next) => {
     // Store or update recommendation in review queue as pending (for operator oversight)
     // If a pending review already exists for this user, update it instead of creating a duplicate
     try {
-      const review = RecommendationReview.createOrUpdatePending({
+      RecommendationReview.createOrUpdatePending({
         user_id: userId,
         recommendation_data: validatedRecommendations,
         decision_trace: recommendations.decision_trace,
         status: 'pending'
       });
-      console.log(`✓ Created/updated pending review (ID: ${review.review_id}) for user ${userId}`);
       
       // After storing as pending, return empty recommendations to the user
       // Users should NOT see pending recommendations until approved
@@ -200,18 +199,9 @@ router.get('/:user_id', (req, res, next) => {
         }
       });
     } catch (error) {
-      // Log but don't fail the request if review storage fails
+      // Don't fail the request if review storage fails
       // In this case, we'll still return the recommendations (edge case)
-      console.error(`✗ Failed to store recommendation for review (user ${userId}):`, error);
-      console.error('Error details:', error.message, error.stack);
-      
-      // Fall through to return recommendations anyway (review storage failed)
-    }
-    
-    // Log total request time
-    const totalDuration = Date.now() - startTime;
-    if (totalDuration > 1000 || process.env.NODE_ENV === 'development') {
-      console.log(`[Performance] GET /recommendations/${userId} completed in ${totalDuration}ms (generation: ${genDuration}ms)`);
+      // Error is already logged by error handler middleware
     }
     
     // Transform recommendations structure for frontend compatibility

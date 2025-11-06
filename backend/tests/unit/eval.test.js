@@ -212,8 +212,8 @@ describe('Evaluation & Metrics System', () => {
   });
 
   describe('calculateExplainability', () => {
-    test('should calculate explainability metric', () => {
-      const result = calculateExplainability([testUserId]);
+    test('should calculate explainability metric', async () => {
+      const result = await calculateExplainability([testUserId]);
       
       expect(result).toHaveProperty('metric', 'explainability');
       expect(result).toHaveProperty('description');
@@ -226,10 +226,10 @@ describe('Evaluation & Metrics System', () => {
       expect(Array.isArray(result.recommendation_details)).toBe(true);
     });
 
-    test('should return 100% explainability when all recommendations have rationales', () => {
+    test('should return 100% explainability when all recommendations have rationales', async () => {
       // Generate recommendations for test user
       try {
-        const result = calculateExplainability([testUserId]);
+        const result = await calculateExplainability([testUserId]);
         // All recommendations should have rationales
         expect(result.explainability_percentage).toBeGreaterThanOrEqual(0);
         expect(result.meets_target).toBe(result.explainability_percentage >= 100);
@@ -239,7 +239,7 @@ describe('Evaluation & Metrics System', () => {
       }
     });
 
-    test('should handle users without consent gracefully', () => {
+    test('should handle users without consent gracefully', async () => {
       const uniqueId = Date.now();
       const userWithoutConsent = User.create({
         name: 'No Consent User',
@@ -250,15 +250,15 @@ describe('Evaluation & Metrics System', () => {
         consent_status: 'revoked'
       });
 
-      const result = calculateExplainability([userWithoutConsent.user_id]);
+      const result = await calculateExplainability([userWithoutConsent.user_id]);
       expect(result.total_recommendations).toBe(0);
       expect(result.explainability_percentage).toBe(0);
     });
   });
 
   describe('calculateLatency', () => {
-    test('should calculate latency metric', () => {
-      const result = calculateLatency([testUserId], 1);
+    test('should calculate latency metric', async () => {
+      const result = await calculateLatency([testUserId], 1);
       
       expect(result).toHaveProperty('metric', 'latency');
       expect(result).toHaveProperty('description');
@@ -274,20 +274,20 @@ describe('Evaluation & Metrics System', () => {
       expect(Array.isArray(result.latency_details)).toBe(true);
     });
 
-    test('should return 0 latency for empty user list', () => {
-      const result = calculateLatency([]);
+    test('should return 0 latency for empty user list', async () => {
+      const result = await calculateLatency([]);
       expect(result.sample_size).toBe(0);
       expect(result.average_latency_ms).toBe(0);
       expect(result.meets_target).toBe(false);
     });
 
-    test('should respect sample size parameter', () => {
-      const result = calculateLatency([testUserId, testUserId2, testUserId3], 2);
+    test('should respect sample size parameter', async () => {
+      const result = await calculateLatency([testUserId, testUserId2, testUserId3], 2);
       expect(result.sample_size).toBeLessThanOrEqual(2);
     });
 
-    test('should measure latency correctly', () => {
-      const result = calculateLatency([testUserId], 1);
+    test('should measure latency correctly', async () => {
+      const result = await calculateLatency([testUserId], 1);
       if (result.sample_size > 0) {
         expect(result.average_latency_ms).toBeGreaterThanOrEqual(0);
         expect(result.average_latency_seconds).toBeGreaterThanOrEqual(0);
@@ -298,15 +298,15 @@ describe('Evaluation & Metrics System', () => {
   });
 
   describe('calculateAuditability', () => {
-    test('should calculate auditability metric', () => {
+    test('should calculate auditability metric', async () => {
       // Generate recommendations to create review records
       try {
-        generateRecommendations(testUserId);
+        await generateRecommendations(testUserId);
       } catch (error) {
         // Skip if user doesn't have enough data
       }
 
-      const result = calculateAuditability([testUserId]);
+      const result = await calculateAuditability([testUserId]);
       
       expect(result).toHaveProperty('metric', 'auditability');
       expect(result).toHaveProperty('description');
@@ -319,7 +319,7 @@ describe('Evaluation & Metrics System', () => {
       expect(Array.isArray(result.trace_details)).toBe(true);
     });
 
-    test('should return 0% auditability for users without recommendations', () => {
+    test('should return 0% auditability for users without recommendations', async () => {
       const uniqueId = Date.now();
       const userWithoutConsent = User.create({
         name: 'No Consent User',
@@ -330,15 +330,15 @@ describe('Evaluation & Metrics System', () => {
         consent_status: 'revoked'
       });
 
-      const result = calculateAuditability([userWithoutConsent.user_id]);
+      const result = await calculateAuditability([userWithoutConsent.user_id]);
       expect(result.total_recommendations).toBeGreaterThanOrEqual(0);
       expect(result.auditability_percentage).toBeGreaterThanOrEqual(0);
     });
   });
 
   describe('calculateAllMetrics', () => {
-    test('should calculate all metrics', () => {
-      const result = calculateAllMetrics({ userIds: [testUserId], latencySampleSize: 1 });
+    test('should calculate all metrics', async () => {
+      const result = await calculateAllMetrics({ userIds: [testUserId], latencySampleSize: 1 });
       
       expect(result).toHaveProperty('timestamp');
       expect(result).toHaveProperty('calculation_time_ms');
@@ -357,8 +357,8 @@ describe('Evaluation & Metrics System', () => {
       expect(result.summary).toHaveProperty('auditability_percentage');
     });
 
-    test('should calculate metrics for all users when no userIds specified', () => {
-      const result = calculateAllMetrics({ latencySampleSize: 1 });
+    test('should calculate metrics for all users when no userIds specified', async () => {
+      const result = await calculateAllMetrics({ latencySampleSize: 1 });
       
       expect(result).toHaveProperty('metrics');
       expect(result.metrics.coverage).toHaveProperty('total_users');
@@ -367,8 +367,8 @@ describe('Evaluation & Metrics System', () => {
   });
 
   describe('Report Generation', () => {
-    test('generateJSONReport should create JSON file', () => {
-      const metrics = calculateAllMetrics({ userIds: [testUserId], latencySampleSize: 1 });
+    test('generateJSONReport should create JSON file', async () => {
+      const metrics = await calculateAllMetrics({ userIds: [testUserId], latencySampleSize: 1 });
       const fs = require('fs');
       const path = require('path');
       const outputPath = path.join(__dirname, '../../data/evaluation/test_metrics.json');
@@ -388,8 +388,8 @@ describe('Evaluation & Metrics System', () => {
       }
     });
 
-    test('generateCSVReport should create CSV file', () => {
-      const metrics = calculateAllMetrics({ userIds: [testUserId], latencySampleSize: 1 });
+    test('generateCSVReport should create CSV file', async () => {
+      const metrics = await calculateAllMetrics({ userIds: [testUserId], latencySampleSize: 1 });
       const fs = require('fs');
       const path = require('path');
       const outputPath = path.join(__dirname, '../../data/evaluation/test_metrics.csv');
@@ -410,8 +410,8 @@ describe('Evaluation & Metrics System', () => {
       }
     });
 
-    test('generateSummaryReport should create Markdown file', () => {
-      const metrics = calculateAllMetrics({ userIds: [testUserId], latencySampleSize: 1 });
+    test('generateSummaryReport should create Markdown file', async () => {
+      const metrics = await calculateAllMetrics({ userIds: [testUserId], latencySampleSize: 1 });
       const fs = require('fs');
       const path = require('path');
       const outputPath = path.join(__dirname, '../../data/evaluation/test_summary.md');
@@ -432,11 +432,11 @@ describe('Evaluation & Metrics System', () => {
       }
     });
 
-    test('exportDecisionTraces should export decision traces', () => {
+    test('exportDecisionTraces should export decision traces', async () => {
       const path = require('path');
       const outputDir = path.join(__dirname, '../../data/evaluation/test_traces');
       
-      const result = exportDecisionTraces(outputDir);
+      const result = await exportDecisionTraces(outputDir);
       
       expect(result).toHaveProperty('output_directory');
       expect(result).toHaveProperty('traces_exported');
@@ -450,12 +450,12 @@ describe('Evaluation & Metrics System', () => {
       }
     });
 
-    test('generateAllReports should generate all report types', () => {
+    test('generateAllReports should generate all report types', async () => {
       const path = require('path');
       const outputDir = path.join(__dirname, '../../data/evaluation/test_reports');
       const fs = require('fs');
       
-      const result = generateAllReports({ 
+      const result = await generateAllReports({ 
         userIds: [testUserId], 
         latencySampleSize: 1,
         outputDir 

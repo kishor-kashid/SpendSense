@@ -1,46 +1,45 @@
-import React, { useEffect, useState, useRef, useCallback, useMemo, memo } from 'react';
-import RecommendationCard from './RecommendationCard';
+import React, { useEffect, useState, useCallback } from 'react';
 import TransactionList from './TransactionList';
 import SpendingBreakdown from './SpendingBreakdown';
 import SpendingInsights from './SpendingInsights';
+import AIFeaturesTab from './AIFeaturesTab';
+import RecommendationsSection from './RecommendationsSection';
+import CurrentBalance from './CurrentBalance';
 import CreditCards from './CreditCards';
-import BehavioralSignals from './BehavioralSignals';
 import Loading from '../common/Loading';
 import Card from '../common/Card';
 import { useAuth } from '../../context/AuthContext';
 import { useConsent } from '../../hooks/useConsent';
+import { useAIConsent } from '../../hooks/useAIConsent';
 import { useRecommendations } from '../../hooks/useRecommendations';
 import { useUser } from '../../context/UserContext';
-import { getTransactions, getSpendingInsights } from '../../services/api';
+import { getTransactions, getSpendingInsights, getAccounts } from '../../services/api';
 import './Dashboard.css';
 
 const Dashboard = () => {
   const { userId } = useAuth();
   const { profile, refreshProfile } = useUser();
   const { consentStatus, hasConsent, grant, revoke, loadConsent } = useConsent(userId);
-  const { recommendations, loadRecommendations, clearRecommendations, loading: recommendationsLoading } = useRecommendations(userId);
+  const { hasAIConsent, loadAIConsent } = useAIConsent(userId);
+  const { loadRecommendations, clearRecommendations } = useRecommendations(userId);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
   
   // Transactions and insights state
   const [transactions, setTransactions] = useState([]);
   const [insights, setInsights] = useState(null);
+  const [accounts, setAccounts] = useState(null);
   const [loadingTransactions, setLoadingTransactions] = useState(false);
   const [loadingInsights, setLoadingInsights] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview'); // overview, transactions, insights
-
-  // Refs for scrollable recommendation lists
-  const educationListRef = useRef(null);
-  const offersListRef = useRef(null);
-
-  // State for scroll button visibility
-  const [educationScrollState, setEducationScrollState] = useState({ canScrollLeft: false, canScrollRight: false });
-  const [offersScrollState, setOffersScrollState] = useState({ canScrollLeft: false, canScrollRight: false });
+  const [loadingAccounts, setLoadingAccounts] = useState(false);
+  const [activeTab, setActiveTab] = useState('insights'); // transactions, insights, recommendations, ai-features
+  const [insightsFilter, setInsightsFilter] = useState('30'); // '30', '180', 'all'
 
   useEffect(() => {
     if (userId) {
       loadConsent();
+      loadAIConsent();
     }
-  }, [userId, loadConsent]);
+  }, [userId, loadConsent, loadAIConsent]);
 
   // Listen for consent changes from Navigation component
   useEffect(() => {
@@ -54,28 +53,23 @@ const Dashboard = () => {
       }
     };
 
+    const handleAIConsentChange = async () => {
+      // Reload AI consent status when it changes
+      await loadAIConsent();
+      // When AI consent changes, refresh the AI Features tab if it's active
+      if (activeTab === 'ai-features') {
+        window.dispatchEvent(new CustomEvent('dashboard-refresh'));
+      }
+    };
+
     window.addEventListener('consent-changed', handleConsentChange);
+    window.addEventListener('ai-consent-changed', handleAIConsentChange);
     return () => {
       window.removeEventListener('consent-changed', handleConsentChange);
+      window.removeEventListener('ai-consent-changed', handleAIConsentChange);
     };
-  }, [userId, loadConsent, refreshProfile, loadRecommendations]);
+  }, [userId, loadConsent, loadAIConsent, refreshProfile, loadRecommendations, activeTab]);
 
-  // Load recommendations when consent is granted and user is available
-  useEffect(() => {
-    if (hasConsent && userId) {
-      // Small delay to ensure profile is loaded first
-      const timer = setTimeout(() => {
-        loadRecommendations().catch(err => {
-          console.error('Error loading recommendations after consent:', err);
-        });
-      }, 100);
-      return () => clearTimeout(timer);
-    } else if (!hasConsent && userId) {
-      // Clear recommendations when consent is revoked
-      clearRecommendations();
-      setLoadingRecommendations(false);
-    }
-  }, [hasConsent, userId, loadRecommendations, clearRecommendations]);
 
   const loadTransactionsAndInsights = useCallback(async () => {
     if (!userId) return;
@@ -84,9 +78,26 @@ const Dashboard = () => {
     setLoadingInsights(true);
 
     try {
+      // Calculate date range based on filter
+      const endDate = new Date().toISOString().split('T')[0];
+      let startDate = null;
+      
+      if (insightsFilter === '30') {
+        const date = new Date();
+        date.setDate(date.getDate() - 30);
+        startDate = date.toISOString().split('T')[0];
+      } else if (insightsFilter === '180') {
+        const date = new Date();
+        date.setDate(date.getDate() - 180);
+        startDate = date.toISOString().split('T')[0];
+      }
+      // For 'all', don't set startDate - API will use all available data
+
+      const insightsParams = startDate ? { startDate, endDate } : { endDate };
+
       const [transactionsData, insightsData] = await Promise.all([
         getTransactions(userId, { includePending: false }),
-        getSpendingInsights(userId, {})
+        getSpendingInsights(userId, insightsParams)
       ]);
 
       // Handle API response structure
@@ -96,11 +107,35 @@ const Dashboard = () => {
       setTransactions(transactionsArray);
       setInsights(insightsObj);
     } catch (error) {
-      console.error('Error loading transactions/insights:', error);
-      // Don't set error state - just log it
+      // Silently handle errors - don't set error state
     } finally {
       setLoadingTransactions(false);
       setLoadingInsights(false);
+    }
+  }, [userId, insightsFilter]);
+
+  // Load accounts
+  const loadAccounts = useCallback(async () => {
+    if (!userId) return;
+
+    setLoadingAccounts(true);
+    try {
+      const accountsData = await getAccounts(userId);
+      // API returns: { success: true, accounts: {...}, total_balance: {...}, credit_cards: {...} }
+      // We need to pass the entire response structure (minus success) to components
+      const accountsObj = accountsData.success 
+        ? {
+            accounts: accountsData.accounts,
+            total_balance: accountsData.total_balance,
+            credit_cards: accountsData.credit_cards
+          }
+        : accountsData.accounts || accountsData.data || accountsData;
+      setAccounts(accountsObj);
+    } catch (error) {
+      console.error('Error loading accounts:', error);
+      // Silently handle errors
+    } finally {
+      setLoadingAccounts(false);
     }
   }, [userId]);
 
@@ -108,23 +143,10 @@ const Dashboard = () => {
   useEffect(() => {
     if (userId) {
       loadTransactionsAndInsights();
+      loadAccounts();
     }
-  }, [userId, loadTransactionsAndInsights]);
+  }, [userId, loadTransactionsAndInsights, loadAccounts]);
 
-  // Memoize recommendations data to prevent unnecessary re-renders
-  const memoizedEducationItems = useMemo(() => {
-    if (!recommendations?.education_items) return [];
-    return recommendations.education_items;
-  }, [recommendations?.education_items]);
-
-  const memoizedPartnerOffers = useMemo(() => {
-    if (!recommendations?.partner_offers) return [];
-    // Filter out ineligible offers
-    return recommendations.partner_offers.filter(offer => {
-      const eligibility = offer.eligibility || offer.eligibility_check;
-      return !eligibility || eligibility.eligible === true || eligibility.isEligible === true;
-    });
-  }, [recommendations?.partner_offers]);
 
   // Listen for refresh events from navbar
   useEffect(() => {
@@ -137,8 +159,9 @@ const Dashboard = () => {
             await loadRecommendations();
           }
           await loadTransactionsAndInsights();
+          await loadAccounts();
         } catch (error) {
-          console.error('Error refreshing data:', error);
+          // Silently handle errors
         } finally {
           setLoadingRecommendations(false);
         }
@@ -149,72 +172,7 @@ const Dashboard = () => {
     return () => {
       window.removeEventListener('dashboard-refresh', handleRefreshEvent);
     };
-  }, [userId, hasConsent, refreshProfile, loadRecommendations, loadTransactionsAndInsights]);
-
-  // Check scroll position for button states
-  const checkScrollPosition = useCallback((ref, setScrollState) => {
-    if (ref.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = ref.current;
-      setScrollState({
-        canScrollLeft: scrollLeft > 0,
-        canScrollRight: scrollLeft + clientWidth < scrollWidth - 1 // -1 for floating point precision
-      });
-    }
-  }, []);
-
-  // Scroll function for navigation buttons
-  const scrollList = useCallback((ref, direction) => {
-    if (ref.current) {
-      const cardWidth = 350; // Fixed card width
-      const gap = 16; // var(--spacing-lg) is typically 16px
-      const scrollAmount = cardWidth + gap; // Scroll exactly one card + gap
-      ref.current.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
-        behavior: 'smooth'
-      });
-    }
-  }, []);
-
-  // Update scroll button states
-  useEffect(() => {
-    const updateScrollStates = () => {
-      checkScrollPosition(educationListRef, setEducationScrollState);
-      checkScrollPosition(offersListRef, setOffersScrollState);
-    };
-
-    // Initial check
-    updateScrollStates();
-
-    // Set up scroll listeners
-    const educationElement = educationListRef.current;
-    const offersElement = offersListRef.current;
-
-    if (educationElement) {
-      educationElement.addEventListener('scroll', updateScrollStates);
-    }
-    if (offersElement) {
-      offersElement.addEventListener('scroll', updateScrollStates);
-    }
-
-    // Also check when recommendations change
-    if (recommendations) {
-      // Small delay to allow DOM to update
-      setTimeout(updateScrollStates, 100);
-    }
-
-    // Check on window resize
-    window.addEventListener('resize', updateScrollStates);
-
-    return () => {
-      if (educationElement) {
-        educationElement.removeEventListener('scroll', updateScrollStates);
-      }
-      if (offersElement) {
-        offersElement.removeEventListener('scroll', updateScrollStates);
-      }
-      window.removeEventListener('resize', updateScrollStates);
-    };
-  }, [recommendations, checkScrollPosition]);
+  }, [userId, hasConsent, refreshProfile, loadRecommendations, loadTransactionsAndInsights, loadAccounts]);
 
   if (!userId) {
     return (
@@ -239,12 +197,6 @@ const Dashboard = () => {
       {/* Tabs for different views */}
       <div className="dashboard-tabs">
         <button
-          className={`dashboard-tab ${activeTab === 'overview' ? 'active' : ''}`}
-          onClick={() => setActiveTab('overview')}
-        >
-          Overview
-        </button>
-        <button
           className={`dashboard-tab ${activeTab === 'transactions' ? 'active' : ''}`}
           onClick={() => setActiveTab('transactions')}
         >
@@ -256,212 +208,75 @@ const Dashboard = () => {
         >
           Insights
         </button>
+        <button
+          className={`dashboard-tab ${activeTab === 'recommendations' ? 'active' : ''}`}
+          onClick={() => {
+            setActiveTab('recommendations');
+            // Trigger refresh when switching to recommendations tab
+            if (hasConsent) {
+              window.dispatchEvent(new CustomEvent('recommendations-tab-active'));
+            }
+          }}
+        >
+          Recommendations
+        </button>
+        {/* AI Features tab - always show, but may show consent message */}
+        <button
+          className={`dashboard-tab ${activeTab === 'ai-features' ? 'active' : ''}`}
+          onClick={() => setActiveTab('ai-features')}
+        >
+          AI Features
+        </button>
       </div>
-
-      {/* Overview Tab */}
-      {activeTab === 'overview' && (
-        <>
-          <SpendingInsights insights={insights} loading={loadingInsights} />
-          {hasConsent && (
-            <>
-              <BehavioralSignals 
-                behavioralSignals={profile?.behavioral_signals} 
-                loading={profile === null} 
-              />
-              <CreditCards 
-                creditData={profile?.behavioral_signals?.credit} 
-                loading={profile === null} 
-              />
-            </>
-          )}
-          <SpendingBreakdown insights={insights} loading={loadingInsights} />
-        </>
-      )}
 
       {/* Transactions Tab */}
       {activeTab === 'transactions' && (
-        <TransactionList transactions={transactions} loading={loadingTransactions} />
+        <>
+          <CurrentBalance accounts={accounts} loading={loadingAccounts} />
+          <CreditCards accounts={accounts} loading={loadingAccounts} />
+          <TransactionList transactions={transactions} loading={loadingTransactions} />
+        </>
       )}
 
       {/* Insights Tab */}
       {activeTab === 'insights' && (
         <>
-          <SpendingInsights insights={insights} loading={loadingInsights} />
+          <div className="insights-filters">
+            <div className="insights-filter-label">Time Period:</div>
+            <div className="insights-filter-buttons">
+              <button
+                className={`insights-filter-btn ${insightsFilter === '30' ? 'active' : ''}`}
+                onClick={() => setInsightsFilter('30')}
+              >
+                30 Days
+              </button>
+              <button
+                className={`insights-filter-btn ${insightsFilter === '180' ? 'active' : ''}`}
+                onClick={() => setInsightsFilter('180')}
+              >
+                180 Days
+              </button>
+              <button
+                className={`insights-filter-btn ${insightsFilter === 'all' ? 'active' : ''}`}
+                onClick={() => setInsightsFilter('all')}
+              >
+                All Time
+              </button>
+            </div>
+          </div>
+          <SpendingInsights insights={insights} loading={loadingInsights} insightsFilter={insightsFilter} />
           <SpendingBreakdown insights={insights} loading={loadingInsights} />
         </>
       )}
 
-      {/* Recommendations Section - Only shown when consent is granted */}
-      {hasConsent && (
-        <div className="recommendations-section">
-          <div className="recommendations-header">
-            <h2 className="section-title">Personalized Recommendations</h2>
-            {recommendations?.status === 'approved' && (
-              <span className="recommendations-status-badge approved">
-                ✓ Approved
-              </span>
-            )}
-          </div>
-        
-        {recommendationsLoading && (
-          <Loading message="Loading recommendations..." />
-        )}
-
-        {!recommendationsLoading && recommendations && (
-          <>
-            {/* Show pending message if recommendations are pending approval */}
-            {recommendations.status === 'pending' && (
-              <Card className="recommendations-pending-card">
-                <div className="recommendations-pending-content">
-                  <div className="recommendations-pending-icon">⏳</div>
-                  <h3>Recommendations Pending Approval</h3>
-                  <p>
-                    {recommendations.pending_message || 
-                     'Your personalized recommendations are currently being reviewed by our team. ' +
-                     'You will be able to view them once they are approved. Please check back later.'}
-                  </p>
-                </div>
-              </Card>
-            )}
-
-            {/* Only show recommendations if they are approved and have content */}
-            {recommendations.status === 'approved' && (
-              <>
-                {recommendations.education_items && recommendations.education_items.length > 0 && (
-                  <div className="recommendations-group">
-                    <div className="recommendations-group-header">
-                      <div className="recommendations-group-title-wrapper">
-                        <h3 className="recommendations-group-title">📚 Educational Resources</h3>
-                        {profile?.assigned_persona?.name && (
-                          <p className="recommendations-group-subtitle">
-                            <strong>Why this matters:</strong> Based on your <strong>{profile.assigned_persona.name}</strong> profile, these educational resources are tailored to help you achieve your financial goals and improve your financial well-being.
-                          </p>
-                        )}
-                      </div>
-                      {recommendations.education_items.length > 1 && (
-                        <div className="scroll-nav-buttons">
-                          <button
-                            className="scroll-nav-btn scroll-nav-btn-left"
-                            onClick={() => scrollList(educationListRef, 'left')}
-                            disabled={!educationScrollState.canScrollLeft}
-                            aria-label="Scroll left"
-                          >
-                            ←
-                          </button>
-                          <button
-                            className="scroll-nav-btn scroll-nav-btn-right"
-                            onClick={() => scrollList(educationListRef, 'right')}
-                            disabled={!educationScrollState.canScrollRight}
-                            aria-label="Scroll right"
-                          >
-                            →
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                    <div className="recommendations-list" ref={educationListRef}>
-                      {memoizedEducationItems.map((item, index) => (
-                        <RecommendationCard 
-                          key={item.item?.id || index} 
-                          recommendation={item} 
-                          type="education"
-                        />
-                      ))}
-                    </div>
-                    <div className="recommendations-disclaimer">
-                      <small>
-                        <strong>Disclaimer:</strong> This is educational content, not financial advice. Consult a licensed advisor for personalized guidance.
-                      </small>
-                    </div>
-                  </div>
-                )}
-
-                {memoizedPartnerOffers.length > 0 && (
-                  <div className="recommendations-group">
-                    <div className="recommendations-group-header">
-                      <div className="recommendations-group-title-wrapper">
-                        <h3 className="recommendations-group-title">💳 Partner Offers</h3>
-                        {profile?.assigned_persona?.name && (
-                          <p className="recommendations-group-subtitle">
-                            <strong>Why this matters:</strong> Based on your <strong>{profile.assigned_persona.name}</strong> profile, these partner offers are curated to match your financial situation and help you save money or improve your financial health.
-                          </p>
-                        )}
-                      </div>
-                      {memoizedPartnerOffers.length > 1 && (
-                        <div className="scroll-nav-buttons">
-                          <button
-                            className="scroll-nav-btn scroll-nav-btn-left"
-                            onClick={() => scrollList(offersListRef, 'left')}
-                            disabled={!offersScrollState.canScrollLeft}
-                            aria-label="Scroll left"
-                          >
-                            ←
-                          </button>
-                          <button
-                            className="scroll-nav-btn scroll-nav-btn-right"
-                            onClick={() => scrollList(offersListRef, 'right')}
-                            disabled={!offersScrollState.canScrollRight}
-                            aria-label="Scroll right"
-                          >
-                            →
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                    <div className="recommendations-list" ref={offersListRef}>
-                      {memoizedPartnerOffers.map((offer, index) => (
-                        <RecommendationCard 
-                          key={offer.item?.id || index} 
-                          recommendation={offer} 
-                          type="offer"
-                        />
-                      ))}
-                    </div>
-                    <div className="recommendations-disclaimer">
-                      <small>
-                        <strong>Disclaimer:</strong> This is educational content, not financial advice. Consult a licensed advisor for personalized guidance.
-                      </small>
-                    </div>
-                  </div>
-                )}
-
-                {(!recommendations.education_items || recommendations.education_items.length === 0) &&
-                 (!recommendations.partner_offers || recommendations.partner_offers.length === 0) && (
-                  <Card>
-                    <p>No recommendations available at this time.</p>
-                  </Card>
-                )}
-              </>
-            )}
-
-            {/* Show message if no status and no recommendations */}
-            {recommendations.status !== 'pending' && recommendations.status !== 'approved' &&
-             (!recommendations.education_items || recommendations.education_items.length === 0) &&
-             (!recommendations.partner_offers || recommendations.partner_offers.length === 0) && (
-              <Card>
-                <p>No recommendations available at this time.</p>
-              </Card>
-            )}
-          </>
-        )}
-
-        {!recommendationsLoading && !recommendations && (
-          <Card>
-            <p>No recommendations available. Please check back later.</p>
-          </Card>
-        )}
-        </div>
+      {/* Recommendations Tab */}
+      {activeTab === 'recommendations' && (
+        <RecommendationsSection key={userId} />
       )}
 
-      {/* Show message when consent is revoked */}
-      {!hasConsent && (
-        <Card className="no-consent-message">
-          <p>
-            <strong>Consent Required for Personalized Features</strong><br />
-            Enable data processing consent above to view your behavioral profile and receive personalized recommendations.
-            You can still view your transactions and spending insights without consent.
-          </p>
-        </Card>
+      {/* AI Features Tab - Only requires AI consent */}
+      {activeTab === 'ai-features' && (
+        <AIFeaturesTab />
       )}
     </div>
   );

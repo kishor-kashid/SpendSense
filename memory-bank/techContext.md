@@ -52,6 +52,7 @@ spendsense/
 - `dotenv` (^16.3.1) - Environment variables
 - `jest` (^29.7.0) - Testing framework
 - `nodemon` (^3.0.2) - Development auto-reload
+- `openai` (^4.20.1) - OpenAI SDK for AI features (GPT-4)
 
 ### Frontend (Installed)
 - `react` (^18.2.0) - UI library
@@ -96,6 +97,8 @@ spendsense/
 - **Operator Credentials:** Username "operator", Password "operator123"
 - **CORS:** Enabled for frontend-backend communication
 - **Ports:** Backend on 3001, Frontend on 3000 (typical)
+- **AI Features:** Requires OpenAI API key in environment variables
+- **AI Model:** GPT-4 used for all AI features (rationale generation, predictions, budgets, goals)
 
 ## Development Workflow
 
@@ -123,6 +126,12 @@ spendsense/
 - **Test Database:** `backend/data/test_database.sqlite` (auto-created, excluded from git)
 - **Test Isolation:** Unique IDs used in tests to prevent UNIQUE constraint violations
 - **Test Configuration:** Serial execution (maxWorkers: 1) for database stability, 30s timeout
+- **Test Patterns:**
+  - Async tests must use async/await for all async function calls
+  - Mock setup uses factory functions in jest.mock() for proper initialization
+  - Test isolation: Clear cache, reset mocks, clean database state in beforeEach
+  - Mock restoration: Use jest.spyOn() with mockRestore() for function mocking
+  - Error testing: Mock failures using mockRejectedValue for async errors
 - **Deterministic:** Use seeds for randomness
 - **Fast execution:** Tests should run quickly (~10-15 seconds for full backend suite)
 - **Test Commands:** 
@@ -151,6 +160,7 @@ spendsense/
   - Database path
   - Server port
   - API endpoints
+  - `OPENAI_API_KEY` - Required for AI features (GPT-4)
   - Other configuration
 
 ### Build Output

@@ -207,7 +207,42 @@ This document outlines current limitations of the SpendSense system and planned 
 
 ---
 
-### 9. Testing & Quality Assurance
+### 9. AI Features & OpenAI Integration
+
+**Limitation:**
+- Requires OpenAI API key (external dependency)
+- API costs scale with usage (GPT-4 pricing)
+- No fallback when OpenAI is unavailable (except template rationales)
+- Limited error handling for API failures
+- No cost tracking or budget alerts
+- Rate limiting is basic (in-memory, not distributed)
+- No support for fine-tuned models
+- Prompt engineering requires manual updates
+- No A/B testing of prompts
+- Limited validation of AI output quality
+
+**Impact:**
+- Additional operational costs
+- Dependency on external service availability
+- Potential for inconsistent AI responses
+- No cost monitoring or optimization alerts
+- Rate limiting lost on server restart
+
+**Future Improvements:**
+- Add cost tracking dashboard
+- Implement distributed rate limiting (Redis)
+- Add support for GPT-3.5-turbo (lower cost option)
+- Implement fine-tuned models for SpendSense-specific patterns
+- Add prompt versioning and A/B testing
+- Implement automated output quality validation
+- Add cost budget alerts
+- Create fallback model selection (GPT-3.5 → GPT-4)
+- Add request queuing for high-traffic scenarios
+- Implement prompt templates versioning system
+
+---
+
+### 10. Testing & Quality Assurance
 
 **Limitation:**
 - Limited test coverage for edge cases
@@ -233,7 +268,7 @@ This document outlines current limitations of the SpendSense system and planned 
 
 ---
 
-### 10. Monitoring & Observability
+### 11. Monitoring & Observability
 
 **Limitation:**
 - No application monitoring

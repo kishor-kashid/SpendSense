@@ -113,7 +113,7 @@ function assignPersonasToUsers(userIds, options = {}) {
     try {
       return assignPersonaToUser(userId, options);
     } catch (error) {
-      console.error(`Error assigning persona to user ${userId}:`, error);
+      // Return error result instead of throwing to allow batch processing to continue
       return {
         user_id: userId,
         error: error.message,

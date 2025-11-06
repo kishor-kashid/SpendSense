@@ -1,0 +1,262 @@
+.subscription-suggestions {
+  padding: 20px 0;
+}
+
+.savings-summary {
+  margin-bottom: 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.savings-summary h3 {
+  margin: 0 0 16px 0;
+  color: white;
+  font-size: 20px;
+}
+
+.savings-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.savings-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.savings-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.savings-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: white;
+}
+
+.savings-value.monthly {
+  color: #4CAF50;
+}
+
+.savings-value.yearly {
+  color: #FFC107;
+}
+
+.suggestions-message {
+  margin-bottom: 24px;
+  padding: 16px;
+  background-color: #e3f2fd;
+  border-left: 4px solid #2196F3;
+}
+
+.suggestions-message p {
+  margin: 0;
+  color: #1976D2;
+}
+
+.suggestions-list {
+  margin-bottom: 24px;
+}
+
+.suggestions-list h3 {
+  margin: 0 0 16px 0;
+  color: #333;
+  font-size: 20px;
+}
+
+.suggestion-items {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.suggestion-item {
+  padding: 20px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #fff;
+  transition: box-shadow 0.2s;
+}
+
+.suggestion-item:hover {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.suggestion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.suggestion-header h4 {
+  margin: 0;
+  color: #333;
+  font-size: 18px;
+}
+
+.suggestion-priority {
+  display: flex;
+  align-items: center;
+}
+
+.priority-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.priority-badge.priority-high {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.priority-badge.priority-medium {
+  background-color: #fff3e0;
+  color: #ef6c00;
+}
+
+.priority-badge.priority-low {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.suggestion-details {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 12px;
+  padding: 12px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+}
+
+.suggestion-cost,
+.suggestion-savings {
+  display: flex;
+  flex-direction: column;
+}
+
+.cost-label,
+.savings-label {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.cost-value,
+.savings-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.suggestion-rationale {
+  margin-bottom: 12px;
+  padding: 12px;
+  background-color: #f9f9f9;
+  border-left: 3px solid #2196F3;
+  border-radius: 4px;
+}
+
+.suggestion-rationale p {
+  margin: 0;
+  color: #555;
+  line-height: 1.6;
+}
+
+.suggestion-alternatives {
+  margin-top: 12px;
+  padding: 12px;
+  background-color: #e8f5e9;
+  border-radius: 4px;
+  color: #2e7d32;
+}
+
+.suggestion-alternatives strong {
+  margin-right: 8px;
+}
+
+.suggestion-analysis {
+  margin-top: 12px;
+}
+
+.suggestion-analysis details {
+  cursor: pointer;
+}
+
+.suggestion-analysis summary {
+  padding: 8px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  font-weight: 600;
+  color: #666;
+}
+
+.suggestion-analysis summary:hover {
+  background-color: #e0e0e0;
+}
+
+.analysis-details {
+  padding: 12px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  margin-top: 8px;
+}
+
+.analysis-details p {
+  margin: 4px 0;
+  color: #555;
+  font-size: 14px;
+}
+
+.no-suggestions {
+  padding: 24px;
+  text-align: center;
+  color: #666;
+}
+
+.no-suggestions h3 {
+  margin: 0 0 12px 0;
+  color: #333;
+}
+
+.no-suggestions p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.ai-rationale {
+  margin-top: 24px;
+  padding: 16px;
+  background-color: #e3f2fd;
+  border-left: 4px solid #2196F3;
+}
+
+.ai-rationale h3 {
+  margin: 0 0 12px 0;
+  color: #1976D2;
+  font-size: 18px;
+}
+
+.ai-rationale p {
+  margin: 0;
+  color: #555;
+  line-height: 1.6;
+}
+
+.subscription-suggestions-empty {
+  padding: 24px;
+  text-align: center;
+  color: #666;
+}
+
+.subscription-suggestions-empty p {
+  margin: 0 0 16px 0;
+}
+

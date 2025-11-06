@@ -86,7 +86,6 @@ const RecommendationReview = ({
         window.dispatchEvent(new CustomEvent('refreshOperatorData'));
       }
     } catch (error) {
-      console.error('Error unflagging review:', error);
       alert('Failed to unflag review: ' + (error.message || 'Unknown error'));
     }
   };
@@ -104,7 +103,6 @@ const RecommendationReview = ({
         window.dispatchEvent(new CustomEvent('refreshOperatorData'));
       }
     } catch (error) {
-      console.error('Error flagging review:', error);
       alert('Failed to flag review: ' + (error.message || 'Unknown error'));
     }
   };

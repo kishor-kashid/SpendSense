@@ -271,10 +271,8 @@ describe('Consent Management', () => {
       }
     });
 
-    test('should block recommendation generation without consent', () => {
-      expect(() => {
-        generateRecommendations(testUserId);
-      }).toThrow('has not granted consent');
+    test('should block recommendation generation without consent', async () => {
+      await expect(generateRecommendations(testUserId)).rejects.toThrow('has not granted consent');
     });
 
     test('should allow recommendation generation with consent', () => {
