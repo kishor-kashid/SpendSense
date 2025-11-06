@@ -229,14 +229,22 @@
   - SpendingInsights component (summary cards, trends, top merchants)
   - Transactions API endpoints (no consent required)
   - Spending insights API endpoints (analytics and trends)
-  - Tabbed interface (Overview, Transactions, Insights)
+  - Timeframe filters: 30 days, 180 days, all time
+  - Tabbed interface (Transactions, Insights, Recommendations, AI Features - Overview removed)
+  
+- ✅ **Account Management**
+  - Current Balance component (total balances, individual depository accounts)
+  - Credit Cards component (summary, individual cards, utilization rates)
+  - Accounts API endpoint: `/accounts/:user_id`
+  - Credit card calculations: Fixed to handle negative balances correctly
   
 - ✅ **Consent Management Enhancements**
-  - ConsentToggle component (always visible, toggle on/off)
-  - Conditional content display (recommendations only with consent)
+  - Data Processing Consent toggle (always visible, in profile menu)
+  - AI Consent toggle (separate, independent consent for AI features)
+  - Conditional content display (recommendations only with data consent, AI features only with AI consent)
   - Transactions/insights available without consent
-  - Behavioral profile only shown with consent
-  - Real-time consent status updates
+  - Behavioral profile only shown with data consent
+  - Real-time consent status updates via events
 
 - ✅ **Operator Review Enhancements**
   - Single review per user (createOrUpdatePending)
@@ -307,6 +315,39 @@
   - Navigation buttons: Left/right buttons replace scrollbar for better UX
   - Consistent card heights: All cards in each row have same height using flexbox
   - Applied to both educational resources and partner offers sections
+
+### AI Features (Phase 7) - Complete ✅
+- ✅ **PR #31: AI Infrastructure Setup**
+  - AI consent table created in database
+  - AIConsent model and service (aiConsentChecker.js)
+  - AI consent API endpoints (POST, GET, DELETE)
+  - OpenAI client initialization (openaiClient.js)
+  - Frontend AI consent hook (useAIConsent.js)
+  - AI consent toggle in Navigation component
+  - Integration with UserContext and AuthContext
+  
+- ✅ **PR #32: Dynamic AI Rationale Generation**
+  - AI rationale generation service using GPT-4
+  - Enhanced prompt templates with user financial data
+  - Integration with recommendation engine (additive to template rationales)
+  - Rate limiting and caching
+  - Tone validation for AI-generated rationales
+  - Graceful fallback if AI generation fails
+  
+- ✅ **PR #33: Predictive Financial Insights**
+  - Transaction pattern analysis service
+  - Multi-horizon predictions (7, 30, 90 days)
+  - AI Analysis Summary and Financial Forecast
+  - Stress point identification
+  - Predictive Insights component in frontend
+  - AI Features tab created
+  
+- ✅ **PR #34: Budget and Goal Generation**
+  - Spending analysis for budget generation
+  - AI-powered budget recommendations (category limits, savings targets)
+  - AI-powered savings goals (SMART goals)
+  - BudgetGenerator component with BudgetDisplay and GoalsDisplay
+  - Budget and goals API endpoints
 
 ## What's Left to Build
 

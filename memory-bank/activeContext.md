@@ -1,30 +1,69 @@
 # Active Context: SpendSense
 
 ## Current Status
-**Project Phase:** Testing & Bug Fixes Complete - System Fully Functional
-**Date:** After PR #29 and PR #30 completion, plus bug fixes
+**Project Phase:** AI Features & Enhancements - System Fully Functional with AI Integration
+**Date:** After AI Features implementation (PR31-34) and recent enhancements
 
 ## Current Work Focus
-- **PRs #1-30 Complete:** All backend features, frontend interfaces, performance optimizations, and final evaluation implemented
+- **PRs #1-34 Complete:** All backend features, frontend interfaces, performance optimizations, AI features, and enhancements implemented
 - **Feature detection:** All 4 behavioral signals working (subscriptions, savings, credit, income)
 - **Persona system:** Complete with 5 personas and prioritization logic
 - **Content catalogs:** Education items and partner offers catalogs ready
-- **Recommendation engine:** Complete with rationale generation, data citation, and caching
-- **Guardrails:** All guardrails complete (consent, eligibility, tone validation)
-- **API Layer:** User, consent, profile, recommendations, feedback, operator, and transactions endpoints complete
+- **Recommendation engine:** Complete with AI-powered rationale generation (GPT-4), template rationales, data citation, and caching
+- **Guardrails:** All guardrails complete (consent, eligibility, tone validation, AI consent)
+- **API Layer:** User, consent, profile, recommendations, feedback, operator, transactions, AI features, and accounts endpoints complete
 - **Evaluation System:** Complete with coverage, explainability, latency, and auditability metrics
 - **Performance Optimization:** Database indexing, in-memory caching, frontend rendering optimizations
 - **Frontend:** Complete user and operator interfaces with all components
-- **Spending Insights:** Transaction viewing, category breakdown, spending analytics, trends
-- **Consent Management:** Toggle functionality, conditional display, real-time updates via events
+- **Spending Insights:** Transaction viewing, category breakdown, spending analytics, trends with timeframe filters (30/180 days, all time)
+- **Dashboard Tabs:** Transactions, Insights, Recommendations, AI Features tabs (Overview tab removed)
+- **Account Management:** Current Balance and Credit Cards sections in Transactions tab
+- **Consent Management:** Data processing consent and AI consent toggles, conditional display, real-time updates via events
+- **AI Features:** Predictive insights, budget generation, goal generation (GPT-4 powered)
 - **Documentation:** Complete API docs, schema docs, decision log, limitations, and READMEs
 - **Operator Dashboard:** Optimized with tabs, visual differentiation, quick stats, urgency indicators, filters
 - **UI Improvements:** Consistent typography, spacing, card heights, disclaimer placement, visual enhancements
-- **Test status:** 327 tests passing (322 backend + 18 frontend, 2 frontend tests removed)
+- **Test status:** 420+ tests passing (322 backend unit + 80 backend integration + 18 frontend)
 
 ## Recent Changes
 
-### Latest Updates (Post-PR #30 - Testing & Bug Fixes)
+### Latest Updates (Post-AI Features Implementation - Enhancements)
+
+1. **Credit Card Calculation Fix** ✅
+   - **Issue:** Credit card balances stored as negative (standard accounting) but backend calculations didn't handle this correctly
+   - **Fix:** Updated `backend/src/routes/accounts.js` to convert negative balances to positive using `Math.abs()` for all calculations
+   - **Impact:** Credit card utilization rates, available credit, and totals now display correctly
+   - **Data Generation:** Confirmed correct - credit card balances properly stored as negative in `dataGenerator.js`
+
+2. **Insights Timeframe Filters** ✅
+   - **Feature:** Added 30-day, 180-day, and "all time" filters to Insights tab
+   - **Backend:** Updated `/transactions/:user_id/insights` to accept optional `startDate` query parameter (null for "all time")
+   - **Frontend:** Added filter buttons in Insights section of Dashboard
+   - **Data Period:** Insights API now returns `filter: '30' | '180' | 'all_time'` in response
+
+3. **Transactions Tab Enhancements** ✅
+   - **Current Balance Section:** Displays total current and available balance, plus individual depository accounts
+   - **Credit Cards Section:** Displays credit card summary (totals, utilization) and individual card details
+   - **Backend:** New `/accounts/:user_id` endpoint provides account data with calculated totals
+   - **Frontend:** New `CurrentBalance` and `CreditCards` components
+   - **Data Loading:** Fixed account data extraction in Dashboard to properly pass to components
+
+4. **Dashboard Tab Restructuring** ✅
+   - **Removed:** Overview tab (duplicated Insights content)
+   - **Added:** Dedicated Recommendations tab between Insights and AI Features
+   - **Structure:** Transactions → Insights → Recommendations → AI Features
+   - **RecommendationsSection:** Moved to dedicated tab with proper event handling for tab activation
+
+5. **AI Features Implementation Complete (PR31-34)** ✅
+   - **PR #31:** AI infrastructure setup (AI consent table, models, services, routes)
+   - **PR #32:** Dynamic AI rationale generation using GPT-4 (additive to template rationales)
+   - **PR #33:** Predictive financial insights (multi-horizon predictions, stress points)
+   - **PR #34:** Budget and goal generation (AI-powered personalized budgets and savings goals)
+   - **AI Consent:** Independent consent mechanism separate from data processing consent
+   - **GPT-4 Integration:** All AI features use GPT-4 model via OpenAI SDK
+   - **Frontend:** AI Features tab with Predictive Insights and Budget Generator components
+
+### Previous Updates (Post-PR #30 - Testing & Bug Fixes)
 
 1. **Backend Test Fixes** ✅
    - **Evaluation Test:** Fixed `countDetectedBehaviors` to support both `short_term` and `analysis_30d` structures for backward compatibility

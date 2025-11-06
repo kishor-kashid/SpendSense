@@ -52,19 +52,29 @@ router.get('/:user_id', (req, res, next) => {
     const totalAvailableBalance = depositoryAccounts.reduce((sum, acc) => sum + (acc.available_balance || 0), 0);
     
     // Calculate credit card balances and limits
-    const creditCardsData = (creditAccounts || []).map(card => ({
-      account_id: card.account_id,
-      subtype: card.subtype || 'credit card',
-      current_balance: card.current_balance || 0,
-      credit_limit: card.credit_limit || 0,
-      available_credit: (card.credit_limit || 0) - (card.current_balance || 0),
-      utilization_rate: card.credit_limit > 0 
-        ? ((card.current_balance || 0) / card.credit_limit * 100).toFixed(1)
-        : 0
-    }));
+    // Credit card balances are stored as negative (debt), convert to positive for display
+    const creditCardsData = (creditAccounts || []).map(card => {
+      // Convert negative balance to positive for credit cards
+      const balance = Math.abs(card.current_balance || 0);
+      const limit = card.credit_limit || 0;
+      
+      return {
+        account_id: card.account_id,
+        subtype: card.subtype || 'credit card',
+        current_balance: balance, // Store as positive for display
+        credit_limit: limit,
+        available_credit: limit - balance, // Correct: limit - positive balance
+        utilization_rate: limit > 0 
+          ? ((balance / limit) * 100).toFixed(1) // Positive percentage
+          : 0
+      };
+    });
     
-    const totalCreditBalance = creditAccounts.reduce((sum, acc) => sum + (acc.current_balance || 0), 0);
-    const totalCreditLimit = creditAccounts.reduce((sum, acc) => sum + (acc.credit_limit || 0), 0);
+    // Calculate totals using absolute values (convert negative to positive)
+    const totalCreditBalance = creditAccounts.reduce((sum, acc) => 
+      sum + Math.abs(acc.current_balance || 0), 0);
+    const totalCreditLimit = creditAccounts.reduce((sum, acc) => 
+      sum + (acc.credit_limit || 0), 0);
     const totalAvailableCredit = totalCreditLimit - totalCreditBalance;
     const overallUtilization = totalCreditLimit > 0 
       ? ((totalCreditBalance / totalCreditLimit) * 100).toFixed(1)

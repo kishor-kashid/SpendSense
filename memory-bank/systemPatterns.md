@@ -50,7 +50,35 @@ Analysis performed on two windows:
 - **180-day window:** Long-term patterns
 - Both windows inform persona assignment and recommendations
 
-### 6. API Request/Response Pattern
+### 6. AI Features Pattern
+- **AI Consent:** Separate consent mechanism independent of data processing consent
+- **AI Services:**
+  - `openaiClient.js` - OpenAI SDK initialization
+  - `rationaleGenerator.js` - AI-powered rationale generation (GPT-4)
+  - `predictiveInsights.js` - Transaction pattern analysis and predictions (GPT-4)
+  - `budgetGenerator.js` - Budget and goal generation (GPT-4)
+  - `promptTemplates.js` - Reusable prompt templates for all AI features
+- **AI Integration:**
+  - GPT-4 model used for all AI features
+  - Rate limiting and caching implemented
+  - Graceful fallback if AI generation fails
+  - AI rationales are additive (complement template rationales, don't replace)
+- **Frontend Components:**
+  - `AIFeaturesTab.jsx` - Main AI features container
+  - `PredictiveInsights.jsx` - Multi-horizon predictions display
+  - `BudgetGenerator.jsx` - Budget and goals container
+  - `BudgetDisplay.jsx` - Budget recommendations display
+  - `GoalsDisplay.jsx` - Savings goals display
+- **API Endpoints:**
+  - `POST /ai-consent` - Grant AI consent
+  - `GET /ai-consent/:user_id` - Get AI consent status
+  - `DELETE /ai-consent/:user_id` - Revoke AI consent
+  - `GET /ai/predictions/:user_id` - Get single-horizon predictions
+  - `GET /ai/predictions/:user_id/all` - Get all-horizon predictions
+  - `GET /ai/budgets/:user_id/generate` - Generate budget
+  - `GET /ai/goals/:user_id/generate` - Generate goals
+
+### 7. API Request/Response Pattern
 - **Request Validation:** All inputs validated via middleware
 - **Consent Enforcement:** 
   - Profile and recommendations require consent (403 if not granted)
@@ -71,7 +99,7 @@ Analysis performed on two windows:
   - Feedback: `/feedback`
   - Operator: `/operator/review`, `/operator/approve`, `/operator/override`, `/operator/users`
 
-### 7. Operator Review Pattern
+### 8. Operator Review Pattern
 - **Automatic Storage:** Recommendations automatically stored in review queue when generated
 - **Single Review Per User:** `createOrUpdatePending` ensures only one pending review per user
 - **Review Queue:** Pending recommendations stored in `recommendation_reviews` table
@@ -81,7 +109,7 @@ Analysis performed on two windows:
 - **Content Display:** Operators see full recommendation content (education items, partner offers) in review
 - **Audit Trail:** Operator notes, reviewed_by, and timestamps recorded
 
-### 8. Consent Management Pattern
+### 9. Consent Management Pattern
 - **Consent Toggle:** Always visible toggle switch for users to grant/revoke consent (in profile menu)
 - **Consent Checking:** Uses `hasConsent()` which checks consent table first (authoritative source)
 - **Conditional Display:**
@@ -98,16 +126,18 @@ Analysis performed on two windows:
 - **API Behavior:** Profile and recommendations endpoints return 403 if consent not granted
 - **Cache Invalidation:** User cache cleared when consent changes to prevent stale data
 
-### 9. Spending Insights Pattern
+### 10. Spending Insights Pattern
 - **Transaction Viewing:** Users can view all their transactions with search, filter, and sort
 - **Category Breakdown:** Visual breakdown of spending by category with percentages
 - **Spending Analytics:** Summary cards (total spending, income, net flow, savings rate)
 - **Trends:** Daily and monthly spending trends
 - **Top Merchants:** Lists top merchants by spending amount
+- **Timeframe Filters:** 30 days, 180 days, all time filters
 - **No Consent Required:** Transactions and insights available without consent
 - **Components:** TransactionList, SpendingBreakdown, SpendingInsights
+- **Backend:** `/transactions/:user_id/insights` accepts optional `startDate` query parameter (null for "all time")
 
-### 10. Authentication Pattern
+### 11. Authentication Pattern
 - **Username/Password System:** Simple authentication without encryption (demo mode)
 - **User Credentials:** Username = first_name + last_name (lowercase, no spaces), Password = first_name + last_name + "123"
 - **Operator Credentials:** Username "operator", Password "operator123"
@@ -118,7 +148,25 @@ Analysis performed on two windows:
 - **Data Generation:** Usernames and passwords generated during synthetic data creation
 - **Frontend:** Login component with username/password input fields for both roles
 
-### 11. UI Design Pattern
+### 15. Account Management Pattern
+- **Current Balance Display:**
+  - Total current and available balance
+  - Individual depository accounts (checking, savings, etc.)
+  - Component: `CurrentBalance.jsx`
+- **Credit Cards Display:**
+  - Summary: Total balance, limit, available credit, utilization
+  - Individual cards: Balance, limit, available credit, utilization rate
+  - Color-coded utilization (low/medium/high)
+  - Component: `CreditCards.jsx`
+- **Backend API:**
+  - `GET /accounts/:user_id` - Returns account data with calculated totals
+  - Credit card balances stored as negative (standard accounting), converted to positive for display
+  - Calculations: `available_credit = limit - Math.abs(balance)`, `utilization_rate = (Math.abs(balance) / limit) * 100`
+- **Data Generation:**
+  - Credit card balances correctly stored as negative in `dataGenerator.js`
+  - Backend converts negative to positive for all calculations and display
+
+### 12. UI Design Pattern
 - **Modern Design System:** CSS variables for colors, spacing, shadows, transitions, typography
 - **Typography Scale:** Comprehensive font size, weight, and line-height variables
 - **Gradient Backgrounds:** Linear gradients for headers, buttons, and accent elements
@@ -139,11 +187,12 @@ Analysis performed on two windows:
   - Left/right navigation buttons instead of scrollbar
   - Smooth scrolling behavior
   - Button state management based on scroll position
+- **Dashboard Tabs:** Transactions, Insights, Recommendations, AI Features (Overview removed)
 - **Disclaimer Placement:** Section-level disclaimers below headers (not in individual cards)
 - **Content Filtering:** Regex filtering to remove hardcoded profile-based messages from backend data
 - **Consistent Spacing:** Standardized spacing using CSS variables across all components
 
-### 12. Recommendation Approval Pattern
+### 13. Recommendation Approval Pattern
 - **Generation:** Recommendations generated and stored as 'pending' in review queue
 - **User View:** Users see empty arrays (education_items: [], partner_offers: []) with "Pending Approval" message until approved
 - **Operator Review:** Operators see full recommendation content in review queue
@@ -152,7 +201,7 @@ Analysis performed on two windows:
 - **Consent Check First:** Consent is checked before checking for pending/approved reviews
 - **Empty Arrays:** When pending, API returns empty arrays instead of recommendation content
 
-### 13. Evaluation Pattern
+### 14. Evaluation Pattern
 - **Metrics Calculation:** Four key metrics calculated for system evaluation
   - Coverage: % users with persona + ≥3 behaviors (supports both `short_term` and `analysis_30d` structures)
   - Explainability: % recommendations with rationales
@@ -189,10 +238,11 @@ User (1) → (N) RecommendationReview
 ### Database Schema
 - **Storage:** SQLite database (`backend/data/database.sqlite`)
 - **Migrations:** Automatic table creation on database initialization (`backend/src/migrations/createTables.js`)
-- **Tables:** users, accounts, transactions, liabilities, consent, feedback, recommendation_reviews
+- **Tables:** users, accounts, transactions, liabilities, consent, feedback, recommendation_reviews, ai_consent
 - **Foreign Keys:** All relationships use ON DELETE CASCADE
 - **Indexes:** Created on frequently queried columns (user_id, account_id, date, merchant_name, status, etc.)
 - **Consent Status:** Simplified to only 'granted' or 'revoked' (removed 'pending' status)
+- **AI Consent:** Separate table (ai_consent) with independent consent tracking for AI features
 
 ## Data Ingestion Patterns
 

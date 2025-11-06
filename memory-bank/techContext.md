@@ -52,6 +52,7 @@ spendsense/
 - `dotenv` (^16.3.1) - Environment variables
 - `jest` (^29.7.0) - Testing framework
 - `nodemon` (^3.0.2) - Development auto-reload
+- `openai` (^4.20.1) - OpenAI SDK for AI features (GPT-4)
 
 ### Frontend (Installed)
 - `react` (^18.2.0) - UI library
@@ -96,6 +97,8 @@ spendsense/
 - **Operator Credentials:** Username "operator", Password "operator123"
 - **CORS:** Enabled for frontend-backend communication
 - **Ports:** Backend on 3001, Frontend on 3000 (typical)
+- **AI Features:** Requires OpenAI API key in environment variables
+- **AI Model:** GPT-4 used for all AI features (rationale generation, predictions, budgets, goals)
 
 ## Development Workflow
 
@@ -151,6 +154,7 @@ spendsense/
   - Database path
   - Server port
   - API endpoints
+  - `OPENAI_API_KEY` - Required for AI features (GPT-4)
   - Other configuration
 
 ### Build Output
